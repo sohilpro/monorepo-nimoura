@@ -1,0 +1,37 @@
+@theme {
+  /* 🎨 Nimoura Brand Palette */
+  --color-nimoura-primary: #b76e79;
+  --color-nimoura-base: #fff8f4;
+  --color-nimoura-accent: #d9c6e2;
+  --color-nimoura-border: #c4c4c4;
+  --color-nimoura-dark: #2e2636;
+  --color-nimoura-velvet: #3b2f45;
+  --color-nimoura-success: #2fb57e;
+  --color-nimoura-error: #f04438;
+  --color-nimoura-warning: #f79009;
+
+  /* 📝 Nimoura Text Scale */
+  --color-nimoura-text-100: #e9e6e6;
+  --color-nimoura-text-200: #cfc9c9;
+  --color-nimoura-text-300: #b5adad;
+  --color-nimoura-text-400: #9b9191;
+  --color-nimoura-text-500: #807676;
+  --color-nimoura-text-600: #665d5d;
+  --color-nimoura-text-700: #4e4545;
+  --color-nimoura-text-800: #3a3131;
+  --color-nimoura-text-900: #272121;
+
+  /* 📱 Breakpoints */
+  --breakpoint-xxs: 360px;
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* 🖋️ Fonts */
+  --font-vazir: "Vazirmatn", system-ui, sans-serif;
+  --font-modam: "Modam", sans-serif;
+  --font-iransans: "IRANSansX", sans-serif;
+}

@@ -1,0 +1,105 @@
+name: nimoura-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nimoura-db-prod
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME:-nimoura}
+    volumes:
+      - postgres_prod_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_NAME:-nimoura}"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nimoura-prod-network
+
+  api:
+    container_name: nimoura-api-prod
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME:-nimoura}
+      JWT_SECRET: ${JWT_SECRET}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://nimoura.shop}
+    volumes:
+      - uploads_data:/app/apps/api/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nimoura-prod-network
+
+  web:
+    container_name: nimoura-web-prod
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      NUXT_PUBLIC_API_BASE: http://api:4000/api/v1
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - nimoura-prod-network
+
+  admin:
+    container_name: nimoura-admin-prod
+    build:
+      context: .
+      dockerfile: docker/admin.Dockerfile
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      HOST: 0.0.0.0
+      NUXT_ADMIN_API_BASE: http://api:4000/api/v1/admin
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - nimoura-prod-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nimoura-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - uploads_data:/app/uploads:ro
+    depends_on:
+      - web
+      - admin
+      - api
+    networks:
+      - nimoura-prod-network
+
+volumes:
+  postgres_prod_data:
+    driver: local
+  uploads_data:
+    driver: local
+
+networks:
+  nimoura-prod-network:
+    driver: bridge

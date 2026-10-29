@@ -28,13 +28,13 @@ nimoura/
 │   └── tsconfig/
 ├── docker/           # Dockerfiles per app + compose files
 ├── turbo.json
-├── pnpm-workspace.yaml
+├── package.json      # npm workspaces ("apps/*", "packages/*")
 ├── docker-compose.yml          # dev
 ├── docker-compose.prod.yml     # production
 └── CLAUDE.md
 ```
 
-پکیج‌منیجر: **pnpm** workspaces همراه با **Turborepo**. هرگز lockfile مربوط به npm یا yarn را وارد پروژه نکن.
+پکیج‌منیجر: **npm** workspaces همراه با **Turborepo**.
 
 ## استک فنی
 
@@ -48,13 +48,13 @@ nimoura/
 ## دستورهای رایج (از ریشه‌ی ریپو اجرا شوند)
 
 ```bash
-pnpm install
-pnpm dev                       # turbo run dev (all apps)
-pnpm --filter api dev          # a single app
-pnpm build                     # turbo run build
-pnpm lint
-pnpm typecheck
-pnpm test
+npm install
+npm run dev                    # turbo run dev (all apps)
+npm run dev --workspace=@nimoura/api # a single app
+npm run build                  # turbo run build
+npm run lint
+npm run typecheck
+npm run test
 docker compose up -d           # full dev stack
 ```
 

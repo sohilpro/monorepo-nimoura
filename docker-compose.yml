@@ -1,0 +1,92 @@
+name: nimoura-dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nimoura-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-nimoura}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-nimoura}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nimoura-network
+
+  api:
+    container_name: nimoura-api
+    build:
+      context: .
+      dockerfile: docker/api.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${PORT:-4000}:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: ${DB_USERNAME:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: ${DB_NAME:-nimoura}
+      JWT_SECRET: ${JWT_SECRET:-nimoura_dev_jwt_secret}
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    volumes:
+      - ./apps/api/uploads:/app/apps/api/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nimoura-network
+
+  web:
+    container_name: nimoura-web
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      HOST: 0.0.0.0
+      NUXT_PUBLIC_API_BASE: http://api:4000/api/v1
+    depends_on:
+      - api
+    networks:
+      - nimoura-network
+
+  admin:
+    container_name: nimoura-admin
+    build:
+      context: .
+      dockerfile: docker/admin.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      HOST: 0.0.0.0
+      NUXT_ADMIN_API_BASE: http://api:4000/api/v1/admin
+    depends_on:
+      - api
+    networks:
+      - nimoura-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  nimoura-network:
+    driver: bridge

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Disallow: /profile/
+Disallow: /cart/
+Disallow: /search/
+Disallow: /auth/
+Disallow: /payment/
+
+Sitemap: https://nimoura.shop/sitemap.xml

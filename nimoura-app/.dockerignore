@@ -1,0 +1,12 @@
+# .dockerignore
+node_modules
+.nuxt
+.output
+.git
+.env
+.env.*
+!.env.production.example
+test-results
+playwright-report
+tests
+*.log

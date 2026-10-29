@@ -1,0 +1,35 @@
+name: Continuous Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: ${{ secrets.SERVER_PORT }}
+          script_stop: true
+          script: |
+            cd /var/www/backend/vecaro-backend
+
+            # دریافت آخرین کامیت‌ها و بازنشانی امن بدون کانفلیکت
+            git fetch origin main
+            git reset --hard origin/main
+
+            # اجرای بیلد با پشتیبانی همزمان از داکر کامپوز v1 و v2
+            if command -v docker-compose >/dev/null 2>&1; then
+              docker-compose up -d --build
+            else
+              docker compose up -d --build
+            fi
+
+            # حذف ایمیج‌های معلق (dangling) برای مدیریت حافظه سرور
+            docker image prune -f

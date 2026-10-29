@@ -1,0 +1,3 @@
+<template>
+    <UserUpdate />
+</template>

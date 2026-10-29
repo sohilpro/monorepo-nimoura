@@ -1,0 +1,117 @@
+# name: Deploy Nuxt Admin to Server
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+
+#     steps:
+#       - name: Checkout code
+#         uses: actions/checkout@v3
+
+#       - name: Set up SSH agent
+#         uses: webfactory/ssh-agent@v0.5.4
+#         with:
+#           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+#       - name: Add server to known_hosts (port 9011)
+#         run: |
+#           ssh-keyscan -p 9011 ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+#       - name: Upload files to server (via SSH & SCP on port 9011)
+#         run: |
+#           ssh -p 9011 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+#             mkdir -p /var/www/admin
+#             cd /var/www/admin
+#             rm -rf *
+#           EOF
+
+#           scp -P 9011 -r . ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/admin
+
+#       - name: Build and run Docker on server
+#         run: |
+#           ssh -p 9011 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+#             cd /var/www/admin
+#             docker stop nimoura-admin || true && docker rm nimoura-admin || true
+#             docker build -t nimoura-admin .
+#             docker run -d --name nimoura-admin \
+#               --env NUXT_PUBLIC_API_BASE=https://api.nimoura.shop \
+#               -p 3001:3000 nimoura-admin
+#           EOF
+
+name: Deploy Nuxt Admin to Server
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-admin-main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH agent
+        uses: webfactory/ssh-agent@v0.5.4
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Trust server host key (custom port)
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          ssh-keyscan -p 9011 ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      # همگام‌سازی تمیز با rsync (به‌جای rm -rf و scp)
+      - name: Rsync project to server
+        run: |
+          rsync -az --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.env' \
+            -e "ssh -p 9011" \
+            ./ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/var/www/admin
+
+      # ساخت/به‌روزرسانی .env از روی Secrets (اگر نمی‌خوای .env روی سرور دستی نگه داری)
+      - name: Create/refresh .env on server from GitHub Secrets
+        run: |
+          ssh -p 9011 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            set -e
+            cd /var/www/admin
+            cat > .env <<EOT
+            NUXT_PUBLIC_API_BASE=${{ secrets.NUXT_PUBLIC_API_BASE }}
+            EOT
+          EOF
+
+      - name: Build & up via Docker Compose on server
+        run: |
+          ssh -p 9011 ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'EOF'
+            set -e
+            cd /var/www/admin
+
+
+            docker compose down --remove-orphans || true
+
+
+            docker ps --filter "publish=3001" -q | xargs -r docker stop
+            docker ps -a --filter "publish=3001" -q | xargs -r docker rm
+
+
+            docker compose build --no-cache
+            docker compose up -d --force-recreate
+
+            docker image prune -f || true
+          EOF

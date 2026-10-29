@@ -1,0 +1,227 @@
+@import "tailwindcss";
+@import "primeicons/primeicons.css";
+@import "./fonts.css";
+
+@theme {
+  /* 🎨 nimoura Palette */
+  --color-nimoura-primary: #b76e79;
+  --color-nimoura-base: #fff8f4;
+  --color-nimoura-accent: #d9c6e2;
+  --color-nimoura-border: #c4c4c4;
+  --color-nimoura-dark: #2e2636;
+  --color-nimoura-velvet: #3b2f45;
+  --color-nimoura-success: #2fb57e;
+
+  /* 📝 Text Scale */
+  --color-nimoura-text-100: #e9e6e6;
+  --color-nimoura-text-200: #cfc9c9;
+  --color-nimoura-text-300: #b5adad;
+  --color-nimoura-text-400: #9b9191;
+  --color-nimoura-text-500: #807676;
+  --color-nimoura-text-600: #665d5d;
+  --color-nimoura-text-700: #4e4545;
+  --color-nimoura-text-800: #3a3131;
+  --color-nimoura-text-900: #272121;
+
+  /* Breakpoint */
+  --breakpoint-xxs: 360px;
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+
+  /* Fonts */
+  --font-vazir: "Vazirmatn", system-ui, sans-serif;
+  --font-modam: "Modam", sans-serif;
+}
+
+/*
+  Container scale — tuned per breakpoint rather than left fluid.
+  From md upward a max-width is capped so product photography and
+  grid cards keep a readable, gallery-like density instead of
+  stretching thin across very wide viewports; padding grows in step
+  so the cap never collides with the side gutters (box-sizing: border-box
+  means padding eats into max-width, so the numbers below always leave
+  real breathing room for content).
+*/
+@utility container {
+  margin-inline: auto;
+  width: 100%;
+  padding-inline: 0.25rem; /* 16px — base, phones under 360px */
+
+  /* @variant xxs {
+    padding-inline: 1.125rem; /* 18px 
+  } */
+
+  /* @variant xs {
+    padding-inline: 1.5rem; /* 24px 
+  } */
+
+  /* @variant sm {
+    padding-inline: 1.75rem; /* 28px 
+  } */
+
+  /* @variant md {
+    max-width: 720px;
+    padding-inline: 1.75rem; /* 28px — content ≈ 664px 
+  } */
+
+  @variant lg {
+    max-width: 984px;
+    padding-inline: 2rem; /* 32px — content ≈ 920px */
+  }
+
+  @variant xl {
+    max-width: 1240px;
+    padding-inline: 2.5rem; /* 40px — content ≈ 1160px */
+  }
+
+  @variant 2xl {
+    max-width: 1512px;
+    padding-inline: 6rem; /* 96px — content ≈ 1320px */
+  }
+}
+
+@layer base {
+  body {
+    @apply relative font-vazir bg-nimoura-base text-nimoura-text-700 transition-all text-base leading-relaxed;
+  }
+
+  .flex-between {
+    @apply flex items-center justify-between;
+  }
+
+  .flex-center {
+    @apply flex items-center justify-center;
+  }
+  .app-hover {
+    @apply transition-all duration-200 hover:shadow-md;
+  }
+
+  button {
+    @apply cursor-pointer!;
+  }
+
+  /* Footer */
+
+  .footer_title {
+    @apply text-xl font-modam font-medium mb-4;
+  }
+}
+
+@layer utilities {
+  .search-modal-list-item {
+    @apply flex items-center justify-center text-sm py-1.5 px-3 rounded-full text-gray-600  border border-gray-300;
+  }
+
+  .small-card {
+    @apply flex flex-col h-72 w-56 gap-y-1 items-center justify-between bg-white shadow-lg rounded-xl pb-1 pt-3 px-4;
+  }
+
+  .product-card_price-wrapper {
+    @apply flex flex-col gap-y-2 pt-4 font-modam border-t-2 border-gray-200;
+  }
+
+  .product-card_price span,
+  .small-card_price span {
+    @apply w-10 h-6 bg-nimoura-primary/15 rounded-xl font-semibold text-xs text-nimoura-primary flex items-center justify-center mb-1;
+  }
+
+  .small-card_price {
+    @apply flex items-center font-modam justify-between gap-x-2;
+  }
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.torobpay-widget-media.torobpay-logo-light-sweep::after {
+  content: "";
+  position: absolute;
+  top: -35%;
+  left: 0;
+  width: 60%;
+  height: 170%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.75) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: translateX(0) rotate(25deg);
+  opacity: 0;
+  pointer-events: none;
+  animation: torobpay-light-sweep 1.8s ease-in-out infinite;
+}
+
+.torobpay-widget-media.torobpay-logo-light-sweep {
+  position: relative;
+  overflow: hidden;
+  border-radius: 15px;
+}
+
+.torobpay-widget-media {
+  display: flex;
+  align-items: center;
+}
+
+@keyframes torobpay-light-sweep {
+  0% {
+    transform: translateX(-120%) rotate(25deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.85;
+  }
+  60% {
+    transform: translateX(160%) rotate(25deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(160%) rotate(25deg);
+    opacity: 0;
+  }
+}
+
+.p-accordionheader-toggle-icon {
+  @apply hover:text-nimoura-text-700! text-nimoura-text-700!;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+ 
+@keyframes heartPop {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0;
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+ 
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

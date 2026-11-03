@@ -1,1 +1,5 @@
-export { PaymentStatus } from '@nimoura/shared-types';
+export enum PaymentStatus {
+  INITIATED = 'INITIATED',
+  SUCCESS = 'OK',
+  FAILED = 'FAILED',
+}

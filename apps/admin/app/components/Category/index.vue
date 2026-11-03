@@ -3,81 +3,92 @@
     <UtilsHeaderWithActions
       :breadcrumbs="[
         { label: 'داشبورد', href: '/' },
-        { label: 'دسته بندی', href: '' },
+        { label: 'دسته‌بندی‌ها', href: '/category' },
       ]"
-      title="دسته بندی ها"
-      subtitle="لیست تمام دسته بندی ها"
+      title="دسته‌بندی‌ها"
+      subtitle="مدیریت و مشاهده تمام دسته‌بندی‌های محصولات در فروشگاه نیمورا"
     />
 
     <UtilsTableDynamic
-      :data="categories?.data?.categories || []"
+      :data="categoriesList"
       :columns="columns"
-      :total="categories?.data?.total"
+      :total="totalCount"
       :page="page"
       :limit="limit"
       :serverSide="true"
       :onPageChange="onPageChange"
       :onSearch="onSearch"
       :onSort="onSort"
-      :sortKey="sortBy"
+      :sortKey="sort"
       :sortOrder="sortOrder"
       :searchQuery="search"
       url-edit="category"
-      api-delete-base="/api/category/remove"
+      api-delete-base="/api/category"
       :on-refresh="refresh"
       itemNameKey="name"
     />
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { formatDate } from '@nimoura/utils';
+
 const {
   page,
   limit,
   search,
-  sortBy,
+  sort,
   sortOrder,
   queryParams,
   onPageChange,
   onSearch,
   onSort,
-} = useTableQuery({ defaultSortBy: "created_at" });
+} = useTableQuery({ defaultSortBy: 'id' });
 
-const fetchUrl = computed(() => {
-  const q = queryParams.value;
-
-  return `/api/category/list?page=${q.page}&limit=${q.limit}&search=${q.search}&sortBy=${q.sortBy}&sortOrder=${q.sortOrder}`;
+const { data: rawCategories, refresh } = await useFetch('/api/category/list', {
+  query: queryParams,
+  key: 'admin-categories-list',
 });
 
-const { data: categories, refresh } = await useFetch(fetchUrl);
+const categoriesList = computed(() => {
+  const d = (rawCategories.value as any)?.data ?? rawCategories.value;
+  return d?.items ?? d?.categories ?? [];
+});
+
+const totalCount = computed(() => {
+  const d = (rawCategories.value as any)?.data ?? rawCategories.value;
+  return d?.total ?? d?.meta?.total ?? categoriesList.value.length;
+});
 
 const columns = [
   {
-    key: "name",
-    label: "دسته بندی",
+    key: 'name',
+    label: 'نام دسته‌بندی',
+    formatter: (val: string) => val || '—',
   },
   {
-    key: "children",
-    label: "زیر دسته",
-    formatter: (val) =>
-      val
-        ?.map((i) => i.name)
-        .slice(0, 3)
-        .join("/") ?? "-",
+    key: 'parent',
+    label: 'دسته‌بندی والد',
+    formatter: (val: any) => val?.name ?? 'شاخه اصلی (بدون والد)',
   },
   {
-    key: "parent",
-    label: "والد",
-    formatter: (val) => val?.name ?? "-",
+    key: 'children',
+    label: 'زیرمجموعه‌ها',
+    formatter: (val: any[]) => {
+      if (!val || !val.length) return '—';
+      const names = val.slice(0, 3).map((c) => c.name).join('، ');
+      return val.length > 3 ? `${names} (+${val.length - 3})` : names;
+    },
   },
   {
-    key: "slug",
-    label: "اسلاگ",
+    key: 'slug',
+    label: 'اسلاگ آدرس',
+    formatter: (val: string) => val || '—',
   },
   {
-    key: "createdAt",
-    label: "تاریخ ثبت",
-    formatter: (val) => new Date(val).toLocaleDateString("fa-IR"),
+    key: 'createdAt',
+    label: 'تاریخ ایجاد',
+    formatter: (val: string) => formatDate(val) || '—',
   },
 ];
 </script>

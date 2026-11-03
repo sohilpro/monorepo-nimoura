@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "cross-env NODE_OPTIONS=--max-old-space-size=4096 nuxt build",
-    "dev": "nuxt dev",
+    "dev": "nuxt dev --port 3000",
     "lint": "eslint .",
     "typecheck": "npx nuxi typecheck",
     "generate": "nuxt generate",

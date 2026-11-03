@@ -5,107 +5,112 @@
         { label: 'داشبورد', href: '/' },
         { label: 'سفارشات ارسال نشده', href: '' },
       ]"
-      title="سفارشات"
-      subtitle="لیست تمام سفارشات ارسال نشده"
+      title="سفارشات ارسال نشده"
+      subtitle="سفارش‌های پرداخت‌شده و در حال آماده‌سازی جهت بسته‌بندی و تحویل به پست"
     />
 
     <UtilsTableDynamic
-      :data="orders?.data?.orders || []"
+      :data="ordersList"
       :columns="columns"
-      :total="orders?.data?.total"
+      :total="totalCount"
       :page="page"
       :limit="limit"
       :serverSide="true"
       :onPageChange="onPageChange"
       :onSearch="onSearch"
       :onSort="onSort"
-      :sortKey="sortBy"
+      :sortKey="sort"
       :sortOrder="sortOrder"
       :searchQuery="search"
       url-edit="order"
-      api-delete-base="/api/orders/remove"
+      api-delete-base="/api/orders"
       :on-refresh="refresh"
       itemNameKey="orderCode"
     />
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { formatPrice, formatDate } from '@nimoura/utils';
+import { OrderStatus } from '@nimoura/shared-types';
+
+const { getStatusLabel, getStatusBadgeClass } = useAdminOrders();
+
 const {
   page,
   limit,
   search,
-  sortBy,
+  sort,
   sortOrder,
   queryParams,
   onPageChange,
   onSearch,
   onSort,
-} = useTableQuery({ defaultSortBy: "created_at" });
+} = useTableQuery({ defaultSortBy: 'createdAt' });
 
-const fetchUrl = computed(() => {
-  const q = queryParams.value;
+const requestQuery = computed(() => ({
+  ...queryParams.value,
+  status: OrderStatus.PAID,
+}));
 
-  return `/api/orders/list?page=${q.page}&limit=${q.limit}&search=${q.search}&sortBy=${q.sortBy}&sortOrder=${q.sortOrder}&status=paid`;
+const { data: rawOrders, refresh } = await useFetch('/api/orders/list', {
+  query: requestQuery,
+  key: 'admin-orders-no-sending',
 });
 
-const { data: orders, refresh } = await useFetch(fetchUrl);
+const ordersList = computed(() => {
+  const data = (rawOrders.value as any)?.data ?? rawOrders.value;
+  return data?.items ?? data?.orders ?? [];
+});
+
+const totalCount = computed(() => {
+  const data = (rawOrders.value as any)?.data ?? rawOrders.value;
+  return data?.total ?? data?.meta?.total ?? ordersList.value.length;
+});
 
 const columns = [
   {
-    key: "orderCode",
-    label: "کد سفارش",
+    key: 'orderCode',
+    label: 'کد سفارش',
+    formatter: (val: string) => val || '—',
   },
   {
-    key: "status",
-    label: "وضعیت",
-    formatter: (val) => {
-      switch (val) {
-        case "pending":
-          return "در حال پردازش ⏳";
-        case "paid":
-          return "پرداخت شده ✅";
-        case "shipped":
-          return "ارسال شده 📦";
-        case "delivered":
-          return "تحویل شده 🏠";
-        case "cancelled":
-          return "لغو شده ❌";
-        default:
-          return "نامشخص";
-      }
+    key: 'shippingInfo',
+    label: 'گیرنده',
+    formatter: (val: any) => {
+      if (!val) return '—';
+      const name = `${val.first_name || ''} ${val.last_name || ''}`.trim();
+      return name || val.phone || '—';
     },
   },
   {
-    key: "paymentRefId",
-    label: "کد پرداختی",
-    formatter: (val) => val ?? "-",
+    key: 'shippingPhone',
+    label: 'شماره تماس',
+    formatter: (_val: any, row: any) => row.shippingInfo?.phone || '—',
   },
   {
-    key: "shippingCost",
-    label: "هزینه ارسال",
-    formatter: (val) => numberFormat(val) + " تومان",
-  },
-
-  {
-    key: "subtotal",
-    label: "قیمت پایه",
-    formatter: (val) => numberFormat(val) + " تومان",
+    key: 'status',
+    label: 'وضعیت',
+    isCustom: true,
+    formatter: (val: OrderStatus) => ({
+      text: getStatusLabel(val),
+      badgeClass: getStatusBadgeClass(val),
+    }),
   },
   {
-    key: "finalTotal",
-    label: "قیمت نهایی",
-    formatter: (val) => numberFormat(val) + " تومان",
+    key: 'finalTotal',
+    label: 'مبلغ سفارش',
+    formatter: (val: number) => formatPrice(val),
   },
   {
-    key: "createdAt",
-    label: "تاریخ ثبت",
-    formatter: (val) => new Date(val).toLocaleDateString("fa-IR"),
+    key: 'shippingCost',
+    label: 'هزینه ارسال',
+    formatter: (val: number) => (val > 0 ? formatPrice(val) : 'رایگان'),
   },
   {
-    key: "createdAt",
-    label: "ساعت ثبت",
-    formatter: (val) => new Date(val).toLocaleTimeString("fa-IR"),
+    key: 'createdAt',
+    label: 'تاریخ پرداخت/ثبت',
+    formatter: (val: string) => formatDate(val) || '—',
   },
 ];
 </script>

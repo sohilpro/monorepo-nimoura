@@ -10,7 +10,7 @@ export interface PaymentResult {
 export function usePaymentResult() {
   const route = useRoute();
   const cart: any = useCartStore();
-  const toast = useToast();
+  const toast = useAppToast();
 
   const result = reactive<PaymentResult>({
     status: "loading",

@@ -126,24 +126,8 @@
 </template>
 
 <script setup lang="ts">
-import { useToast } from 'primevue/usetoast'
-
-// ─── Props / emits ────────────────────────────
-const props = defineProps<{ user: any }>()
-const emit  = defineEmits<{ updated: [profile: any] }>()
-
-// ─── API (plug in) ────────────────────────────
-async function updateProfile(dto: {
-  first_name: string
-  last_name: string
-  birthDate?: string
-}): Promise<any> {
-  // return await $fetch('/api/users/profile', { method: 'PATCH', body: dto })
-  return { ...props.user, ...dto }
-}
-
 // ─── State ────────────────────────────────────
-const toast      = useToast()
+const toast      = useAppToast()
 const editMode   = ref(false)
 const submitting = ref(false)
 const savedAt    = ref<string>('')

@@ -211,11 +211,11 @@
                       <button
                         type="submit"
                         :disabled="isLoading"
-                        :class="{'opacity-50': isLoading}"
+                        :class="{ 'opacity-50': isLoading }"
                         class="flex gap-3 items-center justify-center w-full px-4 py-3 text-sm font-medium text-white transition rounded-lg bg-brand-500 shadow-theme-xs hover:bg-brand-600"
                       >
                         ورود
-                        <IconsLoading v-if="isLoading"/>
+                        <IconsLoading v-if="isLoading" />
                       </button>
                     </div>
                   </div>
@@ -239,7 +239,7 @@
         <div
           class="relative items-center hidden w-full h-full lg:w-1/2 bg-brand-950 dark:bg-white/5 lg:grid"
         >
-        <img src="/images/poster-auth.jpg"/>
+          <img src="/images/poster-auth.jpg" />
           <!-- <div class="flex items-center justify-center z-1">
             <CommonGridShape />
             <div class="flex flex-col items-center max-w-xs">
@@ -257,6 +257,7 @@
 </template>
 
 <script setup lang="ts">
+const toast = useAppToast();
 const showPassword = ref(false);
 const keepLoggedIn = ref(false);
 const isLoading = ref(false);
@@ -281,15 +282,13 @@ const handleSubmit = async () => {
     });
 
     auth.value = data.data.user;
-    
-    useToast().info({
-      message: data.data.message,
-    });
+
+    toast.success(data?.data?.message || "ورود با موفقیت انجام شد");
     navigateTo("/");
   } catch (error: any) {
-    useToast().error({
-      message: error?.data?.data?.message || "ورود ناموفق!",
-    });
+    toast.error(
+      error?.data?.data?.message || error?.data?.message || "ورود ناموفق!",
+    );
   } finally {
     isLoading.value = false;
   }

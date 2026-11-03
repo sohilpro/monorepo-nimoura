@@ -1,0 +1,17 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "sayan": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "SayanServer",
+      "options": {
+        "baseURL": "https://ai.sayanserver.ir/v1"
+      },
+      "models": {
+        "muse": {
+          "name": "muse-wonder-full-1.0"
+        }
+      }
+    }
+  }
+}

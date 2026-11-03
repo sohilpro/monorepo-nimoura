@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const toast = useToast();
+const toast = useAppToast();
 const router = useRouter();
 const cart = useCartSummary();
 const checkout = useCheckout();

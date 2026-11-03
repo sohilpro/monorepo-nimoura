@@ -301,11 +301,6 @@
         />
       </div>
     </Transition>
-
-    <Toast
-      position="top-center"
-      :pt="{ root: { style: 'font-family:Vazirmatn,sans-serif;direction:rtl' } }"
-    />
   </section>
 </template>
 
@@ -342,7 +337,7 @@ const props = defineProps<{
 }>()
 
 // ─── State ────────────────────────────────────
-const toast           = useToast()
+const toast           = useAppToast()
 const fileInput       = ref<HTMLInputElement | null>(null)
 const lightboxSrc     = ref<string | null>(null)
 const loadingComments = ref(false)

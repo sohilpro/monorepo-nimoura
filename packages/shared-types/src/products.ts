@@ -2,9 +2,12 @@ export interface Brand {
   id: number;
   name: string;
   slug: string;
+  logo?: string | null;
   logoUrl?: string;
   description?: string;
   subBrands?: SubBrand[];
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
 
 export interface SubBrand {
@@ -14,15 +17,46 @@ export interface SubBrand {
   brandId?: number;
 }
 
+export interface CreateBrandPayload {
+  name: string;
+  slug?: string;
+  logo?: string | null;
+  description?: string;
+  subBrands?: string[] | Array<{ name: string; slug?: string }>;
+}
+
+export interface UpdateBrandPayload extends Partial<CreateBrandPayload> {}
+
 export interface Category {
   id: number;
   name: string;
   slug: string;
   icon?: string;
+  seoText?: string;
   parentId?: number | null;
   parent?: Category | null;
   children?: Category[];
+  productsCount?: number;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }
+
+export interface CategoryTreeItem {
+  id: number;
+  name: string;
+  slug: string;
+  parentId: number | null;
+  children: CategoryTreeItem[];
+}
+
+export interface CreateCategoryPayload {
+  name: string;
+  slug?: string;
+  parentId?: number | null;
+  seoText?: string;
+}
+
+export interface UpdateCategoryPayload extends Partial<CreateCategoryPayload> {}
 
 export interface ProductPriceTier {
   id?: number;

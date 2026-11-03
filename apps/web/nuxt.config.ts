@@ -1,14 +1,25 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import { fileURLToPath } from "node:url";
 import tailwindcss from "@tailwindcss/vite";
 import Aura from "@primeuix/themes/aura";
 import { definePreset } from "@primeuix/themes";
-import { nimouraThemePreset } from "@nimoura/ui";
+import { nimouraThemePreset } from "../../packages/ui/src";
 
 const MyCustomTheme = definePreset(Aura, nimouraThemePreset);
 
 export default defineNuxtConfig({
   compatibilityDate: "2025-07-15",
   devtools: { enabled: true },
+
+  devServer: {
+    port: 3000,
+  },
+
+  alias: {
+    "@nimoura/ui": fileURLToPath(new URL("../../packages/ui/src", import.meta.url)),
+    "@nimoura/utils": fileURLToPath(new URL("../../packages/utils/src", import.meta.url)),
+    "@nimoura/shared-types": fileURLToPath(new URL("../../packages/shared-types/src", import.meta.url)),
+  },
   app: {
     head: {
       htmlAttrs: {
@@ -147,7 +158,7 @@ export default defineNuxtConfig({
     },
   },
 
-  css: ["./app/assets/css/main.css"],
+  css: ["~/assets/css/main.css"],
   modules: [
     "@primevue/nuxt-module",
     "@vueuse/nuxt",
@@ -172,6 +183,12 @@ export default defineNuxtConfig({
   vite: {
     optimizeDeps: {
       include: [
+        "@tresjs/cientos",
+        "@tresjs/post-processing",
+        "postprocessing",
+        "three",
+        "three/examples/jsm/environments/RoomEnvironment.js",
+        "three/examples/jsm/utils/BufferGeometryUtils.js",
         "@vue/devtools-core",
         "@vue/devtools-kit",
         "embla-carousel-vue",

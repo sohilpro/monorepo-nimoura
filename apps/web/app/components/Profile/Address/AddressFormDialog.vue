@@ -18,7 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const { createAddress, updateAddress } = useAddresses()
-const toast = useToast()
+const toast = useAppToast()
 
 const dialogOpen = computed({
   get: () => props.visible,

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { useToast } from 'primevue/usetoast';
 import type { PromoCodeFormState } from '~~/server/types/promo-code';
 import { DiscountType } from '~~/server/types/promo-code';
 
@@ -13,7 +12,7 @@ const emit = defineEmits<{
   saved: [];
 }>();
 
-const toast = useToast();
+const toast = useAppToast();
 const { createPromoCode, updatePromoCode, generateCode } = usePromoCodes();
 
 const saving = ref(false);

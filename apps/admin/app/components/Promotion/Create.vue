@@ -41,6 +41,7 @@ const body = reactive({
 });
 
 const { isLoading } = useLoading();
+const toast = useAppToast();
 
 async function submitForm() {
   isLoading.value = true;
@@ -49,14 +50,10 @@ async function submitForm() {
       method: "POST",
       body,
     });
-    useToast().success({
-      message: data.data.message || "کد تخفیف با موفقیت ایجاد شد.",
-    });
+    toast.success(data?.data?.message || "کد تخفیف با موفقیت ایجاد شد.");
     navigateTo("/promotion");
   } catch (error: any) {
-    useToast().error({
-      message: error?.data?.data?.message || "خطا در ایجاد کد تخفیف",
-    });
+    toast.error(error?.data?.data?.message || "خطا در ایجاد کد تخفیف");
   } finally {
     isLoading.value = false;
   }

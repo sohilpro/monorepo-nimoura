@@ -229,6 +229,8 @@
 </template>
 
 <script setup>
+import { createSlug } from '@nimoura/utils';
+
 const router = useRouter();
 const { fetchQuickSearch } = useSearch();
 

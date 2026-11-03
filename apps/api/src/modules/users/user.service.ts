@@ -8,6 +8,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
 import {
@@ -118,23 +119,74 @@ export class UsersService {
   // بخش ۲: متدهای پنل ادمین (Admin Management)
   // ==========================================
 
+  async createUser(dto: CreateUserDto) {
+    const existingMobile = await this.userRepository.findOne({
+      where: { mobile: dto.mobile },
+    });
+    if (existingMobile) {
+      throw new ConflictException('کاربری با این شماره موبایل قبلاً ثبت‌نام کرده است.');
+    }
+
+    if (dto.email) {
+      const existingEmail = await this.userRepository.findOne({
+        where: { email: dto.email },
+      });
+      if (existingEmail) {
+        throw new ConflictException('این ایمیل قبلاً ثبت شده است.');
+      }
+    }
+
+    if (dto.identity_card) {
+      const existingId = await this.userRepository.findOne({
+        where: { identity_card: dto.identity_card },
+      });
+      if (existingId) {
+        throw new ConflictException('این کد ملی قبلاً ثبت شده است.');
+      }
+    }
+
+    const hashedPassword = dto.password
+      ? await bcrypt.hash(dto.password, 10)
+      : undefined;
+
+    const user = this.userRepository.create({
+      mobile: dto.mobile,
+      first_name: dto.first_name,
+      last_name: dto.last_name,
+      email: dto.email,
+      password: hashedPassword,
+      role: dto.role,
+      identity_card: dto.identity_card,
+      verify_mobile: true,
+      verify_email: !!dto.email,
+    });
+
+    const saved = await this.userRepository.save(user);
+    const { password, ...safeUser } = saved;
+
+    return {
+      message: 'کاربر با موفقیت ایجاد شد.',
+      user: safeUser,
+    };
+  }
+
   async getUsers(query: any) {
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-      sortOrder = 'DESC',
-      sortBy = 'id',
-    } = query;
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
+    const search = (query.search || '').trim();
+    const sortOrder =
+      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    const allowedSortFields = ['id', 'createdAt', 'first_name', 'last_name', 'mobile', 'email'];
+    const sortBy = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'id';
 
     const searchableFields = ['first_name', 'last_name', 'email', 'mobile'];
-    const where = buildSearchWhereClause(search, searchableFields);
+    const where = search ? buildSearchWhereClause(search, searchableFields) : {};
 
     const [data, total] = await this.userRepository.findAndCount({
       where,
-      take: +limit,
-      skip: (+page - 1) * +limit,
-      order: { [sortBy]: sortOrder.toUpperCase() },
+      take: limit,
+      skip: (page - 1) * limit,
+      order: { [sortBy]: sortOrder },
       select: {
         id: true,
         first_name: true,
@@ -149,7 +201,23 @@ export class UsersService {
       },
     });
 
-    return buildPagination([data, total], page, limit, 'users');
+    const totalPages = Math.ceil(total / limit);
+    return {
+      items: data,
+      users: data,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   }
 
   async getUser(id: number) {

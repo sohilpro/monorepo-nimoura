@@ -2,7 +2,7 @@
 import type { ArticleFormPayload } from '~/composables/useAdminArticles';
 
 const route = useRoute();
-const toast = useToast();
+const toast = useAppToast();
 const id = route.params.id as string;
 
 const { data: article, pending, error } = await useAsyncData(

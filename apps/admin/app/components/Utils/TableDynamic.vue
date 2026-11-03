@@ -106,7 +106,7 @@
 <script setup>
 import TableView from "../common/TableView.vue";
 import CardView from "../common/CardView.vue";
-const toast = useToast();
+const toast = useAppToast();
 
 const props = defineProps({
   data: Array,

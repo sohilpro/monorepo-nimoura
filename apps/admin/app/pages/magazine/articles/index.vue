@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { useConfirm } from 'primevue/useconfirm';
-import { useToast } from 'primevue/usetoast';
 
 const confirm = useConfirm();
-const toast = useToast();
+const toast = useAppToast();
 
 const query = ref({
   page: 1,

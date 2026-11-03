@@ -1,4 +1,4 @@
-import { createSlug } from './slug';
+import { createSlug } from './slug.js';
 
 export interface BreadcrumbItem {
   label: string;

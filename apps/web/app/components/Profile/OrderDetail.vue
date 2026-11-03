@@ -203,7 +203,7 @@ import type { Order } from '~/types/order'
 
 const route  = useRoute()
 const router = useRouter()
-const toast  = useToast()
+const toast  = useAppToast()
 
 const loading = ref(true)
 const order   = ref<Order | null>(null)

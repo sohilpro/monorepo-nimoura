@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { FilterMatchMode } from '@primevue/core/api';
 import { useConfirm } from 'primevue/useconfirm';
-import { useToast } from 'primevue/usetoast';
 import type { PromoCode } from '~~/server/types/promo-code';
 import { DiscountType } from '~~/server/types/promo-code';
 
 
 const { items, meta, loading, fetchList, deletePromoCode, toggleActive } = usePromoCodes();
 const confirm = useConfirm();
-const toast = useToast();
+const toast = useAppToast();
 
 const search = ref('');
 const statusFilter = ref<'all' | 'active' | 'inactive'>('all');
@@ -198,6 +197,5 @@ function onFormSaved() {
     />
 
     <ConfirmDialog />
-    <Toast />
   </div>
 </template>

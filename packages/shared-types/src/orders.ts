@@ -1,10 +1,11 @@
-import { OrderStatus, PaymentMethod } from './enums';
+import { OrderStatus, PaymentMethod } from './enums.js';
 
 export interface OrderItemProductSummary {
   id: number;
   title: string;
   slug: string;
   thumbnail?: string;
+  sku?: string;
 }
 
 export interface OrderItemVariantSummary {
@@ -13,6 +14,8 @@ export interface OrderItemVariantSummary {
   sku?: string;
   colorName?: string;
   colorHex?: string;
+  value?: string;
+  alt?: string;
 }
 
 export interface OrderItem {
@@ -29,8 +32,10 @@ export interface ShippingAddress {
   title?: string;
   address: string;
   city: string;
+  state?: string;
   province?: string;
-  postalCode: string;
+  postal_code?: string;
+  postalCode?: string;
   recipientName?: string;
   recipientPhone?: string;
 }
@@ -39,16 +44,19 @@ export interface ShippingInfo {
   first_name: string;
   last_name: string;
   phone: string;
+  note?: string;
   address: string | ShippingAddress;
-  city: string;
-  postalCode: string;
+  city?: string;
+  postalCode?: string;
 }
 
 export interface PaymentInfo {
   method?: PaymentMethod | string;
   refId?: string;
+  trackingCode?: string;
+  isPaid?: boolean;
+  paidAt?: string | Date | null;
   cardPan?: string;
-  paidAt?: string | Date;
 }
 
 export interface PromotionSummary {
@@ -78,10 +86,76 @@ export interface Order {
   updatedAt: string | Date;
 }
 
+export interface AdminOrderListItem {
+  id: number;
+  orderCode: string;
+  status: OrderStatus;
+  paymentRefId?: string | null;
+  shippingCost: number;
+  subtotal: number;
+  discount: number;
+  finalTotal: number;
+  postalBarcode?: string | null;
+  shippingInfo?: ShippingInfo | null;
+  paymentInfo?: PaymentInfo | null;
+  items?: OrderItem[];
+  itemsCount?: number;
+  customerName?: string;
+  customerPhone?: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+}
+
+export interface OrderRevenueStats {
+  orders: number;
+  revenue: number;
+}
+
+export interface AdminOrderStatistics {
+  totalOrders: number;
+  byStatus: Record<OrderStatus, number>;
+  revenue: {
+    allTime: OrderRevenueStats;
+    last30Days: OrderRevenueStats;
+    today: OrderRevenueStats;
+    averageOrderValue: number;
+  };
+}
+
 export interface CreateOrderDto {
   shippingAddressId?: number;
   shippingInfo?: ShippingInfo;
   paymentMethod: PaymentMethod;
   promotionCode?: string;
   note?: string;
+}
+
+export interface AdminOrderItemInput {
+  productId: number;
+  variantId?: number | null;
+  quantity: number;
+  unitPrice?: number;
+}
+
+export interface UpdateOrderAdminPayload {
+  status?: OrderStatus;
+  shippingCost?: number;
+  discount?: number;
+  paymentRefId?: string;
+  postalBarcode?: string;
+  shippingInfo?: Partial<ShippingInfo>;
+  paymentInfo?: Partial<PaymentInfo>;
+  items?: AdminOrderItemInput[];
+}
+
+export interface CreateOrderAdminPayload {
+  userId?: number;
+  status?: OrderStatus;
+  shippingCost?: number;
+  discount?: number;
+  postalBarcode?: string;
+  paymentRefId?: string;
+  items: AdminOrderItemInput[];
+  shippingInfo: ShippingInfo;
+  paymentInfo?: PaymentInfo;
 }

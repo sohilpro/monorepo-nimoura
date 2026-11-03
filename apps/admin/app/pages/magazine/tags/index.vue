@@ -3,7 +3,7 @@ import { useConfirm } from 'primevue/useconfirm';
 import type { Tag } from '~~/server/types/magazine';
 
 const confirm = useConfirm();
-const toast = useToast();
+const toast = useAppToast();
 const { data: tags, pending, refresh } = useAdminTagsList();
 
 const dialogVisible = ref(false);

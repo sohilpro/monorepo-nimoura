@@ -63,7 +63,7 @@ import type { Address } from '~/composables/useAddresses'
 
 const { addresses, loading, fetchAddresses, removeAddress } = useAddresses()
 const confirm = useConfirm()
-const toast = useToast()
+const toast = useAppToast()
 
 const dialogOpen = ref(false)
 const editingAddress = ref<Address | null>(null)

@@ -26,14 +26,23 @@ export enum PaymentStatus {
 }
 
 export enum BannerStatus {
+  DRAFT = 'draft',
   ACTIVE = 'active',
   INACTIVE = 'inactive',
+  SCHEDULED = 'scheduled',
+  EXPIRED = 'expired',
 }
 
 export enum BannerDevice {
+  ALL = 'all',
   DESKTOP = 'desktop',
   MOBILE = 'mobile',
-  BOTH = 'both',
+  TABLET = 'tablet',
+}
+
+export enum LinkTarget {
+  SELF = '_self',
+  BLANK = '_blank',
 }
 
 export enum CommentStatus {

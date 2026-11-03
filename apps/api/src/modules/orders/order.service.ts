@@ -13,6 +13,7 @@ import {
   EntityManager,
   EntityTarget,
   FindOptionsRelations,
+  FindOptionsWhere,
   In,
   ObjectLiteral,
   Repository,
@@ -169,7 +170,8 @@ export class OrderService {
   }
 
   async getUserOrders(userId: number, query: PaginationQueryDto) {
-    const { page, limit } = query;
+    const page = Math.max(1, Number(query?.page) || 1);
+    const limit = Math.max(1, Number(query?.limit) || 12);
     const [orders, total] = await this.orderRepo.findAndCount({
       where: { user: { id: userId } },
       relations: ORDER_RELATIONS,

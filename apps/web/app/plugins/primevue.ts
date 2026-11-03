@@ -1,8 +1,3 @@
 // plugins/primevue.ts
-import PrimeVue from "primevue/config";
-import ToastService from "primevue/toastservice";
-
-export default defineNuxtPlugin((nuxtApp) => {
-  nuxtApp.vueApp.use(PrimeVue, { ripple: true });
-  nuxtApp.vueApp.use(ToastService);
-});
+// PrimeVue and ToastService are automatically configured by @primevue/nuxt-module in nuxt.config.ts
+export default defineNuxtPlugin(() => {});

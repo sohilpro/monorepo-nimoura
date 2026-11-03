@@ -3,15 +3,16 @@
     <UtilsHeaderWithActions
       :breadcrumbs="[
         { label: 'داشبورد', href: '/' },
-        { label: 'برند ها', href: '' },
+        { label: 'برندها', href: '/brand' },
       ]"
-      title="برند ها"
-      subtitle="لیست تمام برند ها"
+      title="برندها"
+      subtitle="مدیریت برندها، لوگوها و زیربرندهای فروشگاه نیمورا"
     />
+
     <UtilsTableDynamic
-      :data="brands?.data?.brands || []"
+      :data="brandsList"
       :columns="columns"
-      :total="brands?.data?.total"
+      :total="totalCount"
       :page="page"
       :limit="limit"
       :serverSide="true"
@@ -22,14 +23,16 @@
       :sortOrder="sortOrder"
       :searchQuery="search"
       url-edit="brand"
-      api-delete-base="/api/product/brand"
+      api-delete-base="/api/brand"
       :on-refresh="refresh"
       itemNameKey="name"
     />
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { formatDate } from '@nimoura/utils';
+
 const {
   page,
   limit,
@@ -40,38 +43,51 @@ const {
   onPageChange,
   onSearch,
   onSort,
-} = useTableQuery({ defaultSortBy: "createdAt" });
+} = useTableQuery({ defaultSortBy: 'id' });
 
-const fetchUrl = computed(() => {
-  const q = queryParams.value;
-
-  return `/api/product/brand/list?page=${q.page}&limit=${q.limit}&search=${q.search}&sort=${q.sort}&sortOrder=${q.sortOrder}`;
+const { data: rawBrands, refresh } = await useFetch('/api/brand/list', {
+  query: queryParams,
+  key: 'admin-brands-list',
 });
 
-const { data: brands, refresh } = await useFetch(fetchUrl);
+const brandsList = computed(() => {
+  const d = (rawBrands.value as any)?.data ?? rawBrands.value;
+  return d?.items ?? d?.brands ?? [];
+});
+
+const totalCount = computed(() => {
+  const d = (rawBrands.value as any)?.data ?? rawBrands.value;
+  return d?.total ?? d?.meta?.total ?? brandsList.value.length;
+});
 
 const columns = [
   {
-    key: "name",
-    label: "برند ها",
+    key: 'name',
+    label: 'نام و لوگوی برند',
+    isCustom: true,
+    formatter: (val: string, row: any) => ({
+      image: row.logo || row.logoUrl,
+      text: val,
+    }),
   },
   {
-    key: "subBrands",
-    label: "زیر برند",
-    formatter: (val) =>
-      val
-        ?.map((i) => i.name)
-        .slice(0, 3)
-        .join("/") ?? "-",
+    key: 'subBrands',
+    label: 'زیربرندها',
+    formatter: (val: any[]) => {
+      if (!val || !val.length) return '—';
+      const names = val.slice(0, 3).map((sb) => sb.name || sb).join('، ');
+      return val.length > 3 ? `${names} (+${val.length - 3})` : names;
+    },
   },
   {
-    key: "slug",
-    label: "اسلاگ",
+    key: 'slug',
+    label: 'اسلاگ آدرس',
+    formatter: (val: string) => val || '—',
   },
   {
-    key: "createdAt",
-    label: "تاریخ ثبت",
-    formatter: (val) => new Date(val).toLocaleDateString("fa-IR"),
+    key: 'createdAt',
+    label: 'تاریخ ایجاد',
+    formatter: (val: string) => formatDate(val) || '—',
   },
 ];
 </script>

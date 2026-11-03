@@ -268,7 +268,7 @@ const menuGroups = [
         name: "مشتری ها",
         subItems: [
           { name: "همه", path: "/customers", pro: false },
-          // { name: "ایجاد مشتری", path: "/customers/create", pro: false },
+          { name: "ایجاد مشتری جدید", path: "/customers/create", pro: false },
         ],
       },
 

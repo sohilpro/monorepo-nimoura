@@ -2,7 +2,7 @@
 import { useConfirm } from 'primevue/useconfirm';
 
 const confirm = useConfirm();
-const toast = useToast();
+const toast = useAppToast();
 
 const query = ref<{ page: number; limit: number; status: '' | 'pending' | 'approved' | 'rejected' }>({
   page: 1,
@@ -76,7 +76,6 @@ const statusMeta: Record<string, { label: string; severity: string }> = {
 
 <template>
   <div>
-    <Toast />
     <ConfirmDialog />
 
     <h1 class="mb-6 text-xl font-bold text-gray-800">مدیریت نظرات مقالات</h1>

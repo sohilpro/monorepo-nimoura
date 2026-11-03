@@ -102,15 +102,24 @@ export class OrdersAdminService {
 
     const [items, total] = await this.orderRepo.findAndCount({
       where,
-      relations: { shippingInfo: true, paymentInfo: true },
+      relations: { shippingInfo: true, paymentInfo: true, items: { product: true, variant: true } },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
     });
 
+    const totalPages = Math.ceil(total / limit);
+
     return {
       items,
-      meta: { total, page, limit, totalPages: Math.ceil(total / limit) },
+      orders: items,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+      meta: { total, page, limit, totalPages },
     };
   }
 

@@ -1,23 +1,17 @@
 export default defineEventHandler(async (event) => {
-  const {
-    public: { apiBase },
-  } = useRuntimeConfig();
-
-  const token = getCookie(event, "accesstoken");
-  const body = await readBody(event);
   const query = getQuery(event);
+  const id = query.id || event.context.params?.id;
+  const body = await readBody(event);
 
-  try {
-    const data = await $fetch(`${apiBase}/banners/${query.id}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body,
+  if (!id) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'شناسه بنر الزامی است',
     });
-
-    return data;
-  } catch (error) {
-    return error;
   }
+
+  return await adminApiFetch(event, `/banners/${id}`, {
+    method: 'PUT',
+    body,
+  });
 });

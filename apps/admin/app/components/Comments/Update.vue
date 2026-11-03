@@ -30,6 +30,7 @@
 const route = useRoute();
 const id = route.params.slug;
 const { isLoading } = useLoading();
+const toast = useAppToast();
 
 const { data: comments }: any = await useFetch(`/api/comments/getOne`, {
   query: { id },
@@ -49,14 +50,10 @@ async function submitForm() {
       query: { id },
     });
 
-    useToast().info({
-      message: data.data.message || "دیدگاه با موفقیت ویرایش شد",
-    });
+    toast.info(data?.data?.message || "دیدگاه با موفقیت ویرایش شد");
     navigateTo("/comments");
   } catch (error: any) {
-    useToast().error({
-      message: error?.data?.data?.message || "خطا در آپدیت دیدگاه",
-    });
+    toast.error(error?.data?.data?.message || "خطا در آپدیت دیدگاه");
   } finally {
     isLoading.value = false;
   }

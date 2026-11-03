@@ -3,89 +3,109 @@
     <UtilsHeaderWithActions
       :breadcrumbs="[
         { label: 'داشبورد', href: '/' },
-        { label: 'بنر ها', href: '' },
+        { label: 'بنرها', href: '/banners' },
       ]"
-      title="بنر ها"
-      subtitle="لیست تمام بنر ها"
+      title="بنرها و اسلایدرها"
+      subtitle="مدیریت تمام بنرهای تبلیغاتی، اسلایدرها و جایگاه‌های نمایش"
     />
 
     <UtilsTableDynamic
-      :data="banners?.data?.banners || []"
+      :data="bannersList"
       :columns="columns"
-      :total="banners?.data?.total"
+      :total="totalCount"
       :page="page"
       :limit="limit"
       :serverSide="true"
       :onPageChange="onPageChange"
       :onSearch="onSearch"
       :onSort="onSort"
-      :sortKey="sortBy"
+      :sortKey="sort"
       :sortOrder="sortOrder"
       :searchQuery="search"
       url-edit="banners"
-      api-delete-base="/api/banner/remove"
+      api-delete-base="/api/banner"
       :on-refresh="refresh"
       itemNameKey="title"
     />
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { formatDate } from '@nimoura/utils';
+import { BannerStatus } from '@nimoura/shared-types';
+
+const { getDeviceLabel, getStatusLabel, getStatusBadgeClass } = useAdminBanners();
+
 const {
   page,
   limit,
   search,
-  sortBy,
+  sort,
   sortOrder,
   queryParams,
   onPageChange,
   onSearch,
   onSort,
-} = useTableQuery({ defaultSortBy: "created_at" });
+} = useTableQuery({ defaultSortBy: 'sortOrder' });
 
-const fetchUrl = computed(() => {
-  const q = queryParams.value;
-
-  return `/api/banner/list?page=${q.page}&limit=${q.limit}&search=${q.search}&sortBy=${q.sortBy}&sortOrder=${q.sortOrder}`;
+const { data: rawBanners, refresh } = await useFetch('/api/banner/list', {
+  query: queryParams,
+  key: 'admin-banners-list',
 });
 
-const { data: banners, refresh } = await useFetch(fetchUrl);
+const bannersList = computed(() => {
+  const d = (rawBanners.value as any)?.data ?? rawBanners.value;
+  return d?.items ?? d?.banners ?? d?.data ?? [];
+});
+
+const totalCount = computed(() => {
+  const d = (rawBanners.value as any)?.data ?? rawBanners.value;
+  return d?.total ?? d?.meta?.total ?? bannersList.value.length;
+});
 
 const columns = [
   {
-    key: "title",
-    label: "عنوان",
+    key: 'title',
+    label: 'عنوان و تصویر بنر',
+    isCustom: true,
+    formatter: (val: string, row: any) => ({
+      image: row.imageUrl || row.mobileImageUrl,
+      text: val,
+    }),
   },
   {
-    key: "position",
-    label: "موقعیت",
+    key: 'position',
+    label: 'جایگاه نمایش',
+    formatter: (val: any) => val?.name || val?.key || 'عمومی',
   },
   {
-    key: "slug",
-    label: "اسلاگ",
+    key: 'device',
+    label: 'دستگاه',
+    formatter: (val: any) => getDeviceLabel(val),
   },
   {
-    key: "isActive",
-    label: "وضعیت",
-    formatter: (val) => (val ? "فعال ✅" : "غیرفعال ❌"),
+    key: 'status',
+    label: 'وضعیت',
+    isCustom: true,
+    formatter: (val: BannerStatus) => ({
+      text: getStatusLabel(val),
+      badgeClass: getStatusBadgeClass(val),
+    }),
   },
   {
-    key: "categoryId",
-    label: "بخش",
-    formatter: (val) => (val ? "دسته بندی" : "برند"),
+    key: 'link',
+    label: 'لینک مقصد',
+    formatter: (val: string) => val || '—',
   },
   {
-    key: "createdAt",
-    label: "تاریخ ثبت",
-    formatter: (val) => new Date(val).toLocaleDateString("fa-IR"),
+    key: 'sortOrder',
+    label: 'اولویت ترتیب',
+    formatter: (val: number) => val ?? 0,
   },
-];
-
-const columnsExcel = [
-  { key: "title", label: "محصول" },
-  { key: "color", label: "رنگ" },
-  { key: "price", label: "قیمت اصلی" },
-  { key: "priceDiscount", label: "قیمت تخفیفی" },
-  { key: "stock", label: "موجودی" },
+  {
+    key: 'createdAt',
+    label: 'تاریخ ایجاد',
+    formatter: (val: string) => formatDate(val) || '—',
+  },
 ];
 </script>

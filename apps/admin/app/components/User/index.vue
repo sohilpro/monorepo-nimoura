@@ -3,71 +3,119 @@
     <UtilsHeaderWithActions
       :breadcrumbs="[
         { label: 'داشبورد', href: '/' },
-        { label: 'کاربران', href: '' },
+        { label: 'مشتریان', href: '/customers' },
       ]"
-      title="کاربران"
-      subtitle="لیست تمام کاربران"
+      title="مشتریان و کاربران"
+      subtitle="مدیریت حساب‌های کاربری، سطوح دسترسی و مشتریان فروشگاه نیمورا"
     />
+
     <UtilsTableDynamic
-      :data="users?.data?.users || []"
+      :data="usersList"
       :columns="columns"
-      :total="users?.data?.total"
+      :total="totalCount"
       :page="page"
       :limit="limit"
       :serverSide="true"
       :onPageChange="onPageChange"
       :onSearch="onSearch"
       :onSort="onSort"
-      :sortKey="sortBy"
+      :sortKey="sort"
       :sortOrder="sortOrder"
       :searchQuery="search"
       url-edit="customers"
-      api-delete-base="/api/user/remove"
+      api-delete-base="/api/user"
       :on-refresh="refresh"
       itemNameKey="mobile"
-    />
-
+    >
+      <UtilsExcelTable
+        :columns="columnsExcel"
+        :rows="usersList"
+        fileName="nimoura-customers"
+      />
+    </UtilsTableDynamic>
   </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { formatDate } from '@nimoura/utils';
+import { UserRole } from '@nimoura/shared-types';
+
+const { getRoleLabel, getRoleBadgeClass } = useAdminUsers();
+
 const {
   page,
   limit,
   search,
-  sortBy,
+  sort,
   sortOrder,
   queryParams,
   onPageChange,
   onSearch,
   onSort,
-} = useTableQuery({ defaultSortBy: "created_at" });
+} = useTableQuery({ defaultSortBy: 'id' });
 
-const fetchUrl = computed(() => {
-  const q = queryParams.value;
-  
-  return `/api/user/list?page=${q.page}&limit=${q.limit}&search=${q.search}&sortBy=${q.sortBy}&sortOrder=${q.sortOrder}`;
+const { data: rawUsers, refresh } = await useFetch('/api/user/list', {
+  query: queryParams,
+  key: 'admin-users-list',
 });
 
-const { data: users, refresh } = await useFetch(fetchUrl);
+const usersList = computed(() => {
+  const d = (rawUsers.value as any)?.data ?? rawUsers.value;
+  return d?.items ?? d?.users ?? [];
+});
+
+const totalCount = computed(() => {
+  const d = (rawUsers.value as any)?.data ?? rawUsers.value;
+  return d?.total ?? d?.meta?.total ?? usersList.value.length;
+});
 
 const columns = [
   {
-    key: "mobile",
-    label: "موبایل",
+    key: 'fullName',
+    label: 'نام و نام خانوادگی',
+    formatter: (_val: any, row: any) => {
+      const name = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+      return name || 'بدون نام';
+    },
   },
   {
-    key: "identity_card",
-    label: "کدملی",
+    key: 'mobile',
+    label: 'شماره موبایل',
+    formatter: (val: string) => val || '—',
   },
   {
-    key: "email",
-    label: "ایمیل",
+    key: 'email',
+    label: 'ایمیل',
+    formatter: (val: string) => val || '—',
   },
   {
-    key: "createdAt",
-    label: "تاریخ عضویت",
-    formatter: (val) => new Date(val).toLocaleDateString("fa-IR"),
+    key: 'role',
+    label: 'سطح دسترسی',
+    isCustom: true,
+    formatter: (val: UserRole) => ({
+      text: getRoleLabel(val),
+      badgeClass: getRoleBadgeClass(val),
+    }),
   },
+  {
+    key: 'identity_card',
+    label: 'کد ملی',
+    formatter: (val: string) => val || '—',
+  },
+  {
+    key: 'createdAt',
+    label: 'تاریخ عضویت',
+    formatter: (val: string) => formatDate(val) || '—',
+  },
+];
+
+const columnsExcel = [
+  { key: 'first_name', label: 'نام' },
+  { key: 'last_name', label: 'نام خانوادگی' },
+  { key: 'mobile', label: 'موبایل' },
+  { key: 'email', label: 'ایمیل' },
+  { key: 'role', label: 'نقش' },
+  { key: 'identity_card', label: 'کد ملی' },
+  { key: 'createdAt', label: 'تاریخ ثبت‌نام' },
 ];
 </script>

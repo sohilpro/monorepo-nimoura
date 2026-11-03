@@ -48,6 +48,9 @@ const body = reactive({
   // "categoryIds":
 });
 
+const { isLoading } = useLoading();
+const toast = useAppToast();
+
 async function submitForm() {
   isLoading.value = true;
   try {
@@ -57,14 +60,10 @@ async function submitForm() {
       query: { id },
     });
 
-    useToast().info({
-      message: data.data.message || "کد تخفیف با موفقیت ویرایش شد",
-    });
+    toast.info(data?.data?.message || "کد تخفیف با موفقیت ویرایش شد");
     navigateTo("/promotion");
   } catch (error: any) {
-    useToast().error({
-      message: error?.data?.data?.message || "خطا در آپدیت تخفیف",
-    });
+    toast.error(error?.data?.data?.message || "خطا در آپدیت تخفیف");
   } finally {
     isLoading.value = false;
   }

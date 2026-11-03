@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
 
-  return await apiFetch(event, '/brands', {
+  return await adminApiFetch(event, '/brands', {
     method: 'GET',
     query,
   });

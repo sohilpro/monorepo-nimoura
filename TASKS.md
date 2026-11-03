@@ -18,10 +18,10 @@
 - [ ] یافته‌ها را اولویت‌بندی کن: بحرانی / مهم / می‌شود بعداً انجام داد
 
 ### روز ۲ — اسکلت مونوریپو
-- [ ] فایل‌های `package.json` ریشه (با npm workspaces) و `turbo.json` را بساز
-- [ ] پروژه‌ها را به `apps/api`، `apps/web` و `apps/admin` منتقل کن (با `git mv` تا history حفظ شود)
-- [ ] پکیج‌های `packages/tsconfig` و `packages/eslint-config` را بساز و هر سه اپ را به آن‌ها وصل کن
-- [ ] دستورهای `npm run dev`، `npm run build`، `npm run lint` و `npm run typecheck` از ریشه کار کنند
+- [x] فایل‌های `package.json` ریشه (با npm workspaces) و `turbo.json` را بساز
+- [x] پروژه‌ها را به `apps/api`، `apps/web` و `apps/admin` منتقل کن (با `git mv` تا history حفظ شود)
+- [x] پکیج‌های `packages/tsconfig` و `packages/eslint-config` را بساز و هر سه اپ را به آن‌ها وصل کن
+- [x] دستورهای `npm run dev`، `npm run build`، `npm run lint` و `npm run typecheck` از ریشه کار کنند
 
 ### روز ۳ — داکرایز کردن
 - [x] Dockerfile چندمرحله‌ای (multi-stage) برای `api`، `web` و `admin` همراه با `.dockerignore`
@@ -48,7 +48,7 @@
 ### روز ۶ — سفارش‌ها، پرداخت و تراکنش‌ها
 - [x] نوشتن چندجدولی (سفارش، آیتم‌ها، پرداخت، آدرس ارسال، موجودی) را داخل transaction با `DataSource` ببر
 - [x] `OrderService` را تمیز کن و پیشوند سفارش را به NM- تغییر بده
-- [ ] endpoint های ادمین سفارش را کامل کن (ایجاد، ویرایش، تغییر وضعیت، حذف)
+- [x] endpoint های ادمین سفارش را کامل کن (ایجاد، ویرایش، تغییر وضعیت، حذف، آمار فروش)
 - [x] منطق یکپارچه‌سازی ترب (Torob) را مرور کن
 
 ### روز ۷ — ولیدیشن، خطاها و قرارداد API

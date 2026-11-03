@@ -64,6 +64,7 @@
 <script setup>
 const route = useRoute();
 const { withLoading } = useLoading();
+const toast = useAppToast();
 
 const body = reactive({
   subject: "",
@@ -79,10 +80,10 @@ const handleSubmitComment = async () => {
         body,
       });
 
-      useNuxtApp().$toast.success(data.data.message || "دیدگاه شما ثبت شد.");
+      toast.success(data?.data?.message || "دیدگاه شما ثبت شد.");
     } catch (error) {
-      useNuxtApp().$toast.error(
-        error.data.data.message || "مشکلی پیش آمده است.",
+      toast.error(
+        error?.data?.data?.message || error?.data?.message || "مشکلی پیش آمده است.",
       );
     }
   });
@@ -96,10 +97,10 @@ const handleSubmitRecommend = async (req) => {
         query: { id: +route.params.id },
       });
 
-      useNuxtApp().$toast.success(data.data.message);
+      toast.success(data?.data?.message || "نظر شما ثبت شد.");
     } catch (error) {
-      useNuxtApp().$toast.error(
-        error.data.data.message || "نشکلی پیش آمده است.",
+      toast.error(
+        error?.data?.data?.message || error?.data?.message || "مشکلی پیش آمده است.",
       );
     } finally {
       isLoading.value = false;

@@ -69,6 +69,8 @@ const { comments } = defineProps({
   comments: Array,
 });
 const route = useRoute();
+const toast = useAppToast();
+const isLoading = ref(false);
 const { data } = await useFetch("/api/comments/listByProduct", {
   query: { id: +route.params.id },
 });
@@ -82,9 +84,9 @@ const handleSubmitRecommend = async (req) => {
       query: { id: +route.params.id },
     });
 
-    useNuxtApp().$toast.success(data.data.message);
+    toast.success(data?.data?.message || "نظر شما ثبت شد.");
   } catch (error) {
-    useNuxtApp().$toast.error(error.data.data.message || "نشکلی پیش آمده است.");
+    toast.error(error?.data?.data?.message || error?.data?.message || "مشکلی پیش آمده است.");
   } finally {
     isLoading.value = false;
   }

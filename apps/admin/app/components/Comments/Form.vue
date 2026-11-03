@@ -40,6 +40,7 @@ const model = computed({
   set: (val) => emit("update:modelValue", val),
 });
 const { isLoading } = useLoading();
+const toast = useAppToast();
 
 async function approve() {
   isLoading.value = true;
@@ -49,14 +50,10 @@ async function approve() {
       query: { id },
     });
 
-    useToast().info({
-      message: data.data.message || "دیدگاه با موفقیت تایید شد",
-    });
+    toast.info(data?.data?.message || "دیدگاه با موفقیت تایید شد");
     navigateTo("/comments");
   } catch (error: any) {
-    useToast().error({
-      message: error?.data?.data?.message || "خطا در آپدیت دیدگاه",
-    });
+    toast.error(error?.data?.data?.message || "خطا در تایید دیدگاه");
   } finally {
     isLoading.value = false;
   }
@@ -70,14 +67,10 @@ async function reject() {
       query: { id },
     });
 
-    useToast().info({
-      message: data.data.message || "دیدگاه با موفقیت رد شد",
-    });
+    toast.info(data?.data?.message || "دیدگاه با موفقیت رد شد");
     navigateTo("/comments");
   } catch (error: any) {
-    useToast().error({
-      message: error?.data?.data?.message || "خطا در آپدیت دیدگاه",
-    });
+    toast.error(error?.data?.data?.message || "خطا در رد دیدگاه");
   } finally {
     isLoading.value = false;
   }

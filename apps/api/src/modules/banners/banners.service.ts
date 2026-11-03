@@ -142,64 +142,31 @@ export class BannersService {
   }
 
   async findActiveForPosition(
-  positionKey: string,
-  device: BannerDevice = BannerDevice.ALL,
-): Promise<Banner[]> {
-  const now = new Date();
+    positionKey: string,
+    device: BannerDevice = BannerDevice.ALL,
+  ): Promise<Banner[]> {
+    const now = new Date();
 
-  // 🧪 لاگ ۱: بررسی دقیق ورودی‌های دریافتی و تاریخ سرور
-  console.log('=== [DEBUG BANNERS START] ===');
-  console.log('1. Incoming Params:', {
-    positionKey,
-    device,
-    now: now.toISOString(),
-  });
+    const qb = this.bannerRepo
+      .createQueryBuilder('banner')
+      .innerJoinAndSelect('banner.position', 'position')
+      .where('position.key = :positionKey', { positionKey })
+      .andWhere('position.isActive = true')
+      .andWhere('banner.status = :status', { status: BannerStatus.ACTIVE })
+      .andWhere('(banner.startAt IS NULL OR banner.startAt <= :now)', { now })
+      .andWhere('(banner.endAt IS NULL OR banner.endAt >= :now)', { now });
 
- // اصلاح لاگ شماره ۲
-const rawPosition = await this.bannerRepo.manager.query(
-  `SELECT id, "key", "is_active" FROM banner_positions WHERE "key" = $1`,
-  [positionKey],
-);
-console.log('2. Position in DB check:', rawPosition);
+    if (device !== BannerDevice.ALL) {
+      qb.andWhere('(banner.device = :device OR banner.device = :all)', {
+        device,
+        all: BannerDevice.ALL,
+      });
+    }
 
-  // 🧪 لاگ ۳: تعداد بنرهای مرتبط بدون اعمال شرط تاریخ و دستگاه
-  const rawBannersCount = await this.bannerRepo
-    .createQueryBuilder('banner')
-    .innerJoin('banner.position', 'position')
-    .where('position.key = :positionKey', { positionKey })
-    .getCount();
-  console.log('3. Total Raw Banners for position:', rawBannersCount);
+    qb.orderBy('banner.sortOrder', 'ASC');
 
-  const qb = this.bannerRepo
-    .createQueryBuilder('banner')
-    .innerJoinAndSelect('banner.position', 'position') // اضافه شدن innerJoinAndSelect جهت اطمینان
-    .where('position.key = :positionKey', { positionKey })
-    .andWhere('position.isActive = true')
-    .andWhere('banner.status = :status', { status: BannerStatus.ACTIVE })
-    .andWhere('(banner.startAt IS NULL OR banner.startAt <= :now)', { now })
-    .andWhere('(banner.endAt IS NULL OR banner.endAt >= :now)', { now });
-
-  if (device !== BannerDevice.ALL) {
-    qb.andWhere('(banner.device = :device OR banner.device = :all)', {
-      device,
-      all: BannerDevice.ALL,
-    });
+    return await qb.getMany();
   }
-
-  qb.orderBy('banner.sortOrder', 'ASC');
-
-  // 🧪 لاگ ۴: چاپ دستور SQL و پارامترهای واقعی ارسال‌شده به دیتابیس
-  console.log('4. Executed SQL:', qb.getSql());
-  console.log('4. SQL Parameters:', qb.getParameters());
-
-  const result = await qb.getMany();
-
-  // 🧪 لاگ ۵: خروجی نهایی
-  console.log('5. Final Result Count:', result.length);
-  console.log('=== [DEBUG BANNERS END] ===');
-
-  return result;
-}
 
   // اگر متدهای ثبت کلیک/ویو را می‌خواهید، مستقیم ثبت می‌شوند
   async incrementView(id: number): Promise<void> {

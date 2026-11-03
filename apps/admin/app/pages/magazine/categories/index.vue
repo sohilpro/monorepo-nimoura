@@ -4,7 +4,7 @@ import type { Category } from '~~/server/types/magazine';
 import type { CategoryFormPayload } from '~/composables/useAdminCategories';
 
 const confirm = useConfirm();
-const toast = useToast();
+const toast = useAppToast();
 const { data: categories, pending, refresh } = useAdminCategoriesList();
 
 const dialogVisible = ref(false);

@@ -1,1 +1,5 @@
-export { PaymentMethod } from '@nimoura/shared-types';
+export enum PaymentMethod {
+  ZARINPAL = 'zarinpal',
+  TOROB_PAY = 'torobpay',
+  SNAPP_PAY = 'snapp_pay',
+}

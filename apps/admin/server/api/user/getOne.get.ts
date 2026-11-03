@@ -1,20 +1,15 @@
 export default defineEventHandler(async (event) => {
-  const {
-    public: { apiBase },
-  } = useRuntimeConfig();
-
-  const token = getCookie(event, "accesstoken");
   const query = getQuery(event);
+  const id = event.context.params?.id || query.id;
 
-  try {
-    const data = await $fetch(`${apiBase}/users/${query.id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  if (!id) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'شناسه کاربر الزامی است',
     });
-
-    return data;
-  } catch (error) {
-    return error;
   }
+
+  return await adminApiFetch(event, `/users/${id}`, {
+    method: 'GET',
+  });
 });

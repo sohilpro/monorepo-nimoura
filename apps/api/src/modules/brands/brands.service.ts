@@ -92,27 +92,44 @@ export class BrandsService {
   }
 
   async findAll(query: any) {
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-      sortOrder = 'DESC',
-      sortBy = 'id',
-    } = query;
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
+    const search = (query.search || '').trim();
+    const sortOrder =
+      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+    const allowedSortFields = ['id', 'name', 'createdAt', 'updatedAt'];
+    const sortBy = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'id';
+
     const searchableFields = ['name'];
-    const where = buildSearchWhereClause(search, searchableFields);
+    const where = search ? buildSearchWhereClause(search, searchableFields) : {};
+
     const [data, total] = await this.brandRepo.findAndCount({
       relations: {
-        // products: true,
         subBrands: true,
       },
       where,
-      take: +limit,
-      skip: (+page - 1) * +limit,
-      order: { [sortBy]: sortOrder.toUpperCase() },
+      take: limit,
+      skip: (page - 1) * limit,
+      order: { [sortBy]: sortOrder },
     });
 
-    return buildPagination([data, total], page, limit, 'brands');
+    const totalPages = Math.ceil(total / limit);
+    return {
+      items: data,
+      brands: data,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+      },
+    };
   }
 
   findOne(id: number) {

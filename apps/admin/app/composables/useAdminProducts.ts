@@ -20,7 +20,7 @@ export interface ProductQueryParams {
 }
 
 export function useAdminProducts() {
-  const toast = useToast();
+  const toast = useAppToast();
   const { isLoading } = useLoading();
 
   /**

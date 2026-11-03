@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { useToast } from 'primevue/usetoast';
 import type { ArticleFormPayload } from '~/composables/useAdminArticles';
 
-
-const toast = useToast();
+const toast = useAppToast();
 const router = useRouter();
 const submitting = ref(false);
 

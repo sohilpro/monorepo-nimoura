@@ -1,20 +1,15 @@
 export default defineEventHandler(async (event) => {
-  const {
-    public: { apiBase },
-  } = useRuntimeConfig();
-
-  const token = getCookie(event, "accesstoken");
   const query = getQuery(event);
+  const id = query.id || event.context.params?.id;
 
-  try {
-    const data = await $fetch(`${apiBase}/orders/${query.id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  if (!id) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'شناسه سفارش نامعتبر است',
     });
-
-    return data;
-  } catch (error) {
-    return error;
   }
+
+  return await adminApiFetch(event, `/orders/${id}`, {
+    method: 'GET',
+  });
 });

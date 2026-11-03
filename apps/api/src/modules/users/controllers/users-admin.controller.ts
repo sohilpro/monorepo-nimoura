@@ -23,11 +23,27 @@ import { UsersService } from '../user.service';
 import { PaginationQueryDto } from 'src/modules/products/dtos/product-query.dto';
 import { Consumes } from 'src/common/auth/enums/consumes.enum';
 import { UpdateUserDto } from '../dtos/update-user.dto';
+import { CreateUserDto } from '../dtos/create-user.dto';
+import { Post } from '@nestjs/common';
 
 
 @AdminController('users')
 export class UsersAdminController {
   constructor(private readonly userService: UsersService) {}
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'ایجاد کاربر / مشتری جدید (ادمین)',
+  })
+  @ApiConsumes(Consumes.Form, Consumes.Json)
+  @ApiResponse({
+    status: 201,
+    description: 'کاربر با موفقیت ایجاد شد.',
+  })
+  createUser(@Body() dto: CreateUserDto) {
+    return this.userService.createUser(dto);
+  }
 
   @Get()
   @HttpCode(HttpStatus.OK)

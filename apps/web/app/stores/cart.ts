@@ -125,7 +125,6 @@ export const useCartStore = defineStore("cart", {
         existing.quantity += quantity;
       } else {
         this.items.push(newItem);
-        // useNuxtApp().$toast.success("کالا به سبد خرید شما افزوده شد!");
       }
     },
 

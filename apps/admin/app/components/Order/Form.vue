@@ -312,17 +312,18 @@
 </template>
 
 <script setup lang="ts">
-/**********************
- * Props & Emits
- **********************/
+import { OrderStatus, PaymentMethod } from '@nimoura/shared-types';
+import { formatPrice } from '@nimoura/utils';
+
 interface OrderAddress {
-  id: number;
-  title: string;
-  postal_code: string;
-  state: string;
-  city: string;
-  address: string;
+  id?: number;
+  title?: string;
+  postal_code?: string;
+  state?: string;
+  city?: string;
+  address?: string;
 }
+
 interface ShippingInfo {
   first_name: string;
   last_name: string;
@@ -330,27 +331,29 @@ interface ShippingInfo {
   note?: string;
   address: OrderAddress;
 }
+
 interface PaymentInfo {
-  method: "zarinpal" | string;
-  trackingCode: string | any;
-  isPaid: boolean;
-  paidAt: string | null;
+  method?: string;
+  trackingCode?: string | null;
+  isPaid?: boolean;
+  paidAt?: string | null;
 }
+
 interface ProductSnapshot {
   id: number;
   title: string;
-  slug: string;
-  thumbnail: string;
-  sku: string;
+  slug?: string;
+  thumbnail?: string;
+  sku?: string;
 }
+
 interface OrderItem {
   id: number;
   quantity: number;
   unitPrice: number;
   product: ProductSnapshot;
-  variant: any;
+  variant?: any;
 }
-export type OrderStatus = "pending" | "paid" | "shipped" | "cancelled";
 
 interface Order {
   id: number;
@@ -360,69 +363,54 @@ interface Order {
   subtotal: number;
   discount: number;
   finalTotal: number;
-  paymentRefId: string | any;
-  postalBarcode: string | any;
+  paymentRefId?: string | null;
+  postalBarcode?: string | null;
   paymentInfo: PaymentInfo;
   shippingInfo: ShippingInfo;
   items: OrderItem[];
-  shippedAt: Date;
+  shippedAt?: Date | string | null;
 }
 
 const props = defineProps<{ order: Order }>();
 const emit = defineEmits<{
-  (e: "submit", payload: Order): void;
-  (e: "cancel"): void;
-  (e: "add-item"): void;
+  (e: 'submit', payload: any): void;
+  (e: 'cancel'): void;
+  (e: 'add-item'): void;
 }>();
 
-/**********************
- * Local State (Deep Clone)
- **********************/
 function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj));
+  return JSON.parse(JSON.stringify(obj || {}));
 }
 
-function normalizeOrderForForm(o: any): any {
-  return {
-    id: o.id,
-    orderCode: o.orderCode,
-    status: o.status,
-    subtotal: o.subtotal ?? 0,
-    shippingCost: o.shippingCost ?? 0,
-    discount: o.discount ?? 0,
-    finalTotal: o.finalTotal ?? 0,
-    paymentInfo: o.paymentInfo ?? null,
-    shippingInfo: o.shippingInfo ?? null,
-    promotionId: o.promotion ?? null,
-    postalBarcode: o.postalBarcode ?? null,
-
-    // 👇 فقط productId و quantity
-    items: Array.isArray(o.items)
-      ? o.items.map((i: any) => ({
-          productId: i.product?.id,
-          quantity: i.quantity ?? 1,
-          // اگر واریانت دارد، فقط ID آن را بفرست (یا کل آبجکت که بکند ID را بردارد)
-          variant: i.variant ? { id: i.variant.id } : null,
-        }))
-      : [],
-  };
+const rawInitial = deepClone(props.order || {} as any);
+if (!rawInitial.shippingInfo) {
+  rawInitial.shippingInfo = { first_name: '', last_name: '', phone: '', note: '', address: {} };
+}
+if (!rawInitial.shippingInfo.address || typeof rawInitial.shippingInfo.address !== 'object') {
+  rawInitial.shippingInfo.address = { state: '', city: '', postal_code: '', address: '' };
+}
+if (!rawInitial.paymentInfo) {
+  rawInitial.paymentInfo = { method: PaymentMethod.ZARINPAL, isPaid: false, trackingCode: '', paidAt: null };
+}
+if (!Array.isArray(rawInitial.items)) {
+  rawInitial.items = [];
 }
 
-const form = reactive<Order>(deepClone(props.order));
+const form = reactive<Order>(rawInitial);
 
-/**********************
- * Options & Mappings
- **********************/
 const statusOptions = [
-  { value: "pending", label: "در انتظار" },
-  { value: "shipped", label: "ارسال شد" },
-  { value: "cancelled", label: "لغو شده" },
-  { value: "paid", label: "پرداخت شده" },
+  { value: OrderStatus.PENDING, label: 'در انتظار پرداخت' },
+  { value: OrderStatus.PAID, label: 'پرداخت شده' },
+  { value: OrderStatus.PROCESSING, label: 'در حال پردازش' },
+  { value: OrderStatus.SHIPPED, label: 'ارسال شده' },
+  { value: OrderStatus.DELIVERED, label: 'تحویل داده شده' },
+  { value: OrderStatus.CANCELLED, label: 'لغو شده' },
 ];
 
 const paymentMethods = [
-  { value: "zarinpal", label: "زرین‌پال" },
-  // { value: "cod", label: "پرداخت در محل" },
+  { value: PaymentMethod.ZARINPAL, label: 'زرین‌پال' },
+  { value: PaymentMethod.TOROB_PAY, label: 'ترب‌پی' },
+  { value: PaymentMethod.SNAPP_PAY, label: 'اسنپ‌پی' },
 ];
 
 function statusLabel(st: OrderStatus) {
@@ -431,107 +419,143 @@ function statusLabel(st: OrderStatus) {
 
 function badgeTone(st: OrderStatus) {
   switch (st) {
-    case "paid":
-      return "bg-emerald-50 text-emerald-700 border border-emerald-200";
-    case "cancelled":
-      return "bg-rose-50 text-rose-700 border border-rose-200";
-    case "shipped":
-    case "pending":
-      return "bg-amber-50 text-amber-700 border border-amber-200";
+    case OrderStatus.PAID:
+    case OrderStatus.DELIVERED:
+      return 'bg-emerald-50 text-emerald-700 border border-emerald-200';
+    case OrderStatus.CANCELLED:
+      return 'bg-rose-50 text-rose-700 border border-rose-200';
+    case OrderStatus.SHIPPED:
+      return 'bg-blue-50 text-blue-700 border border-blue-200';
+    case OrderStatus.PENDING:
+    case OrderStatus.PROCESSING:
+      return 'bg-amber-50 text-amber-700 border border-amber-200';
     default:
-      return "bg-neutral-50 text-neutral-700 border border-neutral-200";
-  }
-}
-function dotTone(st: OrderStatus) {
-  switch (st) {
-    case "paid":
-      return "bg-emerald-500";
-    case "cancelled":
-      return "bg-rose-500";
-    case "shipped":
-    case "pending":
-      return "bg-amber-500";
-    default:
-      return "bg-neutral-400";
+      return 'bg-neutral-50 text-neutral-700 border border-neutral-200';
   }
 }
 
-/**********************
- * Computeds
- **********************/
+function dotTone(st: OrderStatus) {
+  switch (st) {
+    case OrderStatus.PAID:
+    case OrderStatus.DELIVERED:
+      return 'bg-emerald-500';
+    case OrderStatus.CANCELLED:
+      return 'bg-rose-500';
+    case OrderStatus.SHIPPED:
+      return 'bg-blue-500';
+    case OrderStatus.PENDING:
+    case OrderStatus.PROCESSING:
+      return 'bg-amber-500';
+    default:
+      return 'bg-neutral-400';
+  }
+}
+
 const subtotal = computed(() =>
   form.items.reduce(
     (s, it) => s + (Number(it.unitPrice) || 0) * (Number(it.quantity) || 0),
-    0
-  )
+    0,
+  ),
 );
+
 const finalTotal = computed(() =>
   Math.max(
     0,
     subtotal.value +
       (Number(form.shippingCost) || 0) -
-      (Number(form.discount) || 0)
-  )
+      (Number(form.discount) || 0),
+  ),
 );
+
 const itemCount = computed(() =>
-  form.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0)
+  form.items.reduce((s, it) => s + (Number(it.quantity) || 0), 0),
 );
+
 const serverFinalMismatch = computed(
-  () => Number(form.finalTotal || 0) !== Number(finalTotal.value || 0)
+  () => Number(form.finalTotal || 0) !== Number(finalTotal.value || 0),
 );
 
 watch([subtotal, () => form.shippingCost, () => form.discount], () => {
-  // sync local finalTotal for preview; server remains source of truth on save
   form.finalTotal = finalTotal.value;
 });
 
-/**********************
- * Actions
- **********************/
+function normalizeOrderForForm(o: any): any {
+  return {
+    status: o.status,
+    shippingCost: Number(o.shippingCost) || 0,
+    discount: Number(o.discount) || 0,
+    postalBarcode: o.postalBarcode || undefined,
+    paymentRefId: o.paymentRefId || undefined,
+    shippingInfo: o.shippingInfo
+      ? {
+          first_name: o.shippingInfo.first_name,
+          last_name: o.shippingInfo.last_name,
+          phone: o.shippingInfo.phone,
+          note: o.shippingInfo.note,
+          address:
+            typeof o.shippingInfo.address === 'object' && o.shippingInfo.address !== null
+              ? {
+                  title: o.shippingInfo.address.title,
+                  postal_code: o.shippingInfo.address.postal_code || '1111111111',
+                  state: o.shippingInfo.address.state || '',
+                  city: o.shippingInfo.address.city || '',
+                  address: o.shippingInfo.address.address || '',
+                }
+              : undefined,
+        }
+      : undefined,
+    paymentInfo: o.paymentInfo
+      ? {
+          method: o.paymentInfo.method,
+          isPaid: !!o.paymentInfo.isPaid,
+          trackingCode: o.paymentInfo.trackingCode,
+          paidAt: o.paymentInfo.paidAt,
+        }
+      : undefined,
+    items: Array.isArray(o.items)
+      ? o.items.map((i: any) => ({
+          productId: i.product?.id || i.productId,
+          variantId: i.variant?.id ?? null,
+          quantity: Number(i.quantity) || 1,
+          unitPrice: Number(i.unitPrice) || undefined,
+        }))
+      : [],
+  };
+}
+
 function onSubmit() {
-  // Minimal client-side validation
   const errs: string[] = [];
-  if (!form.shippingInfo.first_name?.trim())
-    errs.push("نام گیرنده را وارد کنید");
-  if (!form.shippingInfo.last_name?.trim())
-    errs.push("نام خانوادگی گیرنده را وارد کنید");
-  if (!/^0\d{10}$/.test(form.shippingInfo.phone || ""))
-    errs.push("شماره تماس معتبر نیست");
-  if (form.items.length === 0) errs.push("حداقل یک آیتم لازم است");
+  if (!form.shippingInfo?.first_name?.trim())
+    errs.push('نام گیرنده را وارد کنید');
+  if (!form.shippingInfo?.last_name?.trim())
+    errs.push('نام خانوادگی گیرنده را وارد کنید');
+  if (!/^0\d{10}$/.test(form.shippingInfo?.phone || ''))
+    errs.push('شماره تماس معتبر نیست (باید ۱۱ رقم و با ۰ شروع شود)');
+  if (form.items.length === 0)
+    errs.push('سفارش باید حداقل دارای یک قلم کالا باشد');
 
   if (errs.length) {
-    alert(errs.join("\n"));
+    alert(errs.join('\n'));
     return;
   }
 
   const finalForm = normalizeOrderForForm(form);
-
-  // return;
-  // Emit a clean clone
-  emit("submit", deepClone(toRaw(finalForm)));
+  emit('submit', deepClone(toRaw(finalForm)));
 }
 
 function removeItem(idx: number) {
   form.items.splice(idx, 1);
 }
 
-/**********************
- * Utils
- **********************/
 function formatCurrency(n: number | null | undefined) {
-  const val = Number(n || 0);
-  return val.toLocaleString("fa-IR");
+  return formatPrice(n);
 }
 
 const showAddModal = ref(false);
 
 function handleAddProduct(product: any) {
-  // بررسی تکراری بودن:
-  // باید چک کنیم آیا محصولی با همین ID و (اگر واریانت دارد) با همین واریانت قبلا هست؟
   const existingItem = form.items.find((item) => {
-    const sameProduct = item.product.id === product.id;
-    // اگر واریانت جدید نال است، باید آیتم قدیمی هم واریانتش نال باشد
-    // اگر واریانت دارد، باید مقدار (value) یا نام (alt) آن یکی باشد
+    const sameProduct = item.product?.id === product.id;
     const sameVariant =
       (!product.selectedVariant && !item.variant) ||
       (product.selectedVariant &&
@@ -541,18 +565,14 @@ function handleAddProduct(product: any) {
   });
 
   if (existingItem) {
-    alert(
-      "این محصول با همین مشخصات در لیست وجود دارد. یک عدد به تعداد آن اضافه شد."
-    );
     existingItem.quantity++;
     return;
   }
 
-  // افزودن آیتم جدید
   form.items.push({
-    id: Date.now(), // ID موقت برای فرانت‌اند
+    id: Date.now(),
     quantity: 1,
-    unitPrice: product.price, // قیمتی که از مودال آمد (قیمت واریانت یا قیمت اصلی)
+    unitPrice: product.price,
     product: {
       id: product.id,
       title: product.title,
@@ -560,12 +580,11 @@ function handleAddProduct(product: any) {
       thumbnail: product.thumbnail,
       sku: product.sku,
     },
-    // ذخیره کامل آبجکت واریانت
     variant: product.selectedVariant
       ? {
           id: product.selectedVariant.id,
-          value: product.selectedVariant.value, // مثلا #653e40
-          alt: product.selectedVariant.alt, // مثلا شکلاتی
+          value: product.selectedVariant.value,
+          alt: product.selectedVariant.alt,
           price: product.selectedVariant.price,
         }
       : null,
@@ -573,23 +592,20 @@ function handleAddProduct(product: any) {
 }
 
 const formattedShippedAt = computed(() => {
-  if (!form.shippedAt) return "";
+  if (!form.shippedAt) return '';
   const d = new Date(form.shippedAt);
-
-  // تبدیل به شمسی
-  const dateStr = d.toLocaleDateString("fa-IR", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
+  const dateStr = d.toLocaleDateString('fa-IR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
   });
-  // دریافت ساعت
-  const timeStr = d.toLocaleTimeString("fa-IR", {
-    hour: "2-digit",
-    minute: "2-digit",
+  const timeStr = d.toLocaleTimeString('fa-IR', {
+    hour: '2-digit',
+    minute: '2-digit',
     hour12: false,
   });
 
-  return `${timeStr} : ${dateStr}`; // ترکیب با فرمت دلخواه شما
+  return `${timeStr} - ${dateStr}`;
 });
 </script>
 

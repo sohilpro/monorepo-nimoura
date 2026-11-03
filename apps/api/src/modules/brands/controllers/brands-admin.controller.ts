@@ -7,6 +7,8 @@ import {
   Post,
   Body,
   Patch,
+  Get,
+  Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -27,6 +29,22 @@ import { AdminController } from 'src/common/auth/decorators/admin-controller.dec
 @AdminController('brands')
 export class AdminBrandsController {
   constructor(private readonly brandService: BrandsService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'لیست تمام برندها برای مدیریت' })
+  @ApiResponse({ status: 200, description: 'لیست برندها دریافت شد' })
+  findAll(@Query() query: any) {
+    return this.brandService.findAll(query);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'دریافت مشخصات یک برند با شناسه' })
+  @ApiParam({ name: 'id', type: Number, description: 'شناسه برند' })
+  @ApiResponse({ status: 200, description: 'اطلاعات برند دریافت شد' })
+  @ApiResponse({ status: 404, description: 'برند پیدا نشد' })
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.brandService.findOne(id);
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)

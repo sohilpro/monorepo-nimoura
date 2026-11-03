@@ -4,7 +4,7 @@ import type { Author } from '~~/server/types/magazine';
 import type { AuthorFormPayload } from '~/composables/useAdminAuthors';
 
 const confirm = useConfirm();
-const toast = useToast();
+const toast = useAppToast();
 const { data: authors, pending, refresh } = useAdminAuthorsList();
 
 const dialogVisible = ref(false);

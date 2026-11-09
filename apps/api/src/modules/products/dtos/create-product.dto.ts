@@ -1,4 +1,5 @@
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -7,14 +8,13 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { plainToInstance, Transform, Type } from 'class-transformer';
 import { CreateVariantDto } from './create-variant.dto';
-import { CreateTagDto } from 'src/modules/tags/dtos/create-tag.dto';
 import { BundleItemDto } from './create-bundle.dto';
-import { PriceTierDto } from './product-price-tier.dto';
 
 const toBoolean = ({ value }: { value: any }) => {
   if (value === undefined || value === null || value === '') {
@@ -68,13 +68,14 @@ export class CreateProductDto {
   @IsInt()
   brandId!: number;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 1,
-    description: 'شناسه زیر برند محصول',
+    description: 'شناسه زیر برند محصول (اختیاری)',
   })
+  @IsOptional()
   @Type(() => Number)
   @IsInt()
-  subBrandId!: number;
+  subBrandId?: number | null;
 
   @ApiProperty({
     example: 'کرم ضد آفتاب SPF50 نیتروژنا',
@@ -180,19 +181,6 @@ export class CreateProductDto {
   @IsString()
   sku!: string;
 
-  // @Expose()
-  // @Transform(({ obj }) => {
-  //   const price = Number(obj?.price);
-  //   const discount =
-  //     obj?.priceDiscount != null ? Number(obj.priceDiscount) : undefined;
-  //   if (typeof price !== 'number' || isNaN(price)) return null;
-  //   if (typeof discount !== 'number' || isNaN(discount)) return null;
-  //   if (discount >= price) return null;
-  //   const percent = ((price - discount) / price) * 100;
-  //   return Math.round(percent * 100) / 100;
-  // })
-  // discountPercent!: number | null;
-
   @ApiPropertyOptional({
     type: Number,
     description: 'موجودی محصول در انبار (در صورت استفاده از مدیریت موجودی)',
@@ -204,8 +192,8 @@ export class CreateProductDto {
   stock?: number;
 
   @ApiProperty({
-    enum: ['simple', 'variant'],
-    description: 'نوع محصول: ساده یا دارای واریانت',
+    enum: ['simple', 'variant', 'bundle'],
+    description: 'نوع محصول: ساده، دارای تنوع (حجمی/وزنی/رنگی) یا پک (باندل)',
     example: 'variant',
   })
   @IsEnum(['simple', 'variant', 'bundle'])
@@ -214,7 +202,7 @@ export class CreateProductDto {
   @ApiPropertyOptional({
     type: [CreateVariantDto],
     description:
-      'لیست واریانت‌ها (مانند رنگ یا سایز) در صورتی که نوع محصول variant باشد',
+      'لیست تنوع‌ها (حجمی، وزنی یا رنگی) در صورتی که نوع محصول variant باشد',
   })
   @Transform(({ value }) => {
     try {
@@ -224,26 +212,38 @@ export class CreateProductDto {
     }
   })
   @IsOptional()
-  // @ValidateNested({ each: true })
+  @IsArray()
+  @ValidateNested({ each: true })
   @Type(() => CreateVariantDto)
   variants?: CreateVariantDto[];
 
   @ApiPropertyOptional({
-    type: [CreateTagDto],
-    description: 'تگ های محصول',
+    type: [Number],
+    description: 'شناسه تگ‌های محصول (از گروه‌های تگ)',
   })
   @Transform(({ value }) => {
     try {
-      return typeof value === 'string' ? JSON.parse(value) : value;
+      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+      return Array.isArray(parsed) ? parsed.map((v) => Number(v)) : parsed;
     } catch {
       return [];
     }
   })
   @IsOptional()
-  // @ValidateNested({ each: true })
-  @Type(() => CreateTagDto)
   @IsArray()
-  tags?: CreateTagDto[];
+  @ArrayMaxSize(100)
+  @IsInt({ each: true })
+  tagIds?: number[];
+
+  @ApiPropertyOptional({
+    default: 5,
+    description: 'وقتی موجودی به این عدد یا کمتر برسد، برچسب «تنها N عدد باقی مانده» نمایش داده می‌شود (۰ = غیرفعال)',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  lowStockThreshold?: number;
 
   @ApiPropertyOptional({ default: false })
   @IsOptional()
@@ -257,22 +257,16 @@ export class CreateProductDto {
   @IsBoolean()
   isAvailable?: boolean;
 
+  @Transform(({ value }) => {
+    try {
+      return typeof value === 'string' ? JSON.parse(value) : value;
+    } catch {
+      return [];
+    }
+  })
   @IsOptional()
   @IsArray({ message: 'اقلام پک باید به صورت آرایه ارسال شوند.' })
   @ValidateNested({ each: true })
   @Type(() => BundleItemDto)
   bundleItems?: BundleItemDto[];
-
-  @ApiPropertyOptional({ type: [PriceTierDto], description: 'پله‌های قیمتی محصول ساده' })
-  @IsOptional()
-  @Transform(({ value }) => {
-    if (typeof value === 'string') {
-      try { return JSON.parse(value); } catch { return []; }
-    }
-    return value;
-  })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => PriceTierDto)
-  priceTiers?: PriceTierDto[];
 }

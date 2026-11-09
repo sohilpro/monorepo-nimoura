@@ -48,7 +48,6 @@ const body = reactive({
   // "categoryIds":
 });
 
-const { isLoading } = useLoading();
 const toast = useAppToast();
 
 async function submitForm() {

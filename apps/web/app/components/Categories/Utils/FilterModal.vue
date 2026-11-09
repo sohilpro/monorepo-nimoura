@@ -82,6 +82,40 @@
             />
           </div>
 
+          <!-- ON SALE -->
+          <div
+            class="flex items-center justify-between border-b border-nimoura-text-100 py-4"
+          >
+            <label
+              for="on-sale-toggle-m"
+              class="cursor-pointer text-sm font-medium text-nimoura-text-700"
+            >
+              فقط تخفیف‌دارها
+              <span
+                v-if="facets?.counts?.onSale"
+                class="text-[11px] font-normal text-nimoura-text-400"
+              >
+                ({{ numberFormat(facets.counts.onSale) }})
+              </span>
+            </label>
+
+            <ToggleSwitch
+              v-model="showOnSale"
+              input-id="on-sale-toggle-m"
+              class="nimoura-toggle"
+              :pt="{ slider: { class: showOnSale ? 'bg-nimoura-primary! ' : '' } }"
+            />
+          </div>
+
+          <!-- TAG FILTERS -->
+          <div v-if="facets?.groups?.length" class="border-b border-nimoura-text-100">
+            <CategoriesUtilsFacetGroups
+              :groups="facets.groups"
+              :selected="draftTags"
+              @toggle="toggleDraftTag"
+            />
+          </div>
+
           <!-- PRICE RANGE -->
           <div class="py-5">
             <div class="mb-5 flex items-center justify-between">
@@ -101,7 +135,7 @@
               v-model="priceRange"
               range
               :min="MIN_PRICE"
-              :max="MAX_PRICE"
+              :max="maxPrice"
               :step="10000"
               class="nimoura-slider !mx-1"
             />
@@ -172,24 +206,41 @@
 </template>
 
 <script setup lang="ts">
+import type { ProductFacets } from '@nimoura/shared-types';
+
 const props = defineProps<{
   visible: boolean;
   close: () => void;
   clearFilters: () => void;
+  facets?: ProductFacets | null;
 }>();
 
 const route = useRoute();
 const router = useRouter();
 
 const MIN_PRICE = 0;
-const MAX_PRICE = 5000000;
+const DEFAULT_MAX_PRICE = 5000000;
+
+const maxPrice = computed(() => {
+  const highest = props.facets?.price?.max ?? 0;
+  return Math.max(DEFAULT_MAX_PRICE, Math.ceil(highest / 100000) * 100000);
+});
 
 const showAvailableOnly = ref(route.query.isAvailable === "true");
+const showOnSale = ref(route.query.onSale === "true");
+// تگ‌ها تا زدن «اعمال فیلتر» فقط پیش‌نویس هستند
+const draftTags = ref<number[]>(parseIdList(route.query.tags));
 
 const priceRange = ref<[number, number]>([
   Number(route.query.minPrice) || MIN_PRICE,
-  Number(route.query.maxPrice) || MAX_PRICE,
+  Number(route.query.maxPrice) || maxPrice.value,
 ]);
+
+function toggleDraftTag(id: number) {
+  draftTags.value = draftTags.value.includes(id)
+    ? draftTags.value.filter((t) => t !== id)
+    : [...draftTags.value, id];
+}
 
 /**
  * Sync state when sheet opens
@@ -203,10 +254,12 @@ watch(
 
     if (val) {
       showAvailableOnly.value = route.query.isAvailable === "true";
+      showOnSale.value = route.query.onSale === "true";
+      draftTags.value = parseIdList(route.query.tags);
 
       priceRange.value = [
         Number(route.query.minPrice) || MIN_PRICE,
-        Number(route.query.maxPrice) || MAX_PRICE,
+        Number(route.query.maxPrice) || maxPrice.value,
       ];
     }
   },
@@ -226,8 +279,11 @@ function handleApply() {
     query: {
       ...route.query,
       isAvailable: showAvailableOnly.value ? "true" : undefined,
+      onSale: showOnSale.value ? "true" : undefined,
+      tags: draftTags.value.length ? draftTags.value.join(",") : undefined,
       minPrice: priceRange.value[0],
       maxPrice: priceRange.value[1],
+      page: undefined,
     },
   });
 
@@ -236,7 +292,9 @@ function handleApply() {
 
 function handleClearFilters() {
   showAvailableOnly.value = false;
-  priceRange.value = [MIN_PRICE, MAX_PRICE];
+  showOnSale.value = false;
+  draftTags.value = [];
+  priceRange.value = [MIN_PRICE, maxPrice.value];
 
   props.clearFilters();
 

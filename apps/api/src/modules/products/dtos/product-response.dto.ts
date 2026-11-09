@@ -1,6 +1,36 @@
 // src/modules/products/dtos/product-response.dto.ts
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { buildProductBadges, getStockStatus } from '../utils/product-badges';
+
+/** The color value when the variant has one, otherwise the first attribute value. */
+function primaryAttributeValue(variant: any): any {
+  const values: any[] = variant?.attributeValues ?? [];
+  return values.find((a) => a?.attribute?.kind === 'color') ?? values[0];
+}
+
+export class ProductBadgeResponseDto {
+  @Expose() type: string;
+  @Expose() label: string;
+  @Expose() tone: string;
+  @Expose() value?: number;
+}
+
+export class ProductTagGroupResponseDto {
+  @Expose() id: number;
+  @Expose() name: string;
+  @Expose() slug: string;
+}
+
+export class ProductTagResponseDto {
+  @Expose() id: number;
+  @Expose() name: string;
+  @Expose() slug: string;
+  @Expose() color?: string | null;
+  @Expose()
+  @Type(() => ProductTagGroupResponseDto)
+  group?: ProductTagGroupResponseDto;
+}
 
 export class AttributeBriefResponseDto {
   @Expose()
@@ -10,6 +40,10 @@ export class AttributeBriefResponseDto {
   @Expose()
   @ApiProperty()
   name: string; // مثلاً: "وزن" یا "رنگ"
+
+  @Expose()
+  @ApiProperty({ enum: ['volume', 'weight', 'color', 'custom'] })
+  kind: string;
 }
 
 export class CategoryBriefResponseDto {
@@ -100,6 +134,10 @@ export class AttributeValueBriefResponseDto {
   @ApiProperty()
   value: string; // مثلاً: "m1-8g" یا "قرمز"
 
+  @Expose()
+  @ApiPropertyOptional({ description: 'کد رنگ #RRGGBB (فقط تنوع رنگی)' })
+  colorHex?: string | null;
+
   // ۱. استخراج خودکار نام ویژگی از رابطه attribute.name
   @Expose()
   @Transform(({ obj }) => obj.attribute?.name || obj.attributeName || null)
@@ -154,6 +192,33 @@ export class ProductVariantResponseDto {
   @Type(() => AttributeValueBriefResponseDto)
   @ApiProperty({ type: () => [AttributeValueBriefResponseDto] })
   attributeValues: AttributeValueBriefResponseDto[];
+
+  @Expose()
+  @Transform(({ obj }) => primaryAttributeValue(obj)?.attribute?.kind ?? null)
+  @ApiPropertyOptional({ enum: ['volume', 'weight', 'color', 'custom'] })
+  kind?: string | null;
+
+  @Expose()
+  @Transform(({ obj }) => primaryAttributeValue(obj)?.colorHex ?? null)
+  @ApiPropertyOptional()
+  colorHex?: string | null;
+
+  /** رنگ (در تنوع رنگی) یا همان برچسب نمایشی؛ برای سازگاری با ویترین */
+  @Expose()
+  @Transform(({ obj }) => {
+    const attr = primaryAttributeValue(obj);
+    return attr?.colorHex ?? attr?.value ?? null;
+  })
+  @ApiPropertyOptional()
+  value?: string | null;
+
+  /** برچسب نمایشی تنوع، مثل «۵۰۰ میلی‌لیتر» یا «رزگلد» */
+  @Expose()
+  @Transform(({ obj }) =>
+    (obj.attributeValues ?? []).map((a: any) => a.value).join(' / '),
+  )
+  @ApiProperty()
+  alt: string;
 
   @Expose()
   @ApiProperty()
@@ -231,6 +296,37 @@ export class ProductResponseDto {
   @Expose()
   @ApiProperty()
   isAmazingOffer: boolean;
+
+  @Expose()
+  @ApiPropertyOptional()
+  lowStockThreshold?: number;
+
+  /** Computed here when the service did not already add it (e.g. detail endpoints). */
+  @Expose()
+  @Transform(({ obj }) => obj.stockStatus ?? getStockStatus(obj))
+  @ApiProperty({ enum: ['in_stock', 'low_stock', 'out_of_stock'] })
+  stockStatus: string;
+
+  @Expose()
+  @Transform(({ obj }) => obj.badges ?? buildProductBadges(obj))
+  @ApiProperty({ type: () => [ProductBadgeResponseDto] })
+  badges: ProductBadgeResponseDto[];
+
+  /** Only active tags of active groups are public. */
+  @Expose()
+  @Transform(({ obj }) =>
+    (obj.tags ?? [])
+      .filter((t: any) => t.isActive !== false && t.group?.isActive !== false)
+      .map((t: any) => ({
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        color: t.color ?? null,
+        group: t.group ? { id: t.group.id, name: t.group.name, slug: t.group.slug } : undefined,
+      })),
+  )
+  @ApiPropertyOptional({ type: () => [ProductTagResponseDto] })
+  tags?: ProductTagResponseDto[];
 
   @Expose()
   @ApiPropertyOptional()

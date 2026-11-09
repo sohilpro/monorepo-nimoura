@@ -51,7 +51,6 @@ function transformMultipartBody<T>(rawBody: any): T {
     'tags',
     'imagesToDelete',
     'attributes',
-    'priceTiers', // ۱. اضافه شدن پله‌های قیمتی محصول ساده
     'bundleItems',
   ];
 
@@ -63,52 +62,6 @@ function transformMultipartBody<T>(rawBody: any): T {
         // در صورت عدم تطابق با JSON مقدار تغییر نمی‌کند تا پایپ ولیدیشن متوجه شود
       }
     }
-  }
-
-  // ۲. تمیزکاری و پارس مقادیر داخل آرایه variants در صورت ارسال تو در تو
-  if (Array.isArray(payload.variants)) {
-    payload.variants = payload.variants.map((v: any) => {
-      let variantObj = v;
-      if (typeof v === 'string') {
-        try {
-          variantObj = JSON.parse(v);
-        } catch {
-          return v;
-        }
-      }
-
-      // اگر priceTiers درون خود واریانت استرینگ شده بود
-      if (typeof variantObj.priceTiers === 'string') {
-        try {
-          variantObj.priceTiers = JSON.parse(variantObj.priceTiers);
-        } catch {
-          variantObj.priceTiers = [];
-        }
-      }
-
-      // اطمینان از عددی بودن مقادیر داخل پله‌های واریانت
-      if (Array.isArray(variantObj.priceTiers)) {
-        variantObj.priceTiers = variantObj.priceTiers.map((tier: any) => ({
-          minQuantity: Number(tier.minQuantity),
-          price: Number(tier.price),
-        }));
-      }
-
-      // تبدیل مقادیر عددی خود واریانت
-      if (variantObj.price !== undefined) variantObj.price = Number(variantObj.price);
-      if (variantObj.priceDiscount !== undefined) variantObj.priceDiscount = Number(variantObj.priceDiscount);
-      if (variantObj.stock !== undefined) variantObj.stock = Number(variantObj.stock);
-
-      return variantObj;
-    });
-  }
-
-  // ۳. اطمینان از عددی بودن مقادیر پله‌های محصول ساده
-  if (Array.isArray(payload.priceTiers)) {
-    payload.priceTiers = payload.priceTiers.map((tier: any) => ({
-      minQuantity: Number(tier.minQuantity),
-      price: Number(tier.price),
-    }));
   }
 
   // فلگ‌های بولی

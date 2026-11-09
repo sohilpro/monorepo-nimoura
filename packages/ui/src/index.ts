@@ -1,1 +1,1 @@
-export * from './primevue-preset';
+export * from "./primevue-preset.js";

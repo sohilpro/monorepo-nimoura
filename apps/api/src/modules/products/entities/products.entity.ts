@@ -119,6 +119,10 @@ export class Products extends CustomBaseEntity {
   @Column('int', { default: 0 })
   stock!: number;
 
+  /** Storefront shows "only N left" once stock drops to this number (0 disables the badge). */
+  @Column({ type: 'int', default: 5 })
+  lowStockThreshold!: number;
+
   @ManyToMany(() => Tags, {
     eager: false,
     cascade: false,

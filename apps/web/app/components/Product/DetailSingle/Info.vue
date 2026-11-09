@@ -77,45 +77,37 @@
           {{ product.shortDescription }}
         </p>
 
-<div v-if="product.type === 'variant'">
-  <ClientOnly>
-    <h4>رنگ: {{ selectedVariant?.alt ?? 'انتخاب نشده' }}</h4>
+<ProductVariantPicker
+          v-if="product.type === 'variant'"
+          :variants="product.variants"
+          :selected-variant="selectedVariant"
+          @update:selected-variant="emit('update:selectedVariant', $event)"
+        />
 
-    <div class="flex gap-2">
-      <div
-        v-for="v in product?.variants"
-        :key="v.value + v.alt"
-        class="relative group"
-      >
-        <button
-          @click="emit('update:selectedVariant', v)"
-          :style="{ background: v.value }"
-          class="w-8 h-8 rounded-md border-2 overflow-hidden relative"
-          :class="
-            selectedVariant?.value === v.value
-              ? 'border-white ring-1 ring-nimoura-text-700'
-              : 'border-gray-300'
-          "
-          :disabled="v.stock === 0"
+        <!-- AUTOMATIC STATUS: only N left / out of stock -->
+        <p
+          v-if="stockNotice"
+          class="flex w-fit items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium"
+          :class="stockNotice.tone"
         >
-          <div
-            v-if="v.stock === 0"
-            class="absolute top-1/2 left-0 w-full h-[2px] bg-nimoura-text-700 -rotate-45 origin-center"
-          ></div>
-        </button>
+          <i :class="stockNotice.icon" />
+          {{ stockNotice.text }}
+        </p>
 
-        <div
-          class="absolute whitespace-nowrap bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity z-10"
-        >
-          {{ v.alt }}
-          <div
-            class="absolute top-5 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-700 rotate-45"
-          ></div>
+        <!-- PRODUCT TAGS (skin type, hair type, benefits...) -->
+        <div v-if="tagGroups.length" class="flex flex-col gap-2.5">
+          <div v-for="group in tagGroups" :key="group.name" class="flex flex-wrap items-center gap-2">
+            <span class="text-xs text-nimoura-text-400">{{ group.name }}:</span>
+            <NuxtLink
+              v-for="tag in group.tags"
+              :key="tag.id"
+              :to="tagLink(tag.id)"
+              class="rounded-full border border-nimoura-text-100 bg-nimoura-base/50 px-3 py-1 text-xs text-nimoura-text-700 transition-colors hover:border-nimoura-primary/40 hover:text-nimoura-primary"
+            >
+              {{ tag.name }}
+            </NuxtLink>
+          </div>
         </div>
-      </div>
-    </div>
-  </ClientOnly>
-</div>
 
         <!-- Features Box  -->
         <div class="w-full flex flex-col gap-y-4">
@@ -248,6 +240,43 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "update:selectedVariant", val: Variant | null): void;
 }>();
+
+// ─── Tags and stock notice ────────────────────
+const tagGroups = computed(() => {
+  const groups = new Map<string, { name: string; tags: any[] }>();
+  for (const tag of props.product?.tags ?? []) {
+    const name = tag.group?.name ?? "ویژگی‌ها";
+    if (!groups.has(name)) groups.set(name, { name, tags: [] });
+    groups.get(name)!.tags.push(tag);
+  }
+  return [...groups.values()];
+});
+
+// clicking a tag opens the product's category filtered by that tag
+const tagLink = (tagId: number) => {
+  const category = props.product?.category;
+  return category
+    ? `/categories/${category.id}/${createSlug(category.name)}?tags=${tagId}`
+    : "/";
+};
+
+const stockNotice = computed(() => {
+  const threshold = props.product?.lowStockThreshold ?? 5;
+  const stock =
+    props.product?.type === "variant"
+      ? props.selectedVariant?.stock
+      : props.product?.stock;
+  if (stock === undefined || stock === null) return null;
+  if (stock <= 0)
+    return { text: "ناموجود", icon: "pi pi-times-circle", tone: "bg-rose-50 text-rose-600" };
+  if (threshold > 0 && stock <= threshold)
+    return {
+      text: `تنها ${numberFormat(stock)} عدد در انبار باقی مانده`,
+      icon: "pi pi-exclamation-triangle",
+      tone: "bg-amber-50 text-amber-700",
+    };
+  return null;
+});
 
 const { isInWishlist, toggleWishlist } = useWishlist();
 const { share } = useShare();

@@ -24,52 +24,23 @@
       </template>
       <template #content>
         <div class="flex flex-col gap-4">
-          <!-- ── Variant swatches ── -->
+          <!-- ── Variant picker (color swatches or volume/weight pills) ── -->
           <div v-if="isVariant && product.variants?.length">
-            <p class="text-xs font-medium text-nimoura-text-600 mb-2.5">
-              رنگ:
-              <span class="text-nimoura-primary font-semibold">
-                {{ selectedVariant?.alt ?? "انتخاب نشده" }}
-              </span>
-            </p>
-            <div class="flex flex-wrap gap-2">
-              <button
-                v-for="v in product.variants"
-                :key="v.id"
-                type="button"
-                :title="v.alt"
-                class="relative w-8 h-8 rounded-full border-2 transition-all duration-200"
-                :style="{ backgroundColor: v.value }"
-                :class="[
-                  selectedVariant?.id === v.id
-                    ? 'border-nimoura-primary scale-110 shadow-md'
-                    : 'border-transparent hover:border-nimoura-text-300 hover:scale-105',
-                  v.stock === 0
-                    ? 'opacity-50 cursor-not-allowed'
-                    : 'cursor-pointer',
-                ]"
-                :disabled="v.stock === 0"
-                @click="$emit('update:selectedVariant', v)"
-              >
-                <!-- strikethrough for out of stock -->
-                <span
-                  v-if="v.stock === 0"
-                  class="absolute inset-0 flex items-center justify-center pointer-events-none"
-                >
-                  <span class="block w-full h-[1.5px] bg-white/80 rotate-45" />
-                </span>
-              </button>
-            </div>
+            <ProductVariantPicker
+              :variants="product.variants"
+              :selected-variant="selectedVariant"
+              @update:selected-variant="emit('update:selectedVariant', $event)"
+            />
             <!-- low stock warning -->
             <p
               v-if="
                 selectedVariant &&
                 selectedVariant.stock > 0 &&
-                selectedVariant.stock <= 3
+                selectedVariant.stock <= (product.lowStockThreshold ?? 5)
               "
               class="mt-2 text-[11px] text-orange-500"
             >
-              فقط {{ selectedVariant.stock }} عدد باقی مانده!
+              تنها {{ numberFormat(selectedVariant.stock) }} عدد در انبار باقی مانده!
             </p>
           </div>
 
@@ -166,9 +137,10 @@
 // ─── Types ────────────────────────────────────
 interface Variant {
   id: number;
-  value: string; // hex color e.g. "#e7cba9"
+  value: string; // hex color for color variants, otherwise the label
   alt: string;
   price: number;
+  priceDiscount?: number;
   stock: number;
 }
 
@@ -200,8 +172,12 @@ const isOutOfStock = computed(() => {
 });
 
 const finalPrice = computed(() => {
-  if (isVariant.value && props.selectedVariant)
-    return props.selectedVariant.price;
+  if (isVariant.value && props.selectedVariant) {
+    const { price, priceDiscount } = props.selectedVariant;
+    return priceDiscount && priceDiscount > 0 && priceDiscount < price
+      ? priceDiscount
+      : price;
+  }
   return props.product?.discountPercent
     ? props.product.priceDiscount
     : props.product?.price;

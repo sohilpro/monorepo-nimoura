@@ -40,6 +40,37 @@
         />
       </div>
 
+      <!-- ON SALE -->
+      <div class="flex items-center justify-between gap-2 px-3 py-3.5 xl:px-4">
+        <label
+          for="on-sale-toggle"
+          class="cursor-pointer text-sm font-medium text-nimoura-text-700"
+        >
+          فقط تخفیف‌دارها
+          <span
+            v-if="facets?.counts?.onSale"
+            class="text-[11px] font-normal text-nimoura-text-400"
+          >
+            ({{ numberFormat(facets.counts.onSale) }})
+          </span>
+        </label>
+
+        <ToggleSwitch
+          v-model="showOnSale"
+          input-id="on-sale-toggle"
+          :pt="{ slider: { class: showOnSale ? 'bg-nimoura-primary! ' : '' } }"
+        />
+      </div>
+
+      <!-- TAG FILTERS (skin type, hair type, benefits, ...) -->
+      <div v-if="facets?.groups?.length" class="px-3 xl:px-4">
+        <CategoriesUtilsFacetGroups
+          :groups="facets.groups"
+          :selected="selectedTagIds"
+          @toggle="toggleTag"
+        />
+      </div>
+
       <!-- PRICE RANGE -->
       <Accordion :value="['0']" multiple class="!border-0">
         <AccordionPanel value="0" class="!border-0">
@@ -63,7 +94,7 @@
                 v-model="priceRange"
                 range
                 :min="MIN_PRICE"
-                :max="MAX_PRICE"
+                :max="maxPrice"
                 :step="10000"
                 class="nimoura-slider !mx-1"
                 @slideend="emitPriceUpdate"
@@ -104,9 +135,15 @@
 </template>
 
 <script setup lang="ts">
-const { clearFilters } = defineProps<{
+import type { ProductFacets } from '@nimoura/shared-types';
+
+const props = defineProps<{
   clearFilters: any;
+  facets?: ProductFacets | null;
 }>();
+const { clearFilters } = props;
+
+const { selectedTagIds, toggleTag, setFlag } = useProductFilters();
 
 const route = useRoute();
 const router = useRouter();
@@ -114,14 +151,21 @@ const router = useRouter();
 const reset = ref(0);
 
 const MIN_PRICE = 0;
-const MAX_PRICE = 5000000;
+const DEFAULT_MAX_PRICE = 5000000;
+
+// slider upper bound follows the most expensive product of the current category
+const maxPrice = computed(() => {
+  const highest = props.facets?.price?.max ?? 0;
+  return Math.max(DEFAULT_MAX_PRICE, Math.ceil(highest / 100000) * 100000);
+});
 
 const priceRange = ref<[number, number]>([
   Number(route.query.minPrice) || MIN_PRICE,
-  Number(route.query.maxPrice) || MAX_PRICE,
+  Number(route.query.maxPrice) || maxPrice.value,
 ]);
 
 const showAvailableOnly = ref(route.query.isAvailable === "true");
+const showOnSale = ref(route.query.onSale === "true");
 
 /**
  * Update price filter
@@ -148,6 +192,10 @@ watch(showAvailableOnly, (newValue) => {
   });
 });
 
+watch(showOnSale, (value) => {
+  if (value !== (route.query.onSale === "true")) setFlag("onSale", value);
+});
+
 /**
  * Sync filters with URL
  */
@@ -155,10 +203,11 @@ watch(
   route,
   (newRoute) => {
     showAvailableOnly.value = newRoute.query.isAvailable === "true";
+    showOnSale.value = newRoute.query.onSale === "true";
 
     priceRange.value = [
       Number(newRoute.query.minPrice) || MIN_PRICE,
-      Number(newRoute.query.maxPrice) || MAX_PRICE,
+      Number(newRoute.query.maxPrice) || maxPrice.value,
     ];
 
     reset.value += 1;

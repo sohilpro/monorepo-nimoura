@@ -70,9 +70,45 @@ export interface ProductSpecification {
 }
 
 export interface ProductTag {
-  id?: number;
+  id: number;
   name: string;
-  type?: string;
+  slug?: string;
+  color?: string | null;
+  groupId?: number;
+  group?: { id: number; name: string; slug: string };
+}
+
+export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
+export type ProductBadgeType =
+  | 'out_of_stock'
+  | 'low_stock'
+  | 'discount'
+  | 'amazing_offer'
+  | 'new'
+  | 'bundle';
+export type ProductBadgeTone = 'danger' | 'warning' | 'success' | 'info' | 'neutral';
+
+export interface ProductBadge {
+  type: ProductBadgeType;
+  label: string;
+  tone: ProductBadgeTone;
+  value?: number;
+}
+
+export type VariantKind = 'volume' | 'weight' | 'color';
+
+export const VARIANT_KIND_ATTRIBUTE_NAMES: Record<VariantKind, string> = {
+  volume: 'حجم',
+  weight: 'وزن',
+  color: 'رنگ',
+};
+
+export interface ProductAttributeValue {
+  id?: number;
+  value: string;
+  colorHex?: string | null;
+  attributeName?: string;
+  attribute?: { id?: number; name: string; kind?: VariantKind | 'custom' };
 }
 
 export interface ProductVariant {
@@ -82,12 +118,23 @@ export interface ProductVariant {
   price: number;
   priceDiscount?: number;
   stock: number;
-  colorName?: string;
-  colorHex?: string;
-  value?: string;
-  alt?: string;
   isAvailable?: boolean;
+  images?: string[];
+  attributeValues?: ProductAttributeValue[];
+  /** Display label, e.g. "500 ml" or "Rose Gold" (storefront responses). */
+  alt?: string;
+  /** Hex color for color variants, otherwise the label (storefront responses). */
+  value?: string;
+  colorHex?: string | null;
+  kind?: VariantKind | 'custom' | null;
   priceTiers?: ProductPriceTier[];
+}
+
+export interface ProductBundleItem {
+  id?: number;
+  quantity: number;
+  product: Pick<Product, 'id' | 'title' | 'thumbnail' | 'sku' | 'type' | 'price' | 'priceDiscount'>;
+  variant?: ProductVariant | null;
 }
 
 export interface ProductImage {
@@ -125,7 +172,11 @@ export interface Product {
   subBrand?: SubBrand | null;
   specifications?: ProductSpecification[];
   tags?: ProductTag[];
+  lowStockThreshold?: number;
+  stockStatus?: StockStatus;
+  badges?: ProductBadge[];
   variants?: ProductVariant[];
+  bundleItems?: ProductBundleItem[];
   images?: ProductImage[];
   priceTiers?: ProductPriceTier[];
   createdAt: string | Date;
@@ -158,6 +209,30 @@ export interface AdminProductListItem {
   updatedAt: string | Date;
 }
 
+export interface VariantAttributeValuePayload {
+  attributeName: string;
+  kind: VariantKind;
+  value: string;
+  colorHex?: string;
+}
+
+export interface CreateVariantPayload {
+  id?: number;
+  sku?: string;
+  price: number;
+  priceDiscount?: number;
+  stock: number;
+  isAvailable?: boolean;
+  images?: string[];
+  attributeValues: VariantAttributeValuePayload[];
+}
+
+export interface BundleItemPayload {
+  productId: number;
+  variantId?: number;
+  quantity: number;
+}
+
 export interface CreateProductPayload {
   title: string;
   englishTitle?: string;
@@ -177,18 +252,10 @@ export interface CreateProductPayload {
   thumbnail?: string | null;
   images?: string[];
   specifications?: ProductSpecification[];
-  tags?: Array<{ name: string; type?: string }>;
-  variants?: Array<{
-    value?: string;
-    colorName?: string;
-    colorHex?: string;
-    price?: number;
-    priceDiscount?: number;
-    stock: number;
-    sku?: string;
-    alt?: string;
-  }>;
-  priceTiers?: ProductPriceTier[];
+  tagIds?: number[];
+  lowStockThreshold?: number;
+  variants?: CreateVariantPayload[];
+  bundleItems?: BundleItemPayload[];
 }
 
 export interface UpdateProductPayload extends Partial<CreateProductPayload> {

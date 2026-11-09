@@ -14,10 +14,47 @@
       @discard="() => navigateTo('/product')"
     />
 
+    <div
+      v-if="showErrors && formErrors.length"
+      ref="errorBox"
+      role="alert"
+      class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"
+    >
+      <p class="mb-2 font-bold">قبل از ذخیره، موارد زیر را اصلاح کنید:</p>
+      <ul class="list-disc space-y-1 ps-5">
+        <li v-for="error in formErrors" :key="error">{{ error }}</li>
+      </ul>
+    </div>
+
     <form @submit.prevent="submitForm" class="space-y-8" id="product-form">
       <div class="flex flex-col lg:flex-row gap-5">
         <!-- Main Column (Left) -->
-        <main class="flex flex-col basis-full lg:basis-7/12 space-y-6">
+        <main class="flex flex-col basis-full lg:basis-7/12 space-y-6 min-w-0">
+          <ProductTypeSelector v-model="form.type" />
+
+          <ProductVariantsEditor
+            v-if="form.type === 'variant'"
+            :kind="form.variantKind"
+            :variants="form.variants"
+            :summary="variantSummary"
+            :show-errors="showErrors"
+            :validate-variant="validateVariant"
+            @update:kind="setVariantKind"
+            @add="addVariant"
+            @remove="removeVariant"
+          />
+
+          <ProductBundleEditor
+            v-if="form.type === 'bundle'"
+            :items="form.bundleItems"
+            :bundle-price="Number(form.priceDiscount) > 0 ? Number(form.priceDiscount) : Number(form.price) || 0"
+            :components-total="bundleComponentsTotal"
+            :product-id="productId"
+            :show-errors="showErrors"
+            @add="addBundleItem"
+            @remove="removeBundleItem"
+          />
+
           <CommonCustomInput
             v-model="form.title"
             label="نام / عنوان محصول (فارسی)"
@@ -29,6 +66,7 @@
             v-model="form.englishTitle"
             label="نام / عنوان انگلیسی محصول"
             placeholder="e.g. Moisturizing & Hydrating Cream"
+            required
           />
 
           <CommonTextArea
@@ -38,14 +76,7 @@
             :rows="4"
           />
 
-          <UtilsTagEditor
-            v-if="tagTypes?.data"
-            v-model="form.tags"
-            :types="tagTypes.data"
-            :typeLabels="tagTypesLabels?.data || []"
-            api-base="/api/tags"
-            label="تگ‌های محصول"
-          />
+          <ProductTagSelector v-model="form.tagIds" />
 
           <!-- ادیتورهای متن غنی -->
           <ProductRichTextEditor
@@ -121,35 +152,63 @@
             />
           </CommonComponentCard>
 
-          <!-- قیمت و موجودی انبار -->
-          <CommonComponentCard title="قیمت و موجودی">
-            <CommonFormattedNumberInput
-              v-model="form.price"
-              label="قیمت اصلی (تومان)"
-              placeholder="150,000"
-              required
-            />
-
-            <CommonFormattedNumberInput
-              v-model="form.priceDiscount"
-              label="قیمت پس از تخفیف (تومان)"
-              placeholder="120,000"
-            />
-
+          <!-- قیمت و موجودی -->
+          <CommonComponentCard :title="form.type === 'bundle' ? 'قیمت و موجودی پک' : 'قیمت و موجودی'">
             <div
-              v-if="calculatedDiscountPercent > 0"
-              class="flex items-center justify-between px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold"
+              v-if="form.type === 'variant'"
+              class="space-y-2 rounded-xl bg-brand-50/60 p-3.5 text-xs leading-6 text-gray-700"
             >
-              <span>میزان تخفیف اعمال‌شده:</span>
-              <span>{{ calculatedDiscountPercent }}٪ تخفیف</span>
+              <p class="font-semibold text-brand-700">قیمت و موجودی از روی تنوع‌ها محاسبه می‌شود</p>
+              <div class="flex items-center justify-between">
+                <span>کمترین قیمت</span>
+                <span class="font-bold">{{ variantSummary.min ? formatPrice(variantSummary.min) : '—' }}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>مجموع موجودی</span>
+                <span class="font-bold">{{ toPersianDigits(variantSummary.stock) }}</span>
+              </div>
             </div>
 
-            <CommonFormattedNumberInput
-              v-model="form.stock"
-              label="موجودی انبار (تعداد)"
-              placeholder="50"
-              :disabled="form.type === 'variant'"
-            />
+            <template v-else>
+              <CommonFormattedNumberInput
+                v-model="form.price"
+                :label="form.type === 'bundle' ? 'قیمت اصلی پک (تومان)' : 'قیمت اصلی (تومان)'"
+                placeholder="150,000"
+                required
+              />
+
+              <CommonFormattedNumberInput
+                v-model="form.priceDiscount"
+                label="قیمت پس از تخفیف (تومان)"
+                placeholder="120,000"
+              />
+
+              <div
+                v-if="discountPercent > 0"
+                class="flex items-center justify-between px-3 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold"
+              >
+                <span>میزان تخفیف اعمال‌شده:</span>
+                <span>{{ toPersianDigits(discountPercent) }}٪ تخفیف</span>
+              </div>
+
+              <CommonFormattedNumberInput
+                v-model="form.stock"
+                :label="form.type === 'bundle' ? 'موجودی پک (تعداد)' : 'موجودی انبار (تعداد)'"
+                placeholder="50"
+              />
+            </template>
+
+            <div class="space-y-1.5">
+              <CommonFormattedNumberInput
+                v-model="form.lowStockThreshold"
+                label="آستانه هشدار کم‌موجودی"
+                placeholder="5"
+              />
+              <p class="text-xs leading-5 text-gray-500">
+                وقتی موجودی به این عدد یا کمتر برسد، روی محصول «تنها N عدد در انبار باقی مانده» نمایش داده می‌شود
+                (۰ = غیرفعال).
+              </p>
+            </div>
           </CommonComponentCard>
 
           <!-- شناسه انبارداری و وضعیت شگفت‌انگیز -->
@@ -175,112 +234,6 @@
               />
             </div>
           </CommonComponentCard>
-
-          <!-- مدیریت تنوع (واریانت‌ها) -->
-          <CommonComponentCard title="تنوع کالا (رنگ یا سایز)">
-            <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-              <span class="text-sm font-medium text-gray-700">این محصول دارای تنوع رنگ است</span>
-              <CommonToggleSwitch
-                v-model="isVariantMode"
-                label=""
-                id="variants-toggle"
-              />
-            </div>
-
-            <div v-if="isVariantMode" class="space-y-4 pt-3">
-              <div class="space-y-2">
-                <label class="text-xs font-semibold text-gray-700">انتخاب رنگ و نام فارسی:</label>
-                <div class="flex items-center gap-3">
-                  <ClientOnly>
-                    <CommonColorPicker v-model="variantColorHex" />
-                  </ClientOnly>
-                  <span class="text-sm font-medium text-gray-700">
-                    {{ detectedColorName || 'رنگ انتخابی' }}
-                  </span>
-                </div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <input
-                  v-model.number="variantStockInput"
-                  type="number"
-                  placeholder="موجودی این تنوع"
-                  min="0"
-                  class="px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500"
-                />
-                <input
-                  v-model.number="variantPriceInput"
-                  type="number"
-                  placeholder="قیمت این تنوع (تومان)"
-                  min="0"
-                  class="px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand-500"
-                />
-              </div>
-
-              <button
-                type="button"
-                @click="addVariant"
-                class="w-full py-2 bg-brand-500 text-white rounded-lg text-xs font-medium hover:bg-brand-600 transition"
-              >
-                + افزودن این تنوع به لیست
-              </button>
-
-              <!-- جدول واریانت‌ها -->
-              <div v-if="form.variants.length" class="overflow-x-auto border border-gray-200 rounded-lg">
-                <table class="w-full text-xs text-right divide-y divide-gray-200">
-                  <thead class="bg-gray-50 text-gray-600">
-                    <tr>
-                      <th class="p-2">رنگ</th>
-                      <th class="p-2">نام رنگ</th>
-                      <th class="p-2">موجودی</th>
-                      <th class="p-2">قیمت</th>
-                      <th class="p-2 text-center">حذف</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-gray-100 bg-white">
-                    <tr v-for="(v, idx) in form.variants" :key="idx">
-                      <td class="p-2">
-                        <span
-                          class="inline-block w-5 h-5 rounded-full border border-gray-300 shadow-xs"
-                          :style="{ backgroundColor: v.value || v.colorHex }"
-                        />
-                      </td>
-                      <td class="p-2">
-                        <input
-                          v-model="v.alt"
-                          type="text"
-                          class="w-24 px-1.5 py-1 border border-gray-200 rounded text-xs"
-                        />
-                      </td>
-                      <td class="p-2">
-                        <input
-                          v-model.number="v.stock"
-                          type="number"
-                          class="w-16 px-1.5 py-1 border border-gray-200 rounded text-xs"
-                        />
-                      </td>
-                      <td class="p-2">
-                        <input
-                          v-model.number="v.price"
-                          type="number"
-                          class="w-20 px-1.5 py-1 border border-gray-200 rounded text-xs"
-                        />
-                      </td>
-                      <td class="p-2 text-center">
-                        <button
-                          type="button"
-                          @click="removeVariant(idx)"
-                          class="text-rose-500 hover:text-rose-700 p-1"
-                        >
-                          ✕
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </CommonComponentCard>
         </aside>
       </div>
     </form>
@@ -288,8 +241,7 @@
 </template>
 
 <script setup lang="ts">
-import { calculateDiscountPercentage, nearestPersianColorName } from '@nimoura/utils';
-import type { CreateProductPayload } from '@nimoura/shared-types';
+import { formatPrice, toPersianDigits } from '@nimoura/utils';
 
 const props = withDefaults(
   defineProps<{
@@ -309,55 +261,30 @@ const {
   fetchBrandOptions,
 } = useAdminProducts();
 
-const form = reactive({
-  title: '',
-  englishTitle: '',
-  introduce: '',
-  howToUse: '',
-  shortDescription: '',
-  sku: '',
-  type: 'simple' as 'simple' | 'variant',
-  price: '0',
-  priceDiscount: '0',
-  stock: '1',
-  categoryId: null as number | null,
-  brandId: null as number | null,
-  subBrandId: null as number | null,
-  isAmazingOffer: false,
-  isAvailable: true,
-  thumbnail: null as string | null,
-  images: [] as string[],
-  specifications: [{ key: '', value: '' }],
-  tags: [] as any[],
-  variants: [] as any[],
-});
+const {
+  form,
+  discountPercent,
+  variantSummary,
+  bundleComponentsTotal,
+  addVariant,
+  removeVariant,
+  setVariantKind,
+  addBundleItem,
+  removeBundleItem,
+  validateVariant,
+  validate,
+  loadFromProduct,
+  buildPayload,
+} = useProductForm();
 
-const isVariantMode = computed({
-  get: () => form.type === 'variant',
-  set: (val: boolean) => {
-    form.type = val ? 'variant' : 'simple';
-  },
-});
+const showErrors = ref(false);
+const formErrors = ref<string[]>([]);
+const errorBox = ref<HTMLElement | null>(null);
 
 const existingThumbnailUrl = ref<string | null>(null);
 const existingImages = ref<Array<{ id?: string | number; url: string }>>([]);
 const imagesToDelete = ref<Array<string | number>>([]);
 const removeOldThumbnail = ref(false);
-
-const variantColorHex = ref('#B76E79');
-const variantStockInput = ref(10);
-const variantPriceInput = ref(0);
-
-const detectedColorName = computed(() => {
-  if (!variantColorHex.value) return '';
-  return nearestPersianColorName(variantColorHex.value).name;
-});
-
-const calculatedDiscountPercent = computed(() => {
-  const p = Number(form.price) || 0;
-  const d = Number(form.priceDiscount) || 0;
-  return calculateDiscountPercentage(p, d);
-});
 
 // گزینه‌های دسته‌بندی و برند
 const categoryOptions = ref<any[]>([]);
@@ -369,60 +296,21 @@ const subBrandOptions = computed(() => {
   return selectedBrand?.subBrands || [];
 });
 
-const { data: tagTypes } = await useFetch<any>('/api/tags/types');
-const { data: tagTypesLabels } = await useFetch<any>('/api/tags/types-label');
 
 onMounted(async () => {
-  const [cats, brands] = await Promise.all([
-    fetchCategoryOptions(),
-    fetchBrandOptions(),
-  ]);
+  const [cats, brands] = await Promise.all([fetchCategoryOptions(), fetchBrandOptions()]);
   categoryOptions.value = cats;
   brandOptions.value = brands;
 
   if (props.mode === 'update' && props.productId) {
     const existing = await getProductById(props.productId);
-    if (existing) {
-      form.title = existing.title || '';
-      form.englishTitle = existing.englishTitle || '';
-      form.shortDescription = existing.shortDescription || '';
-      form.introduce = existing.introduce || '';
-      form.howToUse = existing.howToUse || '';
-      form.sku = existing.sku || '';
-      form.type = existing.variants?.length ? 'variant' : (existing.type as any) || 'simple';
-      form.price = String(existing.price || 0);
-      form.priceDiscount = String(existing.priceDiscount || 0);
-      form.stock = String(existing.stock ?? 1);
-      form.categoryId = existing.categoryId || existing.category?.id || null;
-      form.brandId = existing.brandId || existing.brand?.id || null;
-      form.subBrandId = existing.subBrandId || existing.subBrand?.id || null;
-      form.isAmazingOffer = !!existing.isAmazingOffer;
-      form.isAvailable = existing.isAvailable !== false;
-      form.specifications = existing.specifications?.length
-        ? existing.specifications
-        : [{ key: '', value: '' }];
-      form.tags = (existing.tags || []).map((t: any) => ({ name: t.name, type: t.type }));
+    if (!existing) return;
 
-      if (existing.thumbnail) {
-        existingThumbnailUrl.value = existing.thumbnail;
-      }
-      if (existing.images?.length) {
-        existingImages.value = existing.images.map((img: any) => ({
-          id: img.id,
-          url: img.url,
-        }));
-      }
+    loadFromProduct(existing);
 
-      if (existing.variants?.length) {
-        form.variants = existing.variants.map((v: any) => ({
-          value: v.colorHex || v.value || '#000000',
-          colorHex: v.colorHex || v.value || '#000000',
-          colorName: v.colorName || v.alt || '',
-          alt: v.alt || v.colorName || v.title || '',
-          stock: v.stock || 0,
-          price: v.price || Number(existing.price),
-        }));
-      }
+    if (existing.thumbnail) existingThumbnailUrl.value = existing.thumbnail;
+    if (existing.images?.length) {
+      existingImages.value = existing.images.map((img: any) => ({ id: img.id, url: img.url }));
     }
   }
 });
@@ -440,49 +328,17 @@ function onRemoveExistingImage(imageItem: { id?: string | number; url: string })
   existingImages.value = existingImages.value.filter((img) => img.url !== imageItem.url);
 }
 
-function addVariant() {
-  if (!variantColorHex.value) return;
-
-  const colorName = detectedColorName.value;
-  const price = variantPriceInput.value > 0 ? variantPriceInput.value : Number(form.priceDiscount || form.price || 0);
-
-  form.variants.push({
-    value: variantColorHex.value,
-    colorHex: variantColorHex.value,
-    colorName,
-    alt: colorName,
-    stock: Number(variantStockInput.value) || 0,
-    price,
-  });
-}
-
-function removeVariant(index: number) {
-  form.variants.splice(index, 1);
-}
-
 async function submitForm() {
-  const payload: CreateProductPayload = {
-    title: form.title.trim(),
-    englishTitle: form.englishTitle?.trim() || undefined,
-    shortDescription: form.shortDescription?.trim() || undefined,
-    introduce: form.introduce || undefined,
-    howToUse: form.howToUse || undefined,
-    sku: form.sku.trim(),
-    type: form.type,
-    price: Number(form.price) || 0,
-    priceDiscount: Number(form.priceDiscount) || 0,
-    stock: form.type === 'variant' ? 0 : Number(form.stock) || 0,
-    isAmazingOffer: form.isAmazingOffer,
-    isAvailable: form.isAvailable,
-    categoryId: Number(form.categoryId),
-    brandId: Number(form.brandId),
-    subBrandId: form.subBrandId ? Number(form.subBrandId) : null,
-    thumbnail: form.thumbnail || undefined,
-    images: form.images.length ? form.images : undefined,
-    specifications: form.specifications.filter((s) => s.key && s.key.trim()),
-    tags: form.tags,
-    variants: form.type === 'variant' ? form.variants : [],
-  };
+  formErrors.value = validate();
+  showErrors.value = true;
+
+  if (formErrors.value.length) {
+    await nextTick();
+    errorBox.value?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  const payload = buildPayload();
 
   let success = false;
   if (props.mode === 'create') {

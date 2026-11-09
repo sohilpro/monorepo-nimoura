@@ -8,6 +8,10 @@ export class AttributeValues extends CustomBaseEntity {
   @Column()
   value!: string; // مانند: "500ml"، "شفاف"، "1kg"
 
+  // کد رنگ به فرمت #RRGGBB (فقط برای ویژگی‌های رنگی)
+  @Column({ type: 'varchar', length: 7, nullable: true })
+  colorHex?: string | null;
+
   @ManyToOne(() => Attributes, (attribute) => attribute.values, {
     onDelete: 'CASCADE',
   })

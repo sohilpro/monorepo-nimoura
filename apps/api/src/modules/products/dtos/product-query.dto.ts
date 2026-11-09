@@ -9,6 +9,12 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { parseIdList } from 'src/modules/tags/utils/parse-id-list';
+
+const toBool = ({ value }: { value: unknown }) => {
+  if (value === undefined || value === null || value === '') return undefined;
+  return value === true || value === 'true' || value === '1' || value === 1;
+};
 
 export const SORTABLE_COLUMNS = [
   'newest',
@@ -105,4 +111,25 @@ export class ProductFilterQueryDto extends PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   subBrandId?: number;
+
+  @ApiPropertyOptional({
+    type: [Number],
+    description: 'شناسه تگ‌ها (جداشده با ویرگول). تگ‌های یک گروه OR و گروه‌های مختلف AND می‌شوند.',
+    example: '3,15,22',
+  })
+  @IsOptional()
+  @Transform(({ value }) => parseIdList(value))
+  tags?: number[];
+
+  @ApiPropertyOptional({ description: 'فقط کالاهای دارای تخفیف' })
+  @IsOptional()
+  @Transform(toBool)
+  @IsBoolean()
+  onSale?: boolean;
+
+  @ApiPropertyOptional({ description: 'فقط کالاهای موجود در انبار' })
+  @IsOptional()
+  @Transform(toBool)
+  @IsBoolean()
+  inStock?: boolean;
 }

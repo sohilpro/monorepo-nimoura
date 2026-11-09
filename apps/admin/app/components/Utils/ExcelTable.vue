@@ -11,6 +11,8 @@ const props = defineProps<{
   columns: Column[];
   rows: {
     title: string;
+    englishTitle?: string;
+    sku?: string;
     price?: number;
     priceDiscount?: number;
     stock?: number;
@@ -27,15 +29,24 @@ const flattenRows = () => {
     if (Array.isArray(item.variants) && item.variants.length > 0) {
       // اگر محصول variant دارد
       item.variants.forEach((variant) => {
+        const display = getVariantDisplay(variant);
         result.push({
-          product: item.title,
-          ...variant,
+          title: item.title,
+          englishTitle: item.englishTitle,
+          sku: variant.sku,
+          price: variant.price,
+          priceDiscount: variant.priceDiscount,
+          stock: variant.stock,
+          variantLabel: display.label,
+          colorHex: display.colorHex ?? '',
         });
       });
     } else {
       // اگر محصول ساده است (فقط price و stock دارد)
       result.push({
         title: item.title,
+        englishTitle: item.englishTitle,
+        sku: item.sku,
         price: item.price,
         stock: item.stock,
         priceDiscount: item.priceDiscount,

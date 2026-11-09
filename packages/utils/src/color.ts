@@ -218,3 +218,115 @@ export function nearestPersianColorName(
   }
   return best;
 }
+
+/* ------------------------------------------------------------------ */
+/* Color conversion helpers (HEX / RGB / HSV) used by the color picker */
+/* ------------------------------------------------------------------ */
+
+export type RgbColor = { r: number; g: number; b: number };
+/** h: 0–360, s and v: 0–1 */
+export type HsvColor = { h: number; s: number; v: number };
+
+const clamp = (n: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, n));
+
+/** Accepts "#abc", "abc", "#aabbcc" or "aabbcc" and returns "#AABBCC", or null when invalid. */
+export function normalizeHex(input: string | null | undefined): `#${string}` | null {
+  if (!input) return null;
+  const raw = input.trim().replace(/^#/, '');
+  if (!/^[0-9a-fA-F]{3}$|^[0-9a-fA-F]{6}$/.test(raw)) return null;
+  const full =
+    raw.length === 3
+      ? raw
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : raw;
+  return `#${full.toUpperCase()}`;
+}
+
+export function hexToRgb(hex: string): RgbColor | null {
+  const normalized = normalizeHex(hex);
+  if (!normalized) return null;
+  return {
+    r: parseInt(normalized.slice(1, 3), 16),
+    g: parseInt(normalized.slice(3, 5), 16),
+    b: parseInt(normalized.slice(5, 7), 16),
+  };
+}
+
+export function rgbToHex(r: number, g: number, b: number): `#${string}` {
+  const part = (n: number) =>
+    clamp(Math.round(Number(n) || 0), 0, 255)
+      .toString(16)
+      .padStart(2, '0');
+  return `#${part(r)}${part(g)}${part(b)}`.toUpperCase() as `#${string}`;
+}
+
+export function rgbToHsv({ r, g, b }: RgbColor): HsvColor {
+  const rn = r / 255;
+  const gn = g / 255;
+  const bn = b / 255;
+  const max = Math.max(rn, gn, bn);
+  const min = Math.min(rn, gn, bn);
+  const d = max - min;
+
+  let h = 0;
+  if (d !== 0) {
+    if (max === rn) h = ((gn - bn) / d) % 6;
+    else if (max === gn) h = (bn - rn) / d + 2;
+    else h = (rn - gn) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+
+  return { h, s: max === 0 ? 0 : d / max, v: max };
+}
+
+export function hsvToRgb({ h, s, v }: HsvColor): RgbColor {
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+  let rgb: [number, number, number];
+
+  if (h < 60) rgb = [c, x, 0];
+  else if (h < 120) rgb = [x, c, 0];
+  else if (h < 180) rgb = [0, c, x];
+  else if (h < 240) rgb = [0, x, c];
+  else if (h < 300) rgb = [x, 0, c];
+  else rgb = [c, 0, x];
+
+  return {
+    r: Math.round((rgb[0] + m) * 255),
+    g: Math.round((rgb[1] + m) * 255),
+    b: Math.round((rgb[2] + m) * 255),
+  };
+}
+
+/** Black or white, whichever is more readable on top of the given background. */
+export function getReadableTextColor(hex: string): '#000000' | '#FFFFFF' {
+  const rgb = hexToRgb(hex);
+  if (!rgb) return '#000000';
+  const luminance = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  return luminance > 0.6 ? '#000000' : '#FFFFFF';
+}
+
+/** Frequently used cosmetics shades, offered as quick picks in the admin color picker. */
+export const COSMETIC_COLOR_PRESETS: ColorEntry[] = [
+  { name: 'رزگلد', hex: '#B76E79' },
+  { name: 'نود', hex: '#D9A98C' },
+  { name: 'هلویی', hex: '#F4B6A0' },
+  { name: 'مرجانی', hex: '#FF7F6B' },
+  { name: 'قرمز کلاسیک', hex: '#D7263D' },
+  { name: 'آلبالویی', hex: '#8B1E3F' },
+  { name: 'شرابی', hex: '#5D1A2E' },
+  { name: 'گلبهی', hex: '#F4C2C2' },
+  { name: 'صورتی', hex: '#FF8FB1' },
+  { name: 'سرخابی', hex: '#C2185B' },
+  { name: 'موو', hex: '#B08AA8' },
+  { name: 'بنفش', hex: '#6D3A9C' },
+  { name: 'قهوه‌ای', hex: '#7B4B35' },
+  { name: 'شکلاتی', hex: '#4A2C20' },
+  { name: 'طلایی', hex: '#D4AF37' },
+  { name: 'سیاه', hex: '#111111' },
+];

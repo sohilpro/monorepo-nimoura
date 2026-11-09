@@ -201,10 +201,11 @@
                           class="flex items-center gap-2 mt-1"
                         >
                           <span
+                            v-if="getVariantDisplay(it.variant).colorHex"
                             class="w-4 h-4 rounded-full border border-gray-300"
-                            :style="{ backgroundColor: it.variant.value }"
+                            :style="{ backgroundColor: getVariantDisplay(it.variant).colorHex! }"
                           ></span>
-                          {{ it.variant.alt }}
+                          {{ getVariantDisplay(it.variant).label }}
                         </div>
                       </div>
                     </div>
@@ -560,7 +561,7 @@ function handleAddProduct(product: any) {
       (!product.selectedVariant && !item.variant) ||
       (product.selectedVariant &&
         item.variant &&
-        item.variant.alt === product.selectedVariant.alt);
+        item.variant.id === product.selectedVariant.id);
     return sameProduct && sameVariant;
   });
 
@@ -585,6 +586,7 @@ function handleAddProduct(product: any) {
           id: product.selectedVariant.id,
           value: product.selectedVariant.value,
           alt: product.selectedVariant.alt,
+          colorHex: product.selectedVariant.colorHex,
           price: product.selectedVariant.price,
         }
       : null,

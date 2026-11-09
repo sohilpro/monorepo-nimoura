@@ -26,9 +26,12 @@
         loading="lazy"
       />
 
+      <!-- AUTOMATIC BADGES: new, bundle, amazing offer, only N left -->
+      <ProductBadges :badges="product.badges" />
+
       <!-- OUT OF STOCK -->
       <div
-        v-if="product.stock === 0"
+        v-if="product.stockStatus === 'out_of_stock' || product.stock === 0"
         class="absolute inset-0 flex items-center justify-center bg-white/75 backdrop-blur-[2px]"
       >
         <span

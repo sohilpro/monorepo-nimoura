@@ -5,3 +5,4 @@ export * from './products.js';
 export * from './pagination.js';
 export * from './banners.js';
 export * from './api.js';
+export * from './tags.js';

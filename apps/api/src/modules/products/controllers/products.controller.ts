@@ -9,12 +9,17 @@ import { ProductResponseDto } from '../dtos/product-response.dto';
 import { plainToInstance } from 'class-transformer';
 import { Public } from 'src/common/auth/auth.decorators';
 import { ProductsService } from '../products.service';
+import { ProductFacetsService } from '../product-facets.service';
+import { parseBool } from '../product-listing-filters.service';
 
 @ApiTags('Store - Products')
 @Public() // دسترسی آزاد و بدون نیاز به توکن برای تمام متدهای این کنترلر
 @Controller('products')
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private readonly facetsService: ProductFacetsService,
+  ) {}
 
   @Get('catalog')
   @ApiOperation({ summary: 'کاتالوگ: همه محصولات فعال با صفحه‌بندی و فیلتر' })
@@ -34,6 +39,24 @@ export class ProductsController {
   })
   async getCatalogFilters() {
     return this.productsService.getCatalogFilters();
+  }
+
+  @Get('catalog/facets')
+  @ApiOperation({
+    summary: 'داده‌های فیلتر سایدبار: گروه‌های تگ با تعداد محصول، بازه قیمت و شمارنده‌ها',
+  })
+  async getFacets(@Query() query: ProductFilterQueryDto) {
+    return this.facetsService.getFacets({
+      search: query.search,
+      brandId: query.brandId,
+      subBrandId: query.subBrandId,
+      categoryId: query.categoryId,
+      minPrice: query.minPrice,
+      maxPrice: query.maxPrice,
+      inStock: parseBool(query.inStock) || parseBool(query.isAvailable),
+      onSale: query.onSale,
+      tagIds: query.tags,
+    });
   }
 
   @Get('catalog/wholesale')

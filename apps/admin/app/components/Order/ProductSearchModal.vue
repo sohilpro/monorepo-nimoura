@@ -92,6 +92,12 @@
                       دارای تنوع
                     </span>
                     <span
+                      v-else-if="product.type === 'bundle'"
+                      class="bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded"
+                    >
+                      پک
+                    </span>
+                    <span
                       class="px-1.5 py-0.5 rounded"
                       :class="
                         product.stock > 0
@@ -147,34 +153,40 @@
             <div
               v-for="(variant, idx) in tempProduct.variants"
               :key="idx"
-              @click="variant.stock > 0 ? (selectedVariant = variant) : null"
+              @click="isVariantSellable(variant) ? (selectedVariant = variant) : null"
               class="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all"
               :class="[
                 selectedVariant === variant
                   ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
                   : 'border-gray-200 hover:border-blue-300',
-                variant.stock === 0
+                !isVariantSellable(variant)
                   ? 'opacity-50 cursor-not-allowed bg-gray-50'
                   : '',
               ]"
             >
               <div class="flex items-center gap-3">
                 <span
-                  v-if="variant.value.startsWith('#')"
+                  v-if="getVariantDisplay(variant).colorHex"
                   class="w-8 h-8 rounded-full border border-gray-300 shadow-sm"
-                  :style="{ backgroundColor: variant.value }"
+                  :style="{ backgroundColor: getVariantDisplay(variant).colorHex! }"
                 ></span>
                 <div class="flex flex-col">
                   <span class="text-sm font-medium text-gray-800">{{
-                    variant.alt
+                    getVariantDisplay(variant).label
                   }}</span>
                   <span class="text-xs text-gray-500"
-                    >موجودی: {{ variant.stock }}</span
+                    >{{ isVariantSellable(variant) ? `موجودی: ${variant.stock}` : 'ناموجود' }}</span
                   >
                 </div>
               </div>
-              <div class="text-sm font-bold text-blue-600">
-                {{ Number(variant.price).toLocaleString() }}
+              <div class="text-sm font-bold text-blue-600 text-end">
+                <span
+                  v-if="getEffectivePrice(variant) !== Number(variant.price)"
+                  class="block text-xs font-normal text-gray-400 line-through"
+                >
+                  {{ Number(variant.price).toLocaleString() }}
+                </span>
+                {{ getEffectivePrice(variant).toLocaleString() }}
               </div>
             </div>
           </div>
@@ -281,7 +293,8 @@ const confirmVariantSelection = () => {
 
 const emitFinalProduct = (product: any, variant: any) => {
   // اگر واریانت انتخاب شده باشد، قیمت و موجودی آن اولویت دارد
-  const finalPrice = variant ? variant.price : product.priceDiscount;
+  const finalPrice = getEffectivePrice(variant ?? product);
+  const display = getVariantDisplay(variant);
 
   const payload = {
     id: product.id,
@@ -295,10 +308,11 @@ const emitFinalProduct = (product: any, variant: any) => {
     selectedVariant: variant
       ? {
           id: variant.id,
-          price: variant.price,
+          price: finalPrice,
           stock: variant.stock,
-          value: variant.value, // کد رنگ یا سایز
-          alt: variant.alt, // نام رنگ (مثلا "شکلاتی")
+          value: display.colorHex ?? display.label, // کد رنگ یا برچسب تنوع
+          alt: display.label, // نام نمایشی (مثلاً «رزگلد» یا «۵۰۰ میلی‌لیتر»)
+          colorHex: display.colorHex,
         }
       : null,
   };

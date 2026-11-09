@@ -90,8 +90,11 @@ const columns = [
     key: 'stock',
     label: 'موجودی',
     formatter: (val: number | null | undefined, row: any) => {
-      if (row.type === 'variant') return 'تنوع رنگ/سایز';
-      return typeof val === 'number' ? (val > 0 ? val : 'اتمام موجودی') : '—';
+      if (typeof val !== 'number') return '—';
+      if (val <= 0) return 'اتمام موجودی';
+      return row.type === 'variant' && row.variants?.length
+        ? `${val} (${row.variants.length} تنوع)`
+        : val;
     },
   },
   {
@@ -121,5 +124,7 @@ const columnsExcel = [
   { key: 'price', label: 'قیمت اصلی' },
   { key: 'priceDiscount', label: 'قیمت تخفیف‌دار' },
   { key: 'stock', label: 'موجودی' },
+  { key: 'variantLabel', label: 'تنوع' },
+  { key: 'colorHex', label: 'کد رنگ' },
 ];
 </script>

@@ -289,12 +289,9 @@ const menuGroups = [
         ],
       },
       {
-        name: "تگ ها",
+        name: "تگ های محصول",
         icon: TableIcon,
-        subItems: [
-          { name: "همه", path: "/tag", pro: false },
-          { name: "ایحاد تگ", path: "/tag/create", pro: false },
-        ],
+        subItems: [{ name: "مدیریت تگ ها", path: "/tag", pro: false }],
       },
       {
         name: "تخفیف ها",

@@ -20,7 +20,17 @@ import {
 import { Brands } from '../brands/entities/brands.entity';
 import { SubBrands } from '../brands/entities/sub-brands.entity';
 import { Categories } from '../categories/entities/categories.entity';
-import { Tags } from 'src/modules/tags/entities/tags.entity';
+import { TagsService } from 'src/modules/tags/services/tags.service';
+import { CategoryTreeService } from './category-tree.service';
+import {
+  ProductListingFilters,
+  parseBool,
+} from './product-listing-filters.service';
+import {
+  buildProductBadges,
+  getDiscountPercent,
+  getStockStatus,
+} from './utils/product-badges';
 // import { getSafeExtension } from 'src/common/utils/extention';
 import { buildPagination } from 'src/common/utils/pagination.helper';
 // import { MediaService } from '../media/media.service';
@@ -30,6 +40,8 @@ import { BundleItems } from './entities/bundle-items.entity';
 import { MediaStaticService } from '../media/media-static.service';
 import { Attributes } from './entities/attributes.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { ProductVariantsService } from './product-variants.service';
+import { ProductBundlesService } from './product-bundles.service';
 import { ProductPriceTiers } from './entities/product-price-tiers.entity';
 
 const MAX_LIMIT = 100;
@@ -54,11 +66,14 @@ export class ProductsService {
     private readonly brandRepo: Repository<Brands>,
     @InjectRepository(SubBrands)
     private readonly subBrandRepo: Repository<SubBrands>,
-    @InjectRepository(Tags)
-    private readonly tagRepo: Repository<Tags>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly mediaService: MediaStaticService,
+    private readonly variantsService: ProductVariantsService,
+    private readonly bundlesService: ProductBundlesService,
+    private readonly tagsService: TagsService,
+    private readonly listingFilters: ProductListingFilters,
+    private readonly categoryTree: CategoryTreeService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
@@ -199,7 +214,7 @@ export class ProductsService {
   async findAllActive(query: ProductFilterQueryDto) {
     const page = Math.max(query.page ?? 1, 1);
     const limit = this.sanitizeLimit(query.limit);
-    const { search, brandId, categoryId, sort = 'newest' } = query;
+    const { sort = 'newest' } = query;
 
     const qb = this.productRepo
       .createQueryBuilder('p')
@@ -207,20 +222,19 @@ export class ProductsService {
       .leftJoinAndSelect('p.brand', 'b')
       .where('p.isAvailable = :isAvailable', { isAvailable: true });
 
-    if (search) {
-      qb.andWhere(
-        '(p.title ILIKE :search OR p.englishTitle ILIKE :search OR p.sku ILIKE :search)',
-        { search: `%${search}%` },
-      );
-    }
-
-    if (brandId) {
-      qb.andWhere('p.brandId = :brandId', { brandId });
-    }
-
-    if (categoryId) {
-      qb.andWhere('p.categoryId = :categoryId', { categoryId });
-    }
+    await this.listingFilters.apply(qb, {
+      search: query.search,
+      brandId: query.brandId,
+      subBrandId: query.subBrandId,
+      categoryIds: query.categoryId
+        ? await this.categoryTree.getTreeIds(query.categoryId)
+        : undefined,
+      minPrice: query.minPrice,
+      maxPrice: query.maxPrice,
+      inStock: parseBool(query.inStock),
+      onSale: query.onSale,
+      tagIds: query.tags,
+    });
 
     this.applySorting(qb, sort);
 
@@ -644,7 +658,7 @@ export class ProductsService {
   async findByCategory(categoryId: number, query: ProductFilterQueryDto = {}) {
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = this.sanitizeLimit(query.limit);
-    const { search, sort = 'newest', isAvailable, minPrice, maxPrice } = query;
+    const { sort = 'newest' } = query;
 
     // ۱. پیدا کردن خودِ دسته‌بندی اصلی همراه با والدش جهت ساخت بریدکرامب
     const categoryRepo = this.productRepo.manager.getRepository(Categories);
@@ -661,21 +675,8 @@ export class ProductsService {
       throw new NotFoundException('دسته‌بندی مورد نظر یافت نشد');
     }
 
-    // ۲. پیدا کردن شناسه این دسته‌بندی و تمام زیردسته‌های آن با CTE بازگشتی در پستگرس
-    const categoryTreeIds: { id: number }[] = await this.dataSource.query(
-      `
-    WITH RECURSIVE cat_tree AS (
-      SELECT id FROM categories WHERE id = $1
-      UNION ALL
-      SELECT c.id FROM categories c
-      INNER JOIN cat_tree ct ON c."parentId" = ct.id
-    )
-    SELECT id FROM cat_tree
-  `,
-      [categoryId],
-    );
-
-    const ids = categoryTreeIds.map((c) => c.id);
+    // ۲. شناسه این دسته‌بندی و تمام زیردسته‌های آن
+    const ids = await this.categoryTree.getTreeIds(categoryId);
     if (!ids.length) {
       const emptyResult = buildPagination([[], 0], page, limit, 'products');
       return {
@@ -689,31 +690,20 @@ export class ProductsService {
       .createQueryBuilder('p')
       .leftJoinAndSelect('p.category', 'c')
       .leftJoinAndSelect('p.brand', 'b')
-      .where('p.categoryId IN (:...ids)', { ids });
+      .where('p.isAvailable = :active', { active: true });
 
-    // اعمال فیلتر موجودی
-    if (typeof isAvailable === 'boolean') {
-      qb.andWhere('p.isAvailable = :isAvailable', { isAvailable });
-    }
-
-    if (minPrice !== undefined && minPrice !== null) {
-      qb.andWhere('p.price >= :minPrice', { minPrice: Number(minPrice) });
-    }
-
-    if (maxPrice !== undefined && maxPrice !== null) {
-      qb.andWhere('p.price <= :maxPrice', { maxPrice: Number(maxPrice) });
-    }
-
-    // فیلتر برند (در صورت ارسال در query)
-    if (query.brandId) {
-      qb.andWhere('p.brandId = :brandId', { brandId: query.brandId });
-    }
-
-    if (search) {
-      qb.andWhere('(p.title ILIKE :search OR p.englishTitle ILIKE :search)', {
-        search: `%${search}%`,
-      });
-    }
+    await this.listingFilters.apply(qb, {
+      search: query.search,
+      brandId: query.brandId,
+      subBrandId: query.subBrandId,
+      categoryIds: ids,
+      minPrice: query.minPrice,
+      maxPrice: query.maxPrice,
+      // سایت قدیمی پارامتر isAvailable را برای «فقط کالاهای موجود» می‌فرستد
+      inStock: parseBool(query.inStock) || parseBool(query.isAvailable),
+      onSale: query.onSale,
+      tagIds: query.tags,
+    });
 
     this.applySorting(qb, sort);
 
@@ -780,28 +770,17 @@ export class ProductsService {
         subBrand: true,
         tags: true,
         images: true,
-        priceTiers: true, // پله‌های قیمتی محصول ساده
         variants: {
           attributeValues: {
             attribute: true,
           },
-          priceTiers: true, // پله‌های قیمتی واریانت‌ها
         },
         bundleItems: {
           product: true,
           variant: true,
         },
       },
-      order: {
-        priceTiers: {
-          minQuantity: 'ASC', // سورت صعودی پله‌های محصول
-        },
-        variants: {
-          priceTiers: {
-            minQuantity: 'ASC', // سورت صعودی پله‌های هر واریانت
-          },
-        },
-      },
+      order: { variants: { id: 'ASC' } },
     });
 
     if (!product) {
@@ -816,26 +795,10 @@ export class ProductsService {
       });
     }
 
-    // ۲. حذف چرخه‌های product و variant از پله‌های خود محصول
-    if (Array.isArray(product.priceTiers)) {
-      product.priceTiers = product.priceTiers.map((tier) => {
-        const { product: _, variant: __, ...cleanTier } = tier;
-        return cleanTier as any;
-      });
-    }
-
-    // ۳. حذف چرخه product و تمیزکاری پله‌ها از داخل واریانت‌ها
+    // ۲. حذف چرخه product از داخل واریانت‌ها
     if (Array.isArray(product.variants)) {
       product.variants = product.variants.map((variant) => {
         const { product: _, ...cleanVariant } = variant;
-
-        if (Array.isArray(cleanVariant.priceTiers)) {
-          cleanVariant.priceTiers = cleanVariant.priceTiers.map((tier) => {
-            const { product: __, variant: ___, ...cleanTier } = tier;
-            return cleanTier as any;
-          });
-        }
-
         return cleanVariant as any;
       });
     }
@@ -853,7 +816,7 @@ export class ProductsService {
         category: true,
         brand: true,
         variants: {
-          attributeValues: true,
+          attributeValues: { attribute: true },
           priceTiers: true, // لود پله‌های هر واریانت
         },
         priceTiers: true, // لود پله‌های محصول ساده
@@ -961,9 +924,8 @@ export class ProductsService {
       brandId,
       subBrandId,
       variants,
-      tags,
+      tagIds,
       bundleItems,
-      priceTiers: rawProductPriceTiers, // پله‌های محصول ساده
       images: rawGalleryUrls,
       specifications: rawSpecs,
       ...rest
@@ -982,19 +944,11 @@ export class ProductsService {
     if (subBrandId && !subBrand)
       throw new NotFoundException('زیربرند یافت نشد');
 
-    const resolvedTags = Array.isArray(tags)
-      ? await this.resolveTags(tags)
+    const resolvedTags = Array.isArray(tagIds)
+      ? await this.tagsService.findActiveByIdsOrFail(tagIds)
       : [];
 
-    // بررسی سازگاری نوع محصول پک
-    if (
-      rest.type === 'bundle' &&
-      (!Array.isArray(bundleItems) || bundleItems.length === 0)
-    ) {
-      throw new BadRequestException(
-        'برای ساخت محصول از نوع پک، حداقل یک آیتم باید به عنوان اقلام پک مشخص شود.',
-      );
-    }
+    this.assertDiscountValid(rest.price, rest.priceDiscount);
 
     // پاکسازی امن مشخصات فنی
     const cleanSpecifications = Array.isArray(rawSpecs)
@@ -1034,236 +988,24 @@ export class ProductsService {
 
         const newProduct = await manager.save(Products, product);
 
-        // ب) پردازش و ذخیره پله‌های قیمتی محصول ساده (در صورتی که نوع ساده باشد)
-        if (
-          newProduct.type === 'simple' &&
-          Array.isArray(rawProductPriceTiers) &&
-          rawProductPriceTiers.length > 0
-        ) {
-          // حذف تعدادهای تکراری و مرتب‌سازی
-          const cleanTiersMap = new Map<number, number>();
-          for (const t of rawProductPriceTiers) {
-            const qty = Number(t.minQuantity);
-            const price = Number(t.price);
-            if (qty > 1 && price > 0) {
-              cleanTiersMap.set(qty, price);
-            }
-          }
-
-          const tierEntities = Array.from(cleanTiersMap.entries()).map(
-            ([minQuantity, price]) =>
-              manager.create(ProductPriceTiers, {
-                product: newProduct,
-                variant: null,
-                minQuantity,
-                price,
-              }),
+        // ب) تنوع‌ها (حجمی/وزنی/رنگی)؛ قیمت و موجودی محصول از تنوع‌ها مشتق می‌شود
+        if (newProduct.type === 'variant') {
+          newProduct.variants = await this.variantsService.sync(
+            manager,
+            newProduct,
+            [],
+            variants,
           );
-
-          if (tierEntities.length > 0) {
-            newProduct.priceTiers = await manager.save(
-              ProductPriceTiers,
-              tierEntities,
-            );
-          }
+          const pricing = this.variantsService.derivePricing(
+            newProduct.variants,
+          );
+          await manager.update(Products, newProduct.id, pricing);
+          Object.assign(newProduct, pricing);
         }
 
-        // ج) پردازش و ذخیره واریانت‌ها به همراه پله‌های قیمتی هر واریانت
-        if (
-          newProduct.type === 'variant' &&
-          Array.isArray(variants) &&
-          variants.length > 0
-        ) {
-          const resolvedAttrValueMap = new Map<string, AttributeValues>();
-
-          for (const v of variants) {
-            const rawAttrs = v.attributeValues || [];
-            for (const attrItem of rawAttrs) {
-              const attrName = (attrItem.attributeName || 'ویژگی').trim();
-              const attrVal = String(attrItem.value || '').trim();
-              const key = `${attrName}:::${attrVal}`;
-
-              if (!resolvedAttrValueMap.has(key) && attrVal !== '') {
-                let attributeEntity = await manager.findOne(Attributes, {
-                  where: { name: attrName },
-                });
-
-                if (!attributeEntity) {
-                  attributeEntity = await manager.save(
-                    Attributes,
-                    manager.create(Attributes, { name: attrName }),
-                  );
-                }
-
-                let attrValEntity = await manager.findOne(AttributeValues, {
-                  where: {
-                    value: attrVal,
-                    attribute: { id: attributeEntity.id },
-                  },
-                  relations: { attribute: true },
-                });
-
-                if (!attrValEntity) {
-                  attrValEntity = await manager.save(
-                    AttributeValues,
-                    manager.create(AttributeValues, {
-                      value: attrVal,
-                      attribute: attributeEntity,
-                    }),
-                  );
-                }
-
-                resolvedAttrValueMap.set(key, attrValEntity);
-              }
-            }
-          }
-
-          const savedVariantEntities: ProductVariants[] = [];
-
-          for (let idx = 0; idx < variants.length; idx++) {
-            const v = variants[idx];
-            const matchedAttrValues: AttributeValues[] = [];
-
-            if (Array.isArray(v.attributeValues)) {
-              for (const item of v.attributeValues) {
-                const key = `${(item.attributeName || 'ویژگی').trim()}:::${String(item.value || '').trim()}`;
-                const found = resolvedAttrValueMap.get(key);
-                if (found) matchedAttrValues.push(found);
-              }
-            }
-
-            const variantImages = Array.isArray(v.images)
-              ? v.images
-              : v.image
-                ? [v.image]
-                : [];
-
-            const safeSku = v.sku?.trim()
-              ? v.sku.trim()
-              : `VAR-${newProduct.id}-${idx + 1}-${Date.now().toString(36).slice(-3)}`;
-
-            // ۱. ذخیره خود واریانت
-            const variantEntity = manager.create(ProductVariants, {
-              sku: safeSku,
-              price: Number(v.price) || 0,
-              priceDiscount: Number(v.priceDiscount) || 0,
-              percentageDiscount: Number(v.percentageDiscount) || 0,
-              stock: Number(v.stock) || 0,
-              isAvailable: v.isAvailable ?? true,
-              images: variantImages,
-              product: newProduct,
-              attributeValues: matchedAttrValues,
-            });
-
-            const savedVariant = await manager.save(
-              ProductVariants,
-              variantEntity,
-            );
-
-            // ۲. ذخیره پله‌های قیمتی اختصاصی این واریانت
-            if (Array.isArray(v.priceTiers) && v.priceTiers.length > 0) {
-              const vTierMap = new Map<number, number>();
-              for (const t of v.priceTiers) {
-                const qty = Number(t.minQuantity);
-                const price = Number(t.price);
-                if (qty > 1 && price > 0) {
-                  vTierMap.set(qty, price);
-                }
-              }
-
-              const vTierEntities = Array.from(vTierMap.entries()).map(
-                ([minQuantity, price]) =>
-                  manager.create(ProductPriceTiers, {
-                    product: null,
-                    variant: savedVariant,
-                    minQuantity,
-                    price,
-                  }),
-              );
-
-              if (vTierEntities.length > 0) {
-                savedVariant.priceTiers = await manager.save(
-                  ProductPriceTiers,
-                  vTierEntities,
-                );
-              }
-            }
-
-            savedVariantEntities.push(savedVariant);
-          }
-
-          newProduct.variants = savedVariantEntities;
-
-          // انتساب مدیاها
-          for (const savedVariant of newProduct.variants) {
-            if (savedVariant.images?.length) {
-              await this.mediaService
-                .reassignOwner(
-                  savedVariant.images,
-                  MediaOwnerType.PRODUCT_VARIANT,
-                  String(savedVariant.id),
-                )
-                .catch(() => {});
-            }
-          }
-        }
-
-        // د) پردازش و ذخیره اقلام پک (Bundle)
-        if (
-          newProduct.type === 'bundle' &&
-          Array.isArray(bundleItems) &&
-          bundleItems.length > 0
-        ) {
-          const productIds = Array.from(
-            new Set(bundleItems.map((item: any) => item.productId)),
-          );
-          const variantIds = Array.from(
-            new Set(
-              bundleItems
-                .map((item: any) => item.variantId)
-                .filter((id: any): id is number => typeof id === 'number'),
-            ),
-          );
-
-          const [foundProducts, foundVariants] = await Promise.all([
-            manager.findBy(Products, { id: In(productIds) }),
-            variantIds.length > 0
-              ? manager.findBy(ProductVariants, { id: In(variantIds) })
-              : Promise.resolve([]),
-          ]);
-
-          if (foundProducts.length !== productIds.length) {
-            throw new BadRequestException(
-              'یک یا چند محصول انتخاب‌شده برای اقلام پک یافت نشدند.',
-            );
-          }
-
-          if (foundVariants.length !== variantIds.length) {
-            throw new BadRequestException(
-              'یک یا چند واریانت انتخاب‌شده برای اقلام پک یافت نشدند.',
-            );
-          }
-
-          const bundleItemEntities = bundleItems.map((item: any) => {
-            const targetProduct = foundProducts.find(
-              (p) => p.id === item.productId,
-            );
-            const targetVariant = item.variantId
-              ? foundVariants.find((v) => v.id === item.variantId)
-              : undefined;
-
-            return manager.create(BundleItems, {
-              bundle: newProduct,
-              product: targetProduct,
-              variant: targetVariant,
-              quantity: item.quantity || 1,
-            });
-          });
-
-          newProduct.bundleItems = await manager.save(
-            BundleItems,
-            bundleItemEntities,
-          );
+        // ج) اقلام پک (باندل)
+        if (newProduct.type === 'bundle') {
+          await this.bundlesService.sync(manager, newProduct, bundleItems);
         }
 
         // هـ) ثبت تصاویر گالری اولیه
@@ -1375,9 +1117,7 @@ export class ProductsService {
       where: { id },
       relations: {
         images: true,
-        priceTiers: true,
         variants: {
-          priceTiers: true,
           attributeValues: {
             attribute: true,
           },
@@ -1398,12 +1138,14 @@ export class ProductsService {
       imagesToDelete,
       images: incomingGallery,
       variants,
-      tags,
+      tagIds,
       removeOldThumbnail,
       specifications: rawSpecs,
-      priceTiers: incomingProductPriceTiers,
+      bundleItems,
       ...rest
     } = dto as any;
+
+    const previousType = product.type;
 
     // ۱. بررسی و به‌روزرسانی روابط پایه در صورت تغییر
     if (categoryId && categoryId !== product.category?.id) {
@@ -1424,8 +1166,8 @@ export class ProductsService {
       product.subBrand = sb;
     }
 
-    const resolvedTags = Array.isArray(tags)
-      ? await this.resolveTags(tags)
+    const resolvedTags = Array.isArray(tagIds)
+      ? await this.tagsService.findActiveByIdsOrFail(tagIds)
       : undefined;
 
     // پاکسازی مشخصات فنی
@@ -1586,253 +1328,34 @@ export class ProductsService {
             });
           }
 
-          // ۵. به‌روزرسانی پله‌های قیمتی محصول ساده
-          if (incomingProductPriceTiers !== undefined) {
-            await manager.delete(ProductPriceTiers, {
-              product: { id: product.id },
-            });
+          this.assertDiscountValid(product.price, product.priceDiscount);
 
-            if (
-              Array.isArray(incomingProductPriceTiers) &&
-              incomingProductPriceTiers.length > 0
-            ) {
-              const cleanTiersMap = new Map<number, number>();
-              for (const t of incomingProductPriceTiers) {
-                const qty = Number(t.minQuantity);
-                const price = Number(t.price);
-                if (qty > 1 && price > 0) {
-                  cleanTiersMap.set(qty, price);
-                }
-              }
-
-              const tierEntities = Array.from(cleanTiersMap.entries()).map(
-                ([minQuantity, price]) =>
-                  manager.create(ProductPriceTiers, {
-                    product,
-                    variant: null,
-                    minQuantity,
-                    price,
-                  }),
+          // ۵. تنوع‌ها و اقلام پک بر اساس نوع نهایی محصول
+          if (product.type === 'variant') {
+            const hasExisting = (product.variants ?? []).length > 0;
+            if (Array.isArray(variants) || !hasExisting) {
+              product.variants = await this.variantsService.sync(
+                manager,
+                product,
+                product.variants ?? [],
+                variants,
               );
-
-              if (tierEntities.length > 0) {
-                product.priceTiers = await manager.save(
-                  ProductPriceTiers,
-                  tierEntities,
-                );
-              } else {
-                product.priceTiers = [];
-              }
-            } else {
-              product.priceTiers = [];
             }
+            Object.assign(
+              product,
+              this.variantsService.derivePricing(product.variants ?? []),
+            );
+          } else if ((product.variants ?? []).length > 0) {
+            await this.variantsService.removeAll(manager, product.variants!);
+            product.variants = [];
           }
 
-          // ۶. به‌روزرسانی هوشمند واریانت‌ها (حل خطای کلید خارجی order_items با Upsert)
-          if (Array.isArray(variants)) {
-            const currentVariants = product.variants || [];
-            const oldVariantImageUrls = currentVariants.flatMap(
-              (v) => v.images || [],
-            );
-
-            const incomingVariantIds = variants
-              .map((v: any) => v.id)
-              .filter(
-                (id: any): id is number => typeof id === 'number' && !isNaN(id),
-              );
-
-            // شناسایی واریانت‌های حذف‌شده از فرم
-            const variantsToDelete = currentVariants.filter(
-              (cv) => !incomingVariantIds.includes(cv.id),
-            );
-
-            for (const vToDelete of variantsToDelete) {
-              try {
-                await manager.delete(ProductPriceTiers, {
-                  variant: { id: vToDelete.id },
-                });
-                await manager.remove(ProductVariants, vToDelete);
-              } catch (err: any) {
-                // اگر در order_items بود، غیرفعال می‌شود تا یکپارچگی ارجاعی حفظ گردد
-                vToDelete.isAvailable = false;
-                vToDelete.stock = 0;
-                await manager.save(ProductVariants, vToDelete);
-              }
+          if (product.type === 'bundle') {
+            if (Array.isArray(bundleItems) || previousType !== 'bundle') {
+              await this.bundlesService.sync(manager, product, bundleItems);
             }
-
-            if (variants.length > 0) {
-              const resolvedAttrValueMap = new Map<string, AttributeValues>();
-
-              for (const v of variants) {
-                const rawAttrs = v.attributeValues || [];
-                for (const attrItem of rawAttrs) {
-                  const attrName = (attrItem.attributeName || 'ویژگی').trim();
-                  const attrVal = String(attrItem.value || '').trim();
-                  const key = `${attrName}:::${attrVal}`;
-
-                  if (!resolvedAttrValueMap.has(key) && attrVal !== '') {
-                    let attributeEntity = await manager.findOne(Attributes, {
-                      where: { name: attrName },
-                    });
-
-                    if (!attributeEntity) {
-                      attributeEntity = await manager.save(
-                        Attributes,
-                        manager.create(Attributes, { name: attrName }),
-                      );
-                    }
-
-                    let attrValEntity = await manager.findOne(AttributeValues, {
-                      where: {
-                        value: attrVal,
-                        attribute: { id: attributeEntity.id },
-                      },
-                      relations: { attribute: true },
-                    });
-
-                    if (!attrValEntity) {
-                      attrValEntity = await manager.save(
-                        AttributeValues,
-                        manager.create(AttributeValues, {
-                          value: attrVal,
-                          attribute: attributeEntity,
-                        }),
-                      );
-                    }
-
-                    resolvedAttrValueMap.set(key, attrValEntity);
-                  }
-                }
-              }
-
-              const finalVariants: ProductVariants[] = [];
-
-              for (let idx = 0; idx < variants.length; idx++) {
-                const v = variants[idx];
-                const matchedAttrValues: AttributeValues[] = [];
-
-                if (Array.isArray(v.attributeValues)) {
-                  for (const item of v.attributeValues) {
-                    const key = `${(item.attributeName || 'ویژگی').trim()}:::${String(item.value || '').trim()}`;
-                    const found = resolvedAttrValueMap.get(key);
-                    if (found) matchedAttrValues.push(found);
-                  }
-                }
-
-                const variantImages = Array.isArray(v.images)
-                  ? v.images
-                  : v.image
-                    ? [v.image]
-                    : [];
-
-                let variantEntity: ProductVariants | null = null;
-                if (v.id) {
-                  variantEntity =
-                    currentVariants.find((cv) => cv.id === Number(v.id)) ||
-                    null;
-                }
-
-                const safeSku = v.sku?.trim()
-                  ? v.sku.trim()
-                  : `VAR-${product.id}-${idx + 1}-${Date.now().toString(36).slice(-3)}`;
-
-                if (variantEntity) {
-                  variantEntity.sku = safeSku;
-                  variantEntity.price = Number(v.price) || 0;
-                  variantEntity.priceDiscount = Number(v.priceDiscount) || 0;
-                  variantEntity.percentageDiscount =
-                    Number(v.percentageDiscount) || 0;
-                  variantEntity.stock = Number(v.stock) || 0;
-                  variantEntity.isAvailable = v.isAvailable ?? true;
-                  variantEntity.images = variantImages;
-                  variantEntity.attributeValues = matchedAttrValues;
-                } else {
-                  variantEntity = manager.create(ProductVariants, {
-                    sku: safeSku,
-                    price: Number(v.price) || 0,
-                    priceDiscount: Number(v.priceDiscount) || 0,
-                    percentageDiscount: Number(v.percentageDiscount) || 0,
-                    stock: Number(v.stock) || 0,
-                    isAvailable: v.isAvailable ?? true,
-                    images: variantImages,
-                    product,
-                    attributeValues: matchedAttrValues,
-                  });
-                }
-
-                const savedVariant = await manager.save(
-                  ProductVariants,
-                  variantEntity,
-                );
-
-                // به‌روزرسانی پله‌های قیمتی این واریانت
-                await manager.delete(ProductPriceTiers, {
-                  variant: { id: savedVariant.id },
-                });
-
-                if (Array.isArray(v.priceTiers) && v.priceTiers.length > 0) {
-                  const vTierMap = new Map<number, number>();
-                  for (const t of v.priceTiers) {
-                    const qty = Number(t.minQuantity);
-                    const price = Number(t.price);
-                    if (qty > 1 && price > 0) {
-                      vTierMap.set(qty, price);
-                    }
-                  }
-
-                  const vTierEntities = Array.from(vTierMap.entries()).map(
-                    ([minQuantity, price]) =>
-                      manager.create(ProductPriceTiers, {
-                        product: null,
-                        variant: savedVariant,
-                        minQuantity,
-                        price,
-                      }),
-                  );
-
-                  if (vTierEntities.length > 0) {
-                    savedVariant.priceTiers = await manager.save(
-                      ProductPriceTiers,
-                      vTierEntities,
-                    );
-                  } else {
-                    savedVariant.priceTiers = [];
-                  }
-                } else {
-                  savedVariant.priceTiers = [];
-                }
-
-                finalVariants.push(savedVariant);
-              }
-
-              product.variants = finalVariants;
-
-              for (const savedVariant of product.variants) {
-                if (savedVariant.images?.length) {
-                  await this.mediaService
-                    .reassignOwner(
-                      savedVariant.images,
-                      MediaOwnerType.PRODUCT_VARIANT,
-                      String(savedVariant.id),
-                    )
-                    .catch(() => {});
-                }
-              }
-
-              const newVariantImageUrls = product.variants.flatMap(
-                (v) => v.images || [],
-              );
-              const urlsToRemove = oldVariantImageUrls.filter(
-                (url) => !newVariantImageUrls.includes(url),
-              );
-              if (urlsToRemove.length > 0) {
-                await this.mediaService
-                  .deleteByUrls(urlsToRemove)
-                  .catch(() => {});
-              }
-            } else {
-              product.variants = [];
-            }
+          } else if (previousType === 'bundle') {
+            await this.bundlesService.clear(manager, product);
           }
 
           // ۷. به‌روزرسانی تگ‌ها
@@ -1904,7 +1427,22 @@ export class ProductsService {
       });
     }
 
+    if (Array.isArray(product.bundleItems)) {
+      product.bundleItems = product.bundleItems.map((item: any) => {
+        delete item.bundle;
+        return item;
+      });
+    }
+
     return product;
+  }
+
+  private assertDiscountValid(price?: number, discount?: number): void {
+    if (discount && discount > 0 && price !== undefined && discount >= price) {
+      throw new BadRequestException(
+        'قیمت پس از تخفیف باید کمتر از قیمت اصلی باشد.',
+      );
+    }
   }
 
   private generateSlug(title: string): string {
@@ -1913,11 +1451,6 @@ export class ProductsService {
       .toLowerCase()
       .replace(/[\s\-_]+/g, '-')
       .replace(/[^\u0600-\u06FF\w\-]+/g, '');
-  }
-
-  private async resolveTags(tags: any[]): Promise<any[]> {
-    // پیاده‌سازی متد رزولوشن تگ‌های موجود در سرویس شما
-    return tags;
   }
 
   /**
@@ -2044,17 +1577,13 @@ export class ProductsService {
   }
 
   private calculateSingleDiscount(product: Products): any {
-    const price = Number(product.price) || 0;
-    const discountPrice = Number(product.priceDiscount) || 0;
-
-    let discountPercent = 0;
-    if (price > 0 && discountPrice > 0 && discountPrice < price) {
-      discountPercent = Math.round(((price - discountPrice) / price) * 100);
-    }
+    const discountPercent = getDiscountPercent(product);
 
     return {
       ...product,
       discountPercent,
+      stockStatus: getStockStatus(product),
+      badges: buildProductBadges(product),
     };
   }
 

@@ -1,6 +1,6 @@
 <template>
   <!-- لودینگ اولیه‌ی صفحه: به‌جای اسپینر تمام‌صفحه، اسکلتون هم‌شکل چیدمان واقعی -->
-  <main v-if="pending" class="container">
+  <main v-if="pending && !products" class="container">
     <div class="mt-4 flex flex-col gap-4 lg:mt-5 lg:flex-row lg:gap-5">
       <div class="hidden lg:block lg:w-1/4">
         <Skeleton width="100%" height="26rem" border-radius="1rem" />
@@ -19,13 +19,14 @@
     <UtilsBreadCrumb v-if="hasProducts" :items="breadcrumbItems" />
 
     <div
-      v-if="hasProducts"
+      v-if="hasProducts || hasActiveFilters"
       class="mt-4 flex flex-col gap-4 lg:mt-5 lg:flex-row lg:gap-5"
     >
       <!-- SIDE FILTER BOX (desktop) -->
       <CategoriesUtilsSideFilterBox
         :key="resetKey"
         :clear-filters="clearFilters"
+        :facets="facets"
       />
 
       <!-- Mobile filter/sort overlay backdrop -->
@@ -63,6 +64,12 @@
           >
             <i class="pi pi-filter text-sm!" />
             <span>فیلتر</span>
+            <span
+              v-if="activeFilterCount"
+              class="rounded-full bg-nimoura-primary px-1.5 text-[10px] leading-4 text-white"
+            >
+              {{ numberFormat(activeFilterCount) }}
+            </span>
           </button>
 
           <ClientOnly>
@@ -70,6 +77,7 @@
               :visible="filterModal"
               :close="handleOverlay"
               :clear-filters="clearFilters"
+              :facets="facets"
             />
           </ClientOnly>
 
@@ -101,9 +109,27 @@
           </span>
         </div>
 
+        <!-- ACTIVE FILTER CHIPS -->
+        <CategoriesUtilsActiveFilters
+          :groups="facets?.groups ?? []"
+          :clear-filters="clearFilters"
+        />
+
+        <!-- NO RESULT FOR THE CHOSEN FILTERS -->
+        <UtilsEmptyState
+          v-if="!displayProducts.length && !pending"
+          :primary="{ label: 'حذف فیلترها' }"
+          @primary="clearFilters"
+          title="محصولی با این فیلترها پیدا نشد."
+          description="یک یا چند فیلتر را بردارید تا نتایج بیشتری ببینید."
+          icon="pi pi-filter-slash"
+          class="mt-2"
+        />
+
         <!-- PRODUCTS GRID -->
         <div
-          class="grid grid-cols-2 gap-2 xs:gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-3 lg:gap-3 xl:grid-cols-4 2xl:grid-cols-5"
+          class="grid grid-cols-2 gap-2 transition-opacity xs:gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-3 lg:gap-3 xl:grid-cols-4 2xl:grid-cols-5"
+          :class="{ 'pointer-events-none opacity-60': pending }"
         >
           <CategoriesUtilsProductItem :products="displayProducts" />
         </div>
@@ -214,6 +240,25 @@ const {
   // پی‌لود SSR قدیمی رو نادیده بگیر؛ همیشه دیتای تازه بگیر
   getCachedData: () => undefined,
 });
+
+// ─── Facets (tag groups with counts, price range) ─────────────
+const { activeCount: activeFilterCount } = useProductFilters();
+const hasActiveFilters = computed(() => activeFilterCount.value > 0);
+
+const facetQuery = computed(() => {
+  const { page: _page, sort: _sort, ...filters } = route.query;
+  return { ...filters, id };
+});
+
+const { data: facetsResponse }: any = useLazyAsyncData(
+  () => `facets-${route.fullPath}`,
+  () => $fetch("/api/products/facets", { query: facetQuery.value }),
+  { server: false, watch: [facetQuery], getCachedData: () => undefined },
+);
+
+const facets = computed(
+  () => facetsResponse.value?.data ?? facetsResponse.value ?? null,
+);
 
 const totalPages = computed(() => products.value?.data?.totalPages ?? 1);
 const totalCount = computed(() => products.value?.data?.total ?? 0);

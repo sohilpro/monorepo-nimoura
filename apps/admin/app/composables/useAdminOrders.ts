@@ -1,102 +1,11 @@
 import {
-  type Order,
-  type AdminOrderListItem,
-  type AdminOrderStatistics,
   type UpdateOrderAdminPayload,
-  type CreateOrderAdminPayload,
-  type PaginatedResponse,
   OrderStatus,
 } from '@nimoura/shared-types';
-
-export interface OrderQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: OrderStatus | string;
-  userId?: number;
-  dateFrom?: string;
-  dateTo?: string;
-}
 
 export function useAdminOrders() {
   const toast = useAppToast();
   const { isLoading } = useLoading();
-
-  /**
-   * دریافت لیست سفارش‌ها برای جدول مدیریت با فیلتر، جستجو و صفحه‌بندی
-   */
-  async function getOrdersList(params: OrderQueryParams = {}): Promise<PaginatedResponse<AdminOrderListItem>> {
-    try {
-      const response = await $fetch<any>('/api/orders/list', {
-        method: 'GET',
-        query: {
-          page: params.page || 1,
-          limit: params.limit || 15,
-          search: params.search || undefined,
-          status: params.status || undefined,
-          userId: params.userId || undefined,
-          dateFrom: params.dateFrom || undefined,
-          dateTo: params.dateTo || undefined,
-        },
-      });
-
-      const data = response?.data ?? response;
-      const items = data?.items ?? data?.orders ?? [];
-      const total = data?.total ?? data?.meta?.total ?? items.length;
-      const page = data?.page ?? data?.meta?.page ?? params.page ?? 1;
-      const limit = data?.limit ?? data?.meta?.limit ?? params.limit ?? 15;
-      const totalPages = data?.totalPages ?? data?.meta?.totalPages ?? Math.ceil(total / limit);
-
-      return {
-        items,
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      };
-    } catch (error: any) {
-      toast.add({
-        severity: 'error',
-        summary: 'خطا',
-        detail: error?.data?.message || error?.statusMessage || 'خطا در بارگذاری سفارشات',
-        life: 4000,
-      });
-      return {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 15,
-        totalPages: 0,
-        hasNextPage: false,
-        hasPrevPage: false,
-      };
-    }
-  }
-
-  /**
-   * دریافت جزئیات کامل یک سفارش
-   */
-  async function getOrderById(id: number | string): Promise<Order | null> {
-    isLoading.value = true;
-    try {
-      const response = await $fetch<any>(`/api/orders/${id}`, {
-        method: 'GET',
-      });
-      return (response?.data ?? response) as Order;
-    } catch (error: any) {
-      toast.add({
-        severity: 'error',
-        summary: 'خطا',
-        detail: error?.data?.message || error?.statusMessage || 'خطا در واکشی اطلاعات سفارش',
-        life: 4000,
-      });
-      return null;
-    } finally {
-      isLoading.value = false;
-    }
-  }
 
   /**
    * به‌روزرسانی مشخصات سفارش (اقلام، مبالغ، گیرنده، وضعیت)
@@ -127,49 +36,6 @@ export function useAdminOrders() {
       return false;
     } finally {
       isLoading.value = false;
-    }
-  }
-
-  /**
-   * حذف سفارش
-   */
-  async function deleteOrder(id: number | string): Promise<boolean> {
-    isLoading.value = true;
-    try {
-      const response = await $fetch<any>(`/api/orders/${id}`, {
-        method: 'DELETE',
-      });
-
-      toast.add({
-        severity: 'success',
-        summary: 'موفقیت',
-        detail: response?.message || 'سفارش با موفقیت حذف شد',
-        life: 3000,
-      });
-
-      return true;
-    } catch (error: any) {
-      toast.add({
-        severity: 'error',
-        summary: 'خطا',
-        detail: error?.data?.message || error?.statusMessage || 'خطا در حذف سفارش',
-        life: 4000,
-      });
-      return false;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /**
-   * دریافت آمار و گزارش کلی سفارش‌ها
-   */
-  async function getStatistics(): Promise<AdminOrderStatistics | null> {
-    try {
-      const response = await $fetch<any>('/api/orders/statistics');
-      return response?.data ?? response;
-    } catch {
-      return null;
     }
   }
 
@@ -216,11 +82,7 @@ export function useAdminOrders() {
   }
 
   return {
-    getOrdersList,
-    getOrderById,
     updateOrder,
-    deleteOrder,
-    getStatistics,
     getStatusLabel,
     getStatusBadgeClass,
   };

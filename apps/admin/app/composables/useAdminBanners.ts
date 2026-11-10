@@ -3,85 +3,13 @@ import {
   type BannerPosition,
   type CreateBannerPayload,
   type UpdateBannerPayload,
-  type PaginatedResponse,
   BannerDevice,
   BannerStatus,
 } from '@nimoura/shared-types';
 
-export interface BannerQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  positionId?: number;
-  status?: BannerStatus | string;
-  device?: BannerDevice | string;
-  sortBy?: string;
-  sortDir?: 'ASC' | 'DESC' | 'asc' | 'desc';
-}
-
 export function useAdminBanners() {
   const toast = useAppToast();
   const { isLoading } = useLoading();
-
-  /**
-   * دریافت لیست بنرها با فیلتر، صفحه‌بندی و مرتب‌سازی
-   */
-  async function getBannersList(
-    params: BannerQueryParams = {},
-  ): Promise<PaginatedResponse<Banner>> {
-    try {
-      const response = await $fetch<any>('/api/banner/list', {
-        method: 'GET',
-        query: {
-          page: params.page || 1,
-          limit: params.limit || 15,
-          search: params.search || undefined,
-          positionId: params.positionId || undefined,
-          status: params.status || undefined,
-          device: params.device || undefined,
-          sortBy: params.sortBy || 'sortOrder',
-          sortDir: params.sortDir || 'ASC',
-        },
-      });
-
-      const data = response?.data ?? response;
-      const items = data?.items ?? data?.banners ?? data?.data ?? [];
-      const total = data?.total ?? data?.meta?.total ?? items.length;
-      const page = data?.page ?? data?.meta?.page ?? params.page ?? 1;
-      const limit = data?.limit ?? data?.meta?.limit ?? params.limit ?? 15;
-      const totalPages =
-        data?.totalPages ?? data?.meta?.totalPages ?? Math.ceil(total / limit);
-
-      return {
-        items,
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      };
-    } catch (error: any) {
-      toast.add({
-        severity: 'error',
-        summary: 'خطا',
-        detail:
-          error?.data?.message ||
-          error?.statusMessage ||
-          'خطا در بارگذاری لیست بنرها',
-        life: 4000,
-      });
-      return {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 15,
-        totalPages: 0,
-        hasNextPage: false,
-        hasPrevPage: false,
-      };
-    }
-  }
 
   /**
    * دریافت اطلاعات تکی یک بنر
@@ -181,39 +109,6 @@ export function useAdminBanners() {
   }
 
   /**
-   * حذف بنر
-   */
-  async function deleteBanner(id: number | string): Promise<boolean> {
-    isLoading.value = true;
-    try {
-      const response = await $fetch<any>(`/api/banner/${id}`, {
-        method: 'DELETE',
-      });
-
-      toast.add({
-        severity: 'success',
-        summary: 'موفقیت',
-        detail: response?.message || 'بنر با موفقیت حذف شد',
-        life: 3000,
-      });
-      return true;
-    } catch (error: any) {
-      toast.add({
-        severity: 'error',
-        summary: 'خطا',
-        detail:
-          error?.data?.message ||
-          error?.statusMessage ||
-          'خطا در حذف بنر',
-        life: 4000,
-      });
-      return false;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /**
    * دریافت جایگاه‌های تعریف‌شده بنر
    */
   async function fetchBannerPositions(): Promise<BannerPosition[]> {
@@ -284,11 +179,9 @@ export function useAdminBanners() {
   }
 
   return {
-    getBannersList,
     getBannerById,
     createBanner,
     updateBanner,
-    deleteBanner,
     fetchBannerPositions,
     getDeviceLabel,
     getStatusLabel,

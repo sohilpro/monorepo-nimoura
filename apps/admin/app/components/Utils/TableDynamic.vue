@@ -19,10 +19,18 @@
         >
           ایجاد +
         </NuxtLink>
-        <button @click="view = 'table'" :class="viewBtnClass('table')">
+        <button
+          type="button"
+          @click="view = 'table'"
+          :class="viewBtnClass('table')"
+        >
           📊 جدول
         </button>
-        <button @click="view = 'card'" :class="viewBtnClass('card')">
+        <button
+          type="button"
+          @click="view = 'card'"
+          :class="viewBtnClass('card')"
+        >
           🖼 کارت
         </button>
       </div>
@@ -31,21 +39,22 @@
     <!-- Bulk Actions -->
     <div
       v-if="selectedItems.length"
-      class="mb-4 flex items-center justify-between bg-gray-100 p-2 rounded-xl"
+      class="mb-4 flex items-center justify-between bg-gray-100 p-2 rounded-xl dark:bg-gray-800"
     >
-      <span>{{ selectedItemIds.length }} مورد انتخاب شده</span>
+      <span>{{ selectedItems.length }} مورد انتخاب شده</span>
       <div class="flex gap-2">
         <button
-          @click="deleteItem(selectedItemIds[0])"
-          class="px-3 py-1 bg-red-500 text-white rounded-xl"
+          type="button"
+          @click="deleteItem(selectedItems[0])"
+          class="px-3 py-1 bg-red-500 text-white rounded-xl hover:bg-red-600 transition"
         >
           🗑 حذف
         </button>
 
         <NuxtLink
-          v-if="selectedItemIds.length <= 1"
-          :to="`/${urlEdit}/${selectedItemIds[0].id}`"
-          class="px-3 py-1 bg-blue-500 text-white rounded-xl"
+          v-if="selectedItems.length === 1"
+          :to="`/${urlEdit}/${selectedItems[0]?.id}`"
+          class="px-3 py-1 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition"
         >
           ✏️ ویرایش
         </NuxtLink>
@@ -56,9 +65,9 @@
       :visible="showDeleteModal"
       title="حذف آیتم"
       :message="
-        selectedItemIds.length <= 1
+        selectedItems.length <= 1
           ? `آیا از حذف «${itemToDelete?.[itemNameKey] ?? ''}» اطمینان دارید؟`
-          : `آیا از حذف چندین آیتم مطمعن هستید؟`
+          : `آیا از حذف چندین آیتم مطمئن هستید؟`
       "
       confirm-label="حذف"
       @confirm="confirmDelete"
@@ -71,11 +80,12 @@
       :data="paginatedData"
       :columns="columns"
       :selectedItems="selectedItems"
-      :urlEdit
-      @toggleSelect="toggleSelect"
-      @toggleSelectAll="toggleSelectAll"
+      :urlEdit="props.urlEdit"
+      :serverSide="props.serverSide"
       :sortKey="props.sortKey"
       :sortOrder="props.sortOrder"
+      @toggleSelect="toggleSelect"
+      @toggleSelectAll="toggleSelectAll"
       @sort="handleSort"
       @deleteItem="deleteItem"
     />
@@ -83,17 +93,19 @@
     <!-- Pagination -->
     <div class="flex justify-center mt-6">
       <button
+        type="button"
         @click="changePage(currentPage - 1)"
         :disabled="currentPage === 1"
-        class="px-3 py-1 border rounded-r-xl"
+        class="px-3 py-1 border rounded-r-xl disabled:opacity-50 disabled:cursor-not-allowed"
       >
         قبلی
       </button>
       <span class="px-4 py-1 border-t border-b">صفحه {{ currentPage }}</span>
       <button
+        type="button"
         @click="changePage(currentPage + 1)"
         :disabled="currentPage >= pageCount"
-        class="px-3 py-1 border rounded-l-xl"
+        class="px-3 py-1 border rounded-l-xl disabled:opacity-50 disabled:cursor-not-allowed"
       >
         بعدی
       </button>
@@ -109,9 +121,18 @@ import CardView from "../common/CardView.vue";
 const toast = useAppToast();
 
 const props = defineProps({
-  data: Array,
-  columns: Array,
-  pageSize: Number,
+  data: {
+    type: Array,
+    default: () => [],
+  },
+  columns: {
+    type: Array,
+    default: () => [],
+  },
+  pageSize: {
+    type: Number,
+    default: 10,
+  },
   urlEdit: String,
   apiDeleteBase: String, // مثال: "/api/category" یا "/api/product"
   itemNameKey: {
@@ -167,9 +188,10 @@ const deleteItem = (item) => {
 
 // Search & Filter
 const filteredData = computed(() => {
-  if (!searchQuery.value) return props.data;
-  return props.data.filter((item) => {
-    return Object.values(item).some((value) =>
+  const list = Array.isArray(props.data) ? props.data : [];
+  if (!searchQuery.value) return list;
+  return list.filter((item) => {
+    return Object.values(item || {}).some((value) =>
       String(value).toLowerCase().includes(searchQuery.value.toLowerCase()),
     );
   });
@@ -196,26 +218,27 @@ watch(debouncedSearch, (val) => {
 
 // Sort
 const sortedData = computed(() => {
-  if (!sortKey.value) return filteredData.value;
-  return [...filteredData.value].sort((a, b) => {
-    const aVal = a[sortKey.value];
-    const bVal = b[sortKey.value];
-    if (typeof aVal === "number")
+  const list = filteredData.value;
+  if (!sortKey.value) return list;
+  return [...list].sort((a, b) => {
+    const aVal = a?.[sortKey.value];
+    const bVal = b?.[sortKey.value];
+    if (typeof aVal === "number" && typeof bVal === "number")
       return sortOrder.value === "asc" ? aVal - bVal : bVal - aVal;
     return sortOrder.value === "asc"
-      ? String(aVal).localeCompare(String(bVal))
-      : String(bVal).localeCompare(String(aVal));
+      ? String(aVal ?? "").localeCompare(String(bVal ?? ""), "fa")
+      : String(bVal ?? "").localeCompare(String(aVal ?? ""), "fa");
   });
 });
 
 // Pagination
 const pageCount = computed(() => {
   return props.serverSide
-    ? Math.ceil(props.total / props.limit)
-    : Math.ceil(sortedData.value.length / props.pageSize);
+    ? Math.max(1, Math.ceil((props.total || 0) / (props.limit || 10)))
+    : Math.max(1, Math.ceil(sortedData.value.length / (Number(props.pageSize) || 10)));
 });
 const paginatedData = computed(() => {
-  if (props.serverSide) return props.data;
+  if (props.serverSide) return Array.isArray(props.data) ? props.data : [];
 
   const pageSize = Number(props.pageSize) || 10;
   const start = (currentPage.value - 1) * pageSize;
@@ -262,6 +285,7 @@ const handleSort = (key) => {
 
 // Select Logic
 const toggleSelect = (item) => {
+  if (!item) return;
   const exists = selectedItems.value.find((i) => i.id === item.id);
 
   if (exists) {
@@ -272,17 +296,19 @@ const toggleSelect = (item) => {
 };
 
 const toggleSelectAll = (items) => {
-  const allSelected = items.every((i) =>
+  const safeItems = Array.isArray(items) ? items : [];
+  const allSelected = safeItems.length > 0 && safeItems.every((i) =>
     selectedItems.value.find((s) => s.id === i.id),
   );
-  selectedItems.value = allSelected ? [] : [...items];
-};
-
-const deleteSelected = () => {
-  alert(`درخواست حذف ${selectedItems.value.length} مورد.`);
+  selectedItems.value = allSelected ? [] : [...safeItems];
 };
 
 const confirmDelete = async () => {
+  if (!itemToDelete.value?.id) {
+    showDeleteModal.value = false;
+    document.documentElement.classList.remove("overflow-hidden");
+    return;
+  }
   isLoading.value = true;
   try {
     await $fetch(`${props.apiDeleteBase}/${itemToDelete.value.id}`, {
@@ -294,7 +320,7 @@ const confirmDelete = async () => {
       severity: "success",
       summary: "موفقیت",
       detail: "با موفقیت حذف شد",
-      life: 3000, // مدت زمان نمایش به میلی‌ثانیه
+      life: 3000,
     });
 
     if (props.onRefresh) props.onRefresh();
@@ -314,17 +340,13 @@ const confirmDelete = async () => {
   }
 };
 
-const selectedItemIds = computed(() =>
-  selectedItems.value.length <= 1
-    ? selectedItems.value
-    : selectedItems.value.map((i) => i.id),
-);
-
 const viewComponent = computed(() =>
   view.value === "card" ? CardView : TableView,
 );
 const viewBtnClass = (val) =>
-  `rounded-xl px-3 py-2 border ${
-    val === view.value ? "bg-gray-800 text-white" : "bg-white text-gray-700"
+  `rounded-xl px-3 py-2 border transition ${
+    val === view.value
+      ? "bg-gray-800 text-white dark:bg-gray-100 dark:text-gray-900"
+      : "bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200"
   }`;
 </script>

@@ -25,7 +25,7 @@ useShop3dDeepLink()
 useShop3dTracking()
 useShop3dE2E()
 
-const webglOk = route.query.force3d === '1' || isWebGLAvailable()
+const webglOk = route.query.force3d === '1' || evaluateSupport().ok
 
 const dpr = computed(() =>
   Math.max(0.6, Math.min(window.devicePixelRatio || 1, quality.dpr) * perf.scale.value),

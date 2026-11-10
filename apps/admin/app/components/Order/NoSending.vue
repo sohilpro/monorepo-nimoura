@@ -86,7 +86,7 @@ const columns = [
   {
     key: 'shippingPhone',
     label: 'شماره تماس',
-    formatter: (_val: any, row: any) => row.shippingInfo?.phone || '—',
+    formatter: (_val: any, row: any) => row?.shippingInfo?.phone || '—',
   },
   {
     key: 'status',

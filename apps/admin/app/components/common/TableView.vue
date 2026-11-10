@@ -1,93 +1,120 @@
 <template>
   <table class="w-full table-auto border rounded-xl">
-    <thead class="bg-gray-100 text-right">
+    <thead class="bg-gray-100 dark:bg-gray-800 text-right">
       <tr>
         <th class="p-2">
-          <!-- <input
-            type="checkbox"
-            :checked="
-              props.data.length &&
-              props.data.every((d) => selectedItems.find((s) => s.id === d.id))
-            "
-            @change="() => emit('toggleSelectAll', props.data)"
-          /> -->
           <CommonCheckboxInput
             :modelValue="
-              props.data.length &&
-              props.data.every((d) => selectedItems.find((s) => s.id === d.id))
+              (props.data?.length ?? 0) > 0 &&
+              props.data.every((d) => (selectedItems || []).some((s) => s.id === d.id))
             "
-            id="all"
-            @update:modelValue="() => emit('toggleSelectAll', props.data)"
+            id="select-all"
+            @update:modelValue="() => emit('toggleSelectAll', props.data || [])"
           />
         </th>
 
         <th
           v-for="col in columns"
           :key="col.key"
-          class="p-2 cursor-pointer"
+          class="p-2 cursor-pointer select-none text-gray-700 dark:text-gray-300"
           @click="emitSort(col.key)"
         >
-          {{ col.label }}
-          <span v-if="props.sortKey === col.key">
-            {{ props.sortOrder === "asc" ? "⬆️" : "⬇️" }}
+          <span class="inline-flex items-center gap-1">
+            {{ col.label }}
+            <span v-if="props.sortKey === col.key" class="text-xs">
+              {{ props.sortOrder === 'asc' ? '▲' : '▼' }}
+            </span>
           </span>
         </th>
-        <th class="p-2">عملیات</th>
+        <th class="p-2 text-gray-700 dark:text-gray-300">عملیات</th>
       </tr>
     </thead>
     <tbody>
       <tr
         v-for="(item, i) in sortedData"
-        :key="i"
-        class="odd:bg-white even:bg-gray-50"
+        :key="item?.id ?? i"
+        class="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800/50"
       >
         <td class="p-2">
-          <!-- <input
-            type="checkbox"
-            :checked="selectedItems.find((s) => s.id === item.id)"
-            @change="() => emit('toggleSelect', item)"
-          /> -->
           <CommonCheckboxInput
-            :modelValue="selectedItems.find((s) => s.id === item.id)"
+            :modelValue="(selectedItems || []).some((s) => s.id === item.id)"
             @update:modelValue="() => emit('toggleSelect', item)"
-            :id="item.id"
+            :id="`select-${item?.id ?? i}`"
           />
         </td>
 
         <td v-for="col in columns" :key="col.key" class="p-2">
-          <!-- custom cell rendering -->
-          <template v-if="col.isCustom && col.formatter">
-            <NuxtLink
-              target="_blank"
-              :to="`https://nimoura.shop/product/${item.id}/${item.slug}`"
+          <template v-for="cell in [formatCell(col, item)]" :key="col.key">
+            <!-- Badge cell -->
+            <span
+              v-if="cell.type === 'badge'"
+              :class="[
+                'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
+                cell.badgeClass || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+              ]"
+            >
+              {{ cell.text }}
+            </span>
+
+            <!-- Image + text cell -->
+            <div
+              v-else-if="cell.type === 'image-text'"
               class="flex items-center gap-3"
             >
-              <div class="h-12 w-12">
+              <div
+                class="h-12 w-12 shrink-0 rounded-md bg-gray-100 dark:bg-gray-700 overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-600"
+              >
                 <img
-                  :src="`${col.formatter(item[col.key], item).image}`"
-                  class="h-12 w-12 rounded-md object-cover"
+                  v-if="cell.image"
+                  :src="cell.image"
+                  class="h-full w-full object-cover"
                   alt="preview"
+                  loading="lazy"
                 />
+                <svg
+                  v-else
+                  class="h-6 w-6 text-gray-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="1.5"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
               </div>
-              <span class="text-sm font-medium text-gray-700">
-                {{ col.formatter(item[col.key], item).text }}
-              </span>
-            </NuxtLink>
-          </template>
 
-          <!-- default rendering -->
-          <template v-else>
-            {{ col.formatter ? col.formatter(item[col.key]) : item[col.key] }}
+              <NuxtLink
+                v-if="cell.link"
+                target="_blank"
+                :to="cell.link"
+                class="text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline dark:text-brand-400"
+              >
+                {{ cell.text }}
+              </NuxtLink>
+              <span v-else class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                {{ cell.text }}
+              </span>
+            </div>
+
+            <!-- Plain text cell -->
+            <span v-else class="text-sm text-gray-700 dark:text-gray-300">
+              {{ cell.text }}
+            </span>
           </template>
         </td>
 
         <td class="p-2">
           <div class="relative dropdown-container">
             <button
+              type="button"
               @click.stop="
                 openDropdownId = openDropdownId === item.id ? null : item.id
               "
-              class="text-gray-500"
+              class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
             >
               <svg
                 class="fill-current"
@@ -114,6 +141,7 @@
                 ✏️ ویرایش
               </NuxtLink>
               <button
+                type="button"
                 @click="$emit('deleteItem', item)"
                 class="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
@@ -129,11 +157,20 @@
 
 <script setup>
 const props = defineProps({
-  data: Array,
-  columns: Array,
+  data: {
+    type: Array,
+    default: () => [],
+  },
+  columns: {
+    type: Array,
+    default: () => [],
+  },
   sortKey: String,
   sortOrder: String,
-  selectedItems: Array,
+  selectedItems: {
+    type: Array,
+    default: () => [],
+  },
   urlEdit: String,
   serverSide: {
     type: Boolean,
@@ -142,47 +179,100 @@ const props = defineProps({
 });
 
 const emit = defineEmits([
-  "sort",
-  "toggleSelect",
-  "toggleSelectAll",
-  "deleteItem",
+  'sort',
+  'toggleSelect',
+  'toggleSelectAll',
+  'deleteItem',
 ]);
 
-const sortKey = ref(props.sortKey || "");
-const sortOrder = ref(props.sortOrder || "asc");
 const openDropdownId = ref(null);
 
-// بستن dropdown با کلیک بیرون
 const closeOnClickOutside = (e) => {
-  if (!e.target.closest(".dropdown-container")) {
+  if (!e.target.closest('.dropdown-container')) {
     openDropdownId.value = null;
   }
 };
 
 onMounted(() => {
-  document.addEventListener("click", closeOnClickOutside);
+  document.addEventListener('click', closeOnClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeOnClickOutside);
 });
 
 const emitSort = (key) => {
-  let order = "asc";
+  let order = 'asc';
   if (props.sortKey === key) {
-    order = props.sortOrder === "asc" ? "desc" : "asc";
+    order = props.sortOrder === 'asc' ? 'desc' : 'asc';
   }
-  emit("sort", { key, order });
-
-  // اگر سمت کلاینت بود، می‌توانی local sort را هم اینجا انجام دهی (در آینده)
+  emit('sort', { key, order });
 };
 
 const sortedData = computed(() => {
-  if (props.serverSide || !props.sortKey) return props.data;
-  return [...props.data].sort((a, b) => {
-    const aVal = a[props.sortKey];
-    const bVal = b[props.sortKey];
-    if (typeof aVal === "number")
-      return props.sortOrder === "asc" ? aVal - bVal : bVal - aVal;
-    return props.sortOrder === "asc"
-      ? String(aVal).localeCompare(String(bVal))
-      : String(bVal).localeCompare(String(aVal));
+  const list = Array.isArray(props.data) ? props.data : [];
+  if (props.serverSide || !props.sortKey) return list;
+  return [...list].sort((a, b) => {
+    const aVal = a?.[props.sortKey];
+    const bVal = b?.[props.sortKey];
+    if (typeof aVal === 'number' && typeof bVal === 'number') {
+      return props.sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+    }
+    return props.sortOrder === 'asc'
+      ? String(aVal ?? '').localeCompare(String(bVal ?? ''), 'fa')
+      : String(bVal ?? '').localeCompare(String(aVal ?? ''), 'fa');
   });
 });
+
+const formatCell = (col, item) => {
+  if (!item) return { type: 'text', text: '—' };
+  const rawVal = item[col.key];
+
+  if (!col.formatter) {
+    return {
+      type: 'text',
+      text: rawVal != null && rawVal !== '' ? rawVal : '—',
+    };
+  }
+
+  try {
+    const res = col.formatter(rawVal, item);
+    if (res == null || res === '') {
+      return { type: 'text', text: '—' };
+    }
+
+    if (typeof res === 'object') {
+      if ('badgeClass' in res) {
+        return {
+          type: 'badge',
+          text: res.text != null && res.text !== '' ? res.text : '—',
+          badgeClass: res.badgeClass || '',
+        };
+      }
+      if ('image' in res || col.isCustom) {
+        let link = null;
+        if (props.urlEdit === 'product' && item.id && item.slug) {
+          link = `https://nimoura.shop/product/${item.id}/${item.slug}`;
+        }
+        return {
+          type: 'image-text',
+          text: res.text != null && res.text !== '' ? res.text : '—',
+          image: res.image || '',
+          link,
+        };
+      }
+      return {
+        type: 'text',
+        text: res.text != null ? res.text : '—',
+      };
+    }
+
+    return { type: 'text', text: res };
+  } catch (err) {
+    return {
+      type: 'text',
+      text: rawVal != null && rawVal !== '' ? rawVal : '—',
+    };
+  }
+};
 </script>

@@ -72,8 +72,8 @@ const columns = [
     label: 'نام محصول',
     isCustom: true,
     formatter: (val: string, row: any) => ({
-      image: row.thumbnail || row.images?.[0]?.url,
-      text: val,
+      image: row?.thumbnail || row?.images?.[0]?.url || '',
+      text: val ?? '—',
     }),
   },
   {
@@ -92,7 +92,7 @@ const columns = [
     formatter: (val: number | null | undefined, row: any) => {
       if (typeof val !== 'number') return '—';
       if (val <= 0) return 'اتمام موجودی';
-      return row.type === 'variant' && row.variants?.length
+      return row?.type === 'variant' && row?.variants?.length
         ? `${val} (${row.variants.length} تنوع)`
         : val;
     },
@@ -101,7 +101,9 @@ const columns = [
     key: 'price',
     label: 'قیمت نهایی',
     formatter: (_val: any, row: any) => {
-      const finalPrice = row.priceDiscount && row.priceDiscount > 0 ? row.priceDiscount : row.price;
+      const price = row?.price ?? 0;
+      const priceDiscount = row?.priceDiscount ?? 0;
+      const finalPrice = priceDiscount > 0 ? priceDiscount : price;
       return formatPrice(finalPrice);
     },
   },

@@ -74,7 +74,7 @@ const columns = [
     key: 'fullName',
     label: 'نام و نام خانوادگی',
     formatter: (_val: any, row: any) => {
-      const name = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+      const name = `${row?.first_name || ''} ${row?.last_name || ''}`.trim();
       return name || 'بدون نام';
     },
   },

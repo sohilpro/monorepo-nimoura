@@ -164,69 +164,11 @@ export function useAdminProducts() {
     }
   }
 
-  /**
-   * حذف محصول
-   */
-  async function deleteProduct(id: number | string): Promise<boolean> {
-    isLoading.value = true;
-    try {
-      const response = await $fetch<any>(`/api/product/${id}`, {
-        method: 'DELETE',
-      });
-
-      toast.add({
-        severity: 'success',
-        summary: 'موفقیت',
-        detail: response?.message || 'محصول با موفقیت حذف شد',
-        life: 3000,
-      });
-
-      return true;
-    } catch (error: any) {
-      toast.add({
-        severity: 'error',
-        summary: 'خطا',
-        detail: error?.data?.message || error?.statusMessage || 'خطا در حذف محصول',
-        life: 4000,
-      });
-      return false;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /**
-   * دریافت گزینه‌های دسته‌بندی
-   */
-  async function fetchCategoryOptions(): Promise<Category[]> {
-    try {
-      const res = await $fetch<any>('/api/category/list', { query: { limit: 200 } });
-      const data = res?.data ?? res;
-      return data?.categories || data?.items || [];
-    } catch {
-      return [];
-    }
-  }
-
-  /**
-   * دریافت گزینه‌های برند و زیربرند
-   */
-  async function fetchBrandOptions(): Promise<Brand[]> {
-    try {
-      const res = await $fetch<any>('/api/product/brand/list', { query: { limit: 200 } });
-      const data = res?.data ?? res;
-      return data?.brands || data?.items || [];
-    } catch {
-      return [];
-    }
-  }
-
   return {
     getProductsList,
     getProductById,
     createProduct,
     updateProduct,
-    deleteProduct,
     fetchCategoryOptions,
     fetchBrandOptions,
   };

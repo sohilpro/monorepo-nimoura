@@ -1,30 +1,29 @@
 <template>
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     <div
-      v-for="(item, i) in data"
-      :key="i"
-      class="relative border p-4 rounded-xl shadow-sm hover:shadow-md transition"
+      v-for="(item, i) in safeData"
+      :key="item?.id ?? i"
+      class="relative border p-4 rounded-xl shadow-xs hover:shadow-md transition bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
     >
-      <!-- Product Image -->
-
+      <!-- Item Image (Product, Brand, Banner, etc.) -->
       <div
-        v-if="item?.thumbnail"
-        :class="{ 'mt-5': item?.thumbnail }"
-        class="w-full h-40 mb-4 overflow-hidden rounded-xl bg-gray-100 flex items-center justify-center"
+        v-if="getCardImage(item)"
+        class="w-full h-40 mb-4 mt-6 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center border border-gray-200 dark:border-gray-700"
       >
         <img
-          :src="`${item.thumbnail}`"
+          :src="getCardImage(item)"
           alt=""
           class="object-contain h-full w-full"
+          loading="lazy"
         />
       </div>
 
       <!-- Selection Checkbox -->
       <div class="absolute top-2 left-2">
         <CommonCheckboxInput
-          :modelValue="selectedItems.find((s) => s.id === item.id)"
+          :modelValue="(selectedItems || []).some((s) => s.id === item.id)"
           @update:modelValue="$emit('toggleSelect', item)"
-          :id="item.id"
+          :id="`card-select-${item?.id ?? i}`"
         />
       </div>
 
@@ -32,8 +31,9 @@
       <div class="absolute top-2 right-2">
         <div class="relative dropdown-container">
           <button
+            type="button"
             @click.stop="open = open === item.id ? null : item.id"
-            class="text-gray-500"
+            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
           >
             <svg
               class="fill-current"
@@ -60,6 +60,7 @@
               ✏️ ویرایش
             </NuxtLink>
             <button
+              type="button"
               @click="$emit('deleteItem', item)"
               class="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
             >
@@ -69,21 +70,33 @@
         </div>
       </div>
 
-      <!-- Product Info -->
-      <main :class="{ 'mt-5': !item?.thumbnail }">
+      <!-- Item Info -->
+      <main :class="{ 'mt-6': !getCardImage(item) }">
         <div
           v-for="col in columns"
           :key="col.key"
-          class="mb-1 text-sm flex gap-1 items-center"
+          class="mb-2 text-sm flex gap-1 items-center flex-wrap"
         >
-          <strong class="mt-1">{{ col.label }}:</strong>
-          <!-- custom cell rendering -->
+          <strong class="text-gray-600 dark:text-gray-400 font-medium">
+            {{ col.label }}:
+          </strong>
 
-          <template v-if="col.isCustom && col.formatter">
-            {{ col.formatter(item[col.key], item).text }}
-          </template>
-          <template v-else>
-            {{ col.formatter ? col.formatter(item[col.key]) : item[col.key] }}
+          <template v-for="cell in [formatCell(col, item)]" :key="col.key">
+            <!-- Badge -->
+            <span
+              v-if="cell.type === 'badge'"
+              :class="[
+                'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                cell.badgeClass || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+              ]"
+            >
+              {{ cell.text }}
+            </span>
+
+            <!-- Plain or image-text -->
+            <span v-else class="text-gray-800 dark:text-gray-200 font-medium">
+              {{ cell.text }}
+            </span>
           </template>
         </div>
       </main>
@@ -93,23 +106,88 @@
 
 <script setup>
 const props = defineProps({
-  data: Array,
-  columns: Array,
-  selectedItems: Array,
+  data: {
+    type: Array,
+    default: () => [],
+  },
+  columns: {
+    type: Array,
+    default: () => [],
+  },
+  selectedItems: {
+    type: Array,
+    default: () => [],
+  },
   urlEdit: String,
 });
 
-const emit = defineEmits(["toggleSelect", "editItem", "deleteItem"]);
+defineEmits(['toggleSelect', 'editItem', 'deleteItem']);
 
 const open = ref(null);
 
+const safeData = computed(() => (Array.isArray(props.data) ? props.data : []));
+
+const getCardImage = (item) => {
+  return (
+    item?.thumbnail ||
+    item?.imageUrl ||
+    item?.logo ||
+    item?.images?.[0]?.url ||
+    ''
+  );
+};
+
 const closeOnClickOutside = (e) => {
-  if (!e.target.closest(".dropdown-container")) {
+  if (!e.target.closest('.dropdown-container')) {
     open.value = null;
   }
 };
 
 onMounted(() => {
-  document.addEventListener("click", closeOnClickOutside);
+  document.addEventListener('click', closeOnClickOutside);
 });
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeOnClickOutside);
+});
+
+const formatCell = (col, item) => {
+  if (!item) return { type: 'text', text: '—' };
+  const rawVal = item[col.key];
+
+  if (!col.formatter) {
+    return {
+      type: 'text',
+      text: rawVal != null && rawVal !== '' ? rawVal : '—',
+    };
+  }
+
+  try {
+    const res = col.formatter(rawVal, item);
+    if (res == null || res === '') {
+      return { type: 'text', text: '—' };
+    }
+
+    if (typeof res === 'object') {
+      if ('badgeClass' in res) {
+        return {
+          type: 'badge',
+          text: res.text != null && res.text !== '' ? res.text : '—',
+          badgeClass: res.badgeClass || '',
+        };
+      }
+      return {
+        type: 'text',
+        text: res.text != null && res.text !== '' ? res.text : '—',
+      };
+    }
+
+    return { type: 'text', text: res };
+  } catch (err) {
+    return {
+      type: 'text',
+      text: rawVal != null && rawVal !== '' ? rawVal : '—',
+    };
+  }
+};
 </script>

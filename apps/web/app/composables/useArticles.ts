@@ -14,21 +14,3 @@ export function useArticleList(query: Ref<ArticleQuery> | ArticleQuery) {
 
   return { articles: data, pending, error, refresh };
 }
-
-export function useArticleDetail(slug: string | Ref<string>) {
-  const slugRef = isRef(slug) ? slug : ref(slug);
-
-  const { data, pending, error } = useFetch<{ article: Article; related: Article[] }>(
-    () => `/api/magazine/articles/${slugRef.value}`,
-    { key: computed(() => `article-${slugRef.value}`) },
-  );
-
-  return { article: computed(() => data.value?.article), related: computed(() => data.value?.related ?? []), pending, error };
-}
-
-export async function toggleArticleLike(articleId: string) {
-  return $fetch<{ liked: boolean; likeCount: number }>(
-    `/api/magazine/articles/${articleId}/like`,
-    { method: 'POST' },
-  );
-}

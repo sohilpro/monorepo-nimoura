@@ -7,50 +7,45 @@ interface Column {
   label: string;
 }
 
-const props = defineProps<{
-  columns: Column[];
-  rows: {
-    title: string;
-    englishTitle?: string;
-    sku?: string;
-    price?: number;
-    priceDiscount?: number;
-    stock?: number;
-    variants?: { [key: string]: any }[];
-  }[];
-  fileName?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    columns: Column[];
+    rows?: Record<string, any>[];
+    fileName?: string;
+  }>(),
+  {
+    rows: () => [],
+    fileName: "export",
+  },
+);
 
-// 🟢 هندل کردن هم محصولات ساده و هم محصولاتی با variant
+// 🟢 هندل کردن هم محصولات ساده و با variant و هم سایر موجودیت‌ها (کاربران، سفارشات و...)
 const flattenRows = () => {
   const result: Record<string, any>[] = [];
+  if (!props.rows || !Array.isArray(props.rows)) return result;
 
   props.rows.forEach((item) => {
+    if (!item) return;
     if (Array.isArray(item.variants) && item.variants.length > 0) {
       // اگر محصول variant دارد
       item.variants.forEach((variant) => {
-        const display = getVariantDisplay(variant);
+        const display =
+          typeof getVariantDisplay === "function"
+            ? getVariantDisplay(variant)
+            : { label: "", colorHex: "" };
         result.push({
-          title: item.title,
-          englishTitle: item.englishTitle,
-          sku: variant.sku,
-          price: variant.price,
-          priceDiscount: variant.priceDiscount,
-          stock: variant.stock,
+          ...item,
+          sku: variant.sku ?? item.sku,
+          price: variant.price ?? item.price,
+          priceDiscount: variant.priceDiscount ?? item.priceDiscount,
+          stock: variant.stock ?? item.stock,
           variantLabel: display.label,
-          colorHex: display.colorHex ?? '',
+          colorHex: display.colorHex ?? "",
         });
       });
     } else {
-      // اگر محصول ساده است (فقط price و stock دارد)
-      result.push({
-        title: item.title,
-        englishTitle: item.englishTitle,
-        sku: item.sku,
-        price: item.price,
-        stock: item.stock,
-        priceDiscount: item.priceDiscount,
-      });
+      // اگر محصول ساده است یا سایر موجودیت‌ها
+      result.push({ ...item });
     }
   });
 

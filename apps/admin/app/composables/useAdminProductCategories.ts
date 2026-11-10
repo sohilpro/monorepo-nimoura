@@ -2,76 +2,11 @@ import type {
   Category,
   CreateCategoryPayload,
   UpdateCategoryPayload,
-  PaginatedResponse,
 } from '@nimoura/shared-types';
-
-export interface CategoryQueryParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  sortBy?: string;
-  sortOrder?: 'ASC' | 'DESC' | 'asc' | 'desc';
-}
 
 export function useAdminProductCategories() {
   const toast = useAppToast();
   const { isLoading } = useLoading();
-
-  /**
-   * دریافت لیست صفحه‌بندی‌شده دسته‌بندی‌ها
-   */
-  async function getCategoriesList(
-    params: CategoryQueryParams = {},
-  ): Promise<PaginatedResponse<Category>> {
-    try {
-      const response = await $fetch<any>('/api/category/list', {
-        method: 'GET',
-        query: {
-          page: params.page || 1,
-          limit: params.limit || 15,
-          search: params.search || undefined,
-          sortBy: params.sortBy || 'id',
-          sortOrder: params.sortOrder || 'DESC',
-        },
-      });
-
-      const data = response?.data ?? response;
-      const items = data?.items ?? data?.categories ?? [];
-      const total = data?.total ?? items.length;
-      const page = data?.page ?? params.page ?? 1;
-      const limit = data?.limit ?? params.limit ?? 15;
-      const totalPages = data?.totalPages ?? Math.ceil(total / limit);
-
-      return {
-        items,
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      };
-    } catch (error: any) {
-      toast.add({
-        severity: 'error',
-        summary: 'خطا',
-        detail:
-          error?.data?.message ||
-          error?.statusMessage ||
-          'خطا در دریافت لیست دسته‌بندی‌ها',
-        life: 4000,
-      });
-      return {
-        items: [],
-        total: 0,
-        page: 1,
-        limit: 15,
-        totalPages: 0,
-        hasNextPage: false,
-        hasPrevPage: false,
-      };
-    }
-  }
 
   /**
    * دریافت اطلاعات تکی یک دسته‌بندی
@@ -171,39 +106,6 @@ export function useAdminProductCategories() {
   }
 
   /**
-   * حذف دسته‌بندی
-   */
-  async function deleteCategory(id: number | string): Promise<boolean> {
-    isLoading.value = true;
-    try {
-      const response = await $fetch<any>(`/api/category/${id}`, {
-        method: 'DELETE',
-      });
-
-      toast.add({
-        severity: 'success',
-        summary: 'موفقیت',
-        detail: response?.message || 'دسته‌بندی با موفقیت حذف شد',
-        life: 3000,
-      });
-      return true;
-    } catch (error: any) {
-      toast.add({
-        severity: 'error',
-        summary: 'خطا',
-        detail:
-          error?.data?.message ||
-          error?.statusMessage ||
-          'خطا در حذف دسته‌بندی',
-        life: 4000,
-      });
-      return false;
-    } finally {
-      isLoading.value = false;
-    }
-  }
-
-  /**
    * دریافت تمام دسته‌ها برای سلکتور والد (Parent Dropdown)
    */
   async function fetchParentOptions(excludeId?: number | string): Promise<Category[]> {
@@ -212,22 +114,21 @@ export function useAdminProductCategories() {
         query: { limit: 200 },
       });
       const data = response?.data ?? response;
-      const all: Category[] = data?.items ?? data?.categories ?? [];
+      const categories: Category[] = data?.categories || data?.items || [];
 
-      if (!excludeId) return all;
+      if (!excludeId) return categories;
+
       const numExcludeId = Number(excludeId);
-      return all.filter((c) => c.id !== numExcludeId);
+      return categories.filter((c) => Number(c.id) !== numExcludeId);
     } catch {
       return [];
     }
   }
 
   return {
-    getCategoriesList,
     getCategoryById,
     createCategory,
     updateCategory,
-    deleteCategory,
     fetchParentOptions,
   };
 }

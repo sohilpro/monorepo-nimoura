@@ -58,7 +58,7 @@ const columns = [
   {
     key: "user",
     label: "کاربر",
-    formatter: (val) => val.mobile,
+    formatter: (val) => val?.mobile || "—",
   },
   {
     key: "isApproved",

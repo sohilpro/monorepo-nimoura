@@ -66,8 +66,8 @@ const columns = [
     label: 'نام و لوگوی برند',
     isCustom: true,
     formatter: (val: string, row: any) => ({
-      image: row.logo || row.logoUrl,
-      text: val,
+      image: row?.logo || row?.logoUrl || '',
+      text: val ?? '—',
     }),
   },
   {

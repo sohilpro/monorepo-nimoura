@@ -69,8 +69,8 @@ const columns = [
     label: 'عنوان و تصویر بنر',
     isCustom: true,
     formatter: (val: string, row: any) => ({
-      image: row.imageUrl || row.mobileImageUrl,
-      text: val,
+      image: row?.imageUrl || row?.mobileImageUrl || '',
+      text: val ?? '—',
     }),
   },
   {

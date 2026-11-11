@@ -10,7 +10,10 @@ export class PriceListController {
   constructor(private readonly service: PriceListService) {}
 
   @Get()
-  list(@Query() q: PriceListQueryDto, @Res({ passthrough: true }) res: Response) {
+  list(
+    @Query() q: PriceListQueryDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     res.setHeader('Cache-Control', 'public, max-age=60'); // کش کوتاه، قیمت‌ها هفتگی عوض می‌شوند
     return this.service.getList(q);
   }

@@ -29,7 +29,7 @@ export class Users extends CustomBaseEntity {
   @Column({ type: 'boolean', default: false })
   verify_email!: boolean;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, select: false })
   password!: string;
 
   @Column({ unique: true, nullable: true })

@@ -26,7 +26,6 @@ import { UpdateUserDto } from '../dtos/update-user.dto';
 import { CreateUserDto } from '../dtos/create-user.dto';
 import { Post } from '@nestjs/common';
 
-
 @AdminController('users')
 export class UsersAdminController {
   constructor(private readonly userService: UsersService) {}

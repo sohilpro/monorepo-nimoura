@@ -25,7 +25,7 @@ export class CommentsService {
       content: dto.content,
       article,
       // اصلاح این بخش: حذف as Comment و استفاده از ساختار استاندارد
-      parent: dto.parentId ? ({ id: dto.parentId } as any) : null,
+      parent: dto.parentId ? { id: dto.parentId } : null,
       status: CommentStatus.PENDING,
       ipAddress,
     });
@@ -43,7 +43,18 @@ export class CommentsService {
 
     const qb = this.commentRepo
       .createQueryBuilder('comment')
-      .leftJoinAndSelect('comment.article', 'article')
+      .select([
+        'comment.id',
+        'comment.name',
+        'comment.email',
+        'comment.content',
+        'comment.status',
+        'comment.createdAt',
+        'article.id',
+        'article.title',
+        'article.slug',
+      ])
+      .leftJoin('comment.article', 'article')
       .orderBy('comment.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit);
@@ -74,27 +85,60 @@ export class CommentsService {
         status: CommentStatus.APPROVED,
         parent: IsNull(), // ۲. استفاده از IsNull() به جای null خالص
       },
+      select: {
+        id: true,
+        name: true,
+        content: true,
+        createdAt: true,
+        replies: {
+          id: true,
+          name: true,
+          content: true,
+          createdAt: true,
+        },
+      },
       relations: { replies: true },
       order: { createdAt: 'DESC' },
+      loadEagerRelations: false,
     });
   }
 
   async findPendingAdmin(): Promise<Comment[]> {
     return this.commentRepo.find({
       where: { status: CommentStatus.PENDING },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        content: true,
+        status: true,
+        createdAt: true,
+        article: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
       relations: {
         article: true,
       },
       order: { createdAt: 'DESC' },
+      loadEagerRelations: false,
     });
   }
 
   async moderate(id: number, status: CommentStatus): Promise<Comment> {
     const comment = await this.commentRepo.findOne({
       where: { id },
+      select: {
+        id: true,
+        status: true,
+        article: { id: true },
+      },
       relations: {
         article: true,
       },
+      loadEagerRelations: false,
     });
     if (!comment) throw new NotFoundException('نظر یافت نشد');
     comment.status = status;

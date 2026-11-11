@@ -19,7 +19,10 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         synchronize: configService.get<boolean>('DB_SYNCHRONIZE', false),
         migrationsRun: true,
         logging: configService.get<boolean>('DB_LOGGING', true),
-        ssl: configService.get<string>('DB_SSL') === 'true' ? { rejectUnauthorized: false } : false,
+        ssl:
+          configService.get<string>('DB_SSL') === 'true'
+            ? { rejectUnauthorized: false }
+            : false,
         extra: {
           max: 25,
           idleTimeoutMillis: 30000,

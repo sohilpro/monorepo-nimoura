@@ -26,7 +26,12 @@ export class OrderItemDto {
   @IsPositive({ message: 'تعداد باید حداقل ۱ باشد' })
   quantity!: number;
 
-  @ApiPropertyOptional({ type: Number, nullable: true, description: 'شناسه تنوع (واریانت)', example: 15 })
+  @ApiPropertyOptional({
+    type: Number,
+    nullable: true,
+    description: 'شناسه تنوع (واریانت)',
+    example: 15,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt({ message: 'شناسه تنوع باید یک عدد صحیح باشد' })
@@ -35,13 +40,16 @@ export class OrderItemDto {
 
   /** فرمت قدیمی فرانت: عدد یا آبجکت `{ id }`. به عدد نرمال می‌شود. */
   @ApiPropertyOptional({
-    description: 'شناسه یا آبجکت تنوع (سازگاری با فرانت قدیمی؛ ترجیحاً variantId)',
+    description:
+      'شناسه یا آبجکت تنوع (سازگاری با فرانت قدیمی؛ ترجیحاً variantId)',
     example: { id: 15 },
   })
   @IsOptional()
   @Transform(({ value }) => {
-    if (value && typeof value === 'object' && 'id' in value) return Number(value.id);
-    if (value !== null && value !== undefined && value !== '') return Number(value);
+    if (value && typeof value === 'object' && 'id' in value)
+      return Number(value.id);
+    if (value !== null && value !== undefined && value !== '')
+      return Number(value);
     return null;
   })
   @IsInt({ message: 'شناسه تنوع باید یک عدد صحیح باشد' })
@@ -68,7 +76,11 @@ export class CreateOrderDto {
   paymentInfo!: PaymentInfoDto;
 
   /** فعلاً توسط سرور اعمال نمی‌شود (نیازمند API ماژول پروموشن) */
-  @ApiPropertyOptional({ type: Number, description: 'شناسه کد تخفیف', example: 3 })
+  @ApiPropertyOptional({
+    type: Number,
+    description: 'شناسه کد تخفیف',
+    example: 3,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt({ message: 'شناسه پروموشن باید یک عدد صحیح باشد' })
@@ -76,7 +88,11 @@ export class CreateOrderDto {
   promotionId?: number;
 
   /** فعلاً هزینه‌ی ارسال سمت سرور صفر است و این فیلد نادیده گرفته می‌شود */
-  @ApiPropertyOptional({ type: String, description: 'روش ارسال (فعلاً نادیده گرفته می‌شود)', example: 'post' })
+  @ApiPropertyOptional({
+    type: String,
+    description: 'روش ارسال (فعلاً نادیده گرفته می‌شود)',
+    example: 'post',
+  })
   @IsOptional()
   @IsString({ message: 'اطلاعات هزینه ارسال باید رشته باشد' })
   shippingCost?: string;

@@ -50,19 +50,65 @@ export class CategoriesService {
   findTree(): Promise<Category[]> {
     return this.categoryRepo.find({
       where: { parent: IsNull() },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        image: true,
+        icon: true,
+        sortOrder: true,
+        children: {
+          id: true,
+          name: true,
+          slug: true,
+          icon: true,
+          sortOrder: true,
+        },
+      },
       relations: { children: true },
       order: { sortOrder: 'ASC' },
+      loadEagerRelations: false,
     });
   }
 
   findAll(): Promise<Category[]> {
-    return this.categoryRepo.find({ order: { sortOrder: 'ASC' } });
+    return this.categoryRepo.find({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        image: true,
+        icon: true,
+        sortOrder: true,
+      },
+      order: { sortOrder: 'ASC' },
+      loadEagerRelations: false,
+    });
   }
 
   async findBySlug(slug: string): Promise<Category> {
     const category = await this.categoryRepo.findOne({
       where: { slug },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        image: true,
+        icon: true,
+        metaTitle: true,
+        metaDescription: true,
+        children: {
+          id: true,
+          name: true,
+          slug: true,
+          icon: true,
+        },
+      },
       relations: { children: true },
+      loadEagerRelations: false,
     });
     if (!category) throw new NotFoundException('دسته‌بندی یافت نشد');
     return category;

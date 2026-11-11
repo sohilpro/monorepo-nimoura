@@ -7,7 +7,7 @@
   >
     <div class="flex items-center justify-between">
       <label
-        class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400"
+        class="mb-1.5 block text-sm font-medium text-gray-700"
       >
         {{ label }}
       </label>
@@ -15,7 +15,7 @@
       <NuxtLink
         :to="showCreate.href"
         v-if="showCreate"
-        class="text-blue-500 underline text-sm"
+        class="text-brand-600 hover:text-brand-700 underline text-sm"
       >
         {{ showCreate.label }}
       </NuxtLink>
@@ -27,18 +27,18 @@
       :disabled="props.disabled"
       :placeholder="placeholder"
       @focus="isOpen = true"
-      class="dark:bg-dark-900 h-11 w-full appearance-none rounded-lg border border-gray-300 px-4 py-2.5 pl-11 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30"
+      class="h-11 w-full appearance-none rounded-lg border border-gray-300 px-4 py-2.5 pl-11 pr-4 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10"
     />
 
     <ul
       v-if="isOpen"
-      class="absolute right-0 z-40 left-0 max-h-60 overflow-y-auto mt-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg shadow-lg text-right"
+      class="absolute right-0 z-40 left-0 max-h-60 overflow-y-auto mt-1 bg-white border border-gray-300 rounded-lg shadow-lg text-right"
     >
       <li
         v-for="item in filteredOptions"
         :key="item.id"
         @click="selectOption(item)"
-        class="px-4 py-2 text-sm cursor-pointer bg-white hover:bg-gray-100 dark:hover:bg-gray-800"
+        class="px-4 py-2 text-sm cursor-pointer bg-white hover:bg-gray-100"
       >
         {{ item.name }}
       </li>
@@ -51,7 +51,7 @@
     </ul>
 
     <span
-      class="absolute inset-y-0 z-20 cursor-pointer transition-all duration-500 top-6 left-4 flex items-center text-gray-500 dark:text-gray-400"
+      class="absolute inset-y-0 z-20 cursor-pointer transition-all duration-500 top-6 left-4 flex items-center text-gray-500"
       @click="isOpen = !isOpen"
       :class="{ 'rotate-180': isOpen }"
     >

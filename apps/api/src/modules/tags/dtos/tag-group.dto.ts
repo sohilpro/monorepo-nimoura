@@ -21,11 +21,15 @@ export class CreateTagGroupDto {
   @MaxLength(64)
   name!: string;
 
-  @ApiPropertyOptional({ example: 'skin-type', description: 'اگر خالی باشد از نام ساخته می‌شود' })
+  @ApiPropertyOptional({
+    example: 'skin-type',
+    description: 'اگر خالی باشد از نام ساخته می‌شود',
+  })
   @IsOptional()
   @IsString()
   @Matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
-    message: 'شناسه گروه فقط می‌تواند شامل حروف کوچک انگلیسی، عدد و خط تیره باشد.',
+    message:
+      'شناسه گروه فقط می‌تواند شامل حروف کوچک انگلیسی، عدد و خط تیره باشد.',
   })
   @MaxLength(64)
   slug?: string;
@@ -54,7 +58,10 @@ export class CreateTagGroupDto {
   @IsBoolean()
   isActive?: boolean;
 
-  @ApiPropertyOptional({ default: true, description: 'نمایش در فیلترهای فروشگاه' })
+  @ApiPropertyOptional({
+    default: true,
+    description: 'نمایش در فیلترهای فروشگاه',
+  })
   @IsOptional()
   @IsBoolean()
   isFilterable?: boolean;

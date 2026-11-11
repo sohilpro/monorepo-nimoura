@@ -14,6 +14,16 @@ import {
   buildSearchWhereClause,
 } from 'src/common/utils/pagination.helper';
 
+const ADDRESS_SELECT = {
+  id: true,
+  title: true,
+  postal_code: true,
+  state: true,
+  city: true,
+  address: true,
+  userId: true,
+} as const;
+
 @Injectable()
 export class AddressesService {
   constructor(
@@ -24,21 +34,29 @@ export class AddressesService {
   ) {}
 
   async create(dto: CreateAddressDto, userId: number): Promise<any> {
-    const user = await this.userRepo.findOneBy({ id: userId });
-    if (!user) {
+    const userExists = await this.userRepo.existsBy({ id: userId });
+    if (!userExists) {
       throw new NotFoundException(`کاربر با شناسه ${userId} یافت نشد.`);
     }
 
     const address = this.addressRepo.create({
       ...dto,
-      user,
+      userId,
     });
 
     const save = await this.addressRepo.save(address);
 
     return {
       message: 'آدرس با موفقیت اضاف شد.',
-      address: save,
+      address: {
+        id: save.id,
+        title: save.title,
+        postal_code: save.postal_code,
+        state: save.state,
+        city: save.city,
+        address: save.address,
+        userId: save.userId,
+      },
     };
   }
 
@@ -63,18 +81,24 @@ export class AddressesService {
     const where = search ? { ...userWhere, ...searchWhere } : userWhere;
 
     const [data, total] = await this.addressRepo.findAndCount({
+      select: ADDRESS_SELECT,
       where,
       take: +limit,
       skip: (+page - 1) * +limit,
       order: { [sortBy]: sortOrder.toUpperCase() },
       withDeleted: false,
+      loadEagerRelations: false,
     });
 
     return buildPagination([data, total], page, limit, 'addresses');
   }
 
   async findOne(id: number, userId: number): Promise<Addresses> {
-    const address = await this.addressRepo.findOneBy({ id, userId });
+    const address = await this.addressRepo.findOne({
+      where: { id, userId },
+      select: ADDRESS_SELECT,
+      loadEagerRelations: false,
+    });
     if (!address) throw new NotFoundException('آدرس مورد نظر یافت نشد.');
     return address;
   }
@@ -84,7 +108,11 @@ export class AddressesService {
     dto: UpdateAddressDto,
     userId: number,
   ): Promise<any> {
-    const address = await this.addressRepo.findOneBy({ id });
+    const address = await this.addressRepo.findOne({
+      where: { id },
+      select: ADDRESS_SELECT,
+      loadEagerRelations: false,
+    });
 
     if (!address) throw new NotFoundException('آدرس پیدا نشد');
     if (address.userId !== userId)
@@ -95,12 +123,24 @@ export class AddressesService {
 
     return {
       message: 'آدرس با موفقیت ویرایش شد.',
-      address: save,
+      address: {
+        id: save.id,
+        title: save.title,
+        postal_code: save.postal_code,
+        state: save.state,
+        city: save.city,
+        address: save.address,
+        userId: save.userId,
+      },
     };
   }
 
   async remove(id: number, userId: number): Promise<any> {
-    const address = await this.addressRepo.findOneBy({ id });
+    const address = await this.addressRepo.findOne({
+      where: { id },
+      select: { id: true, userId: true },
+      loadEagerRelations: false,
+    });
 
     if (!address) throw new NotFoundException('آدرس پیدا نشد');
     if (address.userId !== userId)
@@ -119,19 +159,34 @@ export class AddressesService {
     limit: number,
   ): Promise<{ data: Addresses[]; total: number }> {
     const [data, total] = await this.addressRepo.findAndCount({
+      select: {
+        ...ADDRESS_SELECT,
+        createdAt: true,
+        user: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          mobile: true,
+        },
+      },
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
       relations: {
         user: true,
       },
+      loadEagerRelations: false,
     });
 
     return { data, total };
   }
 
   async adminUpdate(id: number, dto: UpdateAddressDto): Promise<Addresses> {
-    const address = await this.addressRepo.findOneBy({ id });
+    const address = await this.addressRepo.findOne({
+      where: { id },
+      select: ADDRESS_SELECT,
+      loadEagerRelations: false,
+    });
     if (!address) throw new NotFoundException('آدرس پیدا نشد');
 
     Object.assign(address, dto);

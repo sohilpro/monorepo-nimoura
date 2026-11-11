@@ -21,19 +21,19 @@ export class TokensService {
     );
   }
 
-genAccessToken(user: Users): string {
-  const payload: JwtPayload = {
-    sub: user.id,
-    email: user.email,
-    phone: user.mobile,
-    role: user.role
-  };
+  genAccessToken(user: Users): string {
+    const payload: JwtPayload = {
+      sub: user.id,
+      email: user.email,
+      phone: user.mobile,
+      role: user.role,
+    };
 
-  return this.jwtService.sign(payload, {
-    secret: process.env.JWT_SECRET,
-    expiresIn: '30d',
-  });
-}
+    return this.jwtService.sign(payload, {
+      secret: process.env.JWT_SECRET,
+      expiresIn: '30d',
+    });
+  }
 
   genRefreshToken(userId: number): string {
     return this.jwtService.sign(

@@ -87,7 +87,7 @@ export class TorobAuthGuard implements CanActivate {
       });
     }
 
-    const parts = token!.split('.');
+    const parts = token.split('.');
     if (parts.length !== 3) this.fail('Malformed token');
     const [h, p, s] = parts;
 

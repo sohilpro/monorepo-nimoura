@@ -10,7 +10,15 @@ import { Categories } from '../categories/entities/categories.entity';
 import { Brands } from '../brands/entities/brands.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Promotions, PromotionUsages, Products,Categories,Brands])],
+  imports: [
+    TypeOrmModule.forFeature([
+      Promotions,
+      PromotionUsages,
+      Products,
+      Categories,
+      Brands,
+    ]),
+  ],
   controllers: [PromotionsController, AdminPromotionsController],
   providers: [PromotionsService],
   exports: [PromotionsService],

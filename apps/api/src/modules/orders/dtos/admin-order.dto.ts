@@ -195,7 +195,9 @@ abstract class AdminOrderBaseDto {
 
 /* ───────────── ایجاد سفارش ───────────── */
 export class CreateOrderAdminDto extends AdminOrderBaseDto {
-  @ApiPropertyOptional({ description: 'شناسه کاربر (اختیاری؛ برای سفارش تلفنی)' })
+  @ApiPropertyOptional({
+    description: 'شناسه کاربر (اختیاری؛ برای سفارش تلفنی)',
+  })
   @IsOptional()
   @IsInt()
   @Min(1)

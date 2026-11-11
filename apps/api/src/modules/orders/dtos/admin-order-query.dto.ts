@@ -33,7 +33,9 @@ export class AdminOrderQueryDto {
   @IsEnum(OrderStatus)
   status?: OrderStatus;
 
-  @ApiPropertyOptional({ description: 'جستجو در کد سفارش، نام و موبایل گیرنده' })
+  @ApiPropertyOptional({
+    description: 'جستجو در کد سفارش، نام و موبایل گیرنده',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)

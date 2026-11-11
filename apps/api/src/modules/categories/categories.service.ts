@@ -9,10 +9,7 @@ import { generateSlug } from 'src/common/utils/slug.helper';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { Categories } from './entities/categories.entity';
-import {
-  buildPagination,
-  buildSearchWhereClause,
-} from 'src/common/utils/pagination.helper';
+import { buildSearchWhereClause } from 'src/common/utils/pagination.helper';
 
 @Injectable()
 export class CategoryService {
@@ -26,19 +23,35 @@ export class CategoryService {
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
     const search = (query.search || '').trim();
     const sortOrder =
-      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC'
+        ? 'ASC'
+        : 'DESC';
     const allowedSortFields = ['id', 'name', 'createdAt', 'updatedAt'];
-    const sortBy = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'id';
+    const sortBy = allowedSortFields.includes(query.sortBy)
+      ? query.sortBy
+      : 'id';
 
     const searchableFields = ['name'];
-    const where = search ? buildSearchWhereClause(search, searchableFields) : {};
+    const where = search
+      ? buildSearchWhereClause(search, searchableFields)
+      : {};
 
     const [data, total] = await this.categoryRepo.findAndCount({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        createdAt: true,
+        updatedAt: true,
+        parent: { id: true, name: true, slug: true },
+        children: { id: true, name: true, slug: true },
+      },
       relations: { parent: true, children: true },
       where,
       take: limit,
       skip: (page - 1) * limit,
       order: { [sortBy]: sortOrder },
+      loadEagerRelations: false,
     });
 
     const totalPages = Math.ceil(total / limit);
@@ -63,7 +76,18 @@ export class CategoryService {
   async findOne(id: number): Promise<Categories> {
     const category = await this.categoryRepo.findOne({
       where: { id },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        seoText: true,
+        createdAt: true,
+        updatedAt: true,
+        parent: { id: true, name: true, slug: true },
+        children: { id: true, name: true, slug: true },
+      },
       relations: { parent: true, children: true },
+      loadEagerRelations: false,
     });
     if (!category) throw new NotFoundException('دسته‌بندی یافت نشد');
     return category;
@@ -72,8 +96,8 @@ export class CategoryService {
   async getCategoryTree(): Promise<any[]> {
     const rawCategories = await this.categoryRepo
       .createQueryBuilder('category')
-      .leftJoinAndSelect('category.parent', 'parent')
-      .leftJoinAndSelect('category.children', 'children')
+      .select(['category.id', 'category.name', 'category.slug', 'parent.id'])
+      .leftJoin('category.parent', 'parent')
       .getMany();
 
     const map = new Map<number, any>();
@@ -109,7 +133,9 @@ export class CategoryService {
 
   // Admin
   async create(dto: CreateCategoryDto) {
-    const slug = dto.slug?.trim() ? generateSlug(dto.slug) : generateSlug(dto.name);
+    const slug = dto.slug?.trim()
+      ? generateSlug(dto.slug)
+      : generateSlug(dto.name);
     const category = this.categoryRepo.create({
       name: dto.name.trim(),
       slug,
@@ -184,9 +210,16 @@ export class CategoryService {
   async getCategoryTreeWithProducts(): Promise<any[]> {
     const rawCategories = await this.categoryRepo
       .createQueryBuilder('category')
-      .leftJoinAndSelect('category.parent', 'parent')
-      .leftJoinAndSelect('category.children', 'children')
-      .leftJoinAndSelect('category.products', 'products')
+      .select([
+        'category.id',
+        'category.name',
+        'category.slug',
+        'parent.id',
+        'products.id',
+        'products.title',
+      ])
+      .leftJoin('category.parent', 'parent')
+      .leftJoin('category.products', 'products')
       .getMany();
 
     const map = new Map<number, any>();

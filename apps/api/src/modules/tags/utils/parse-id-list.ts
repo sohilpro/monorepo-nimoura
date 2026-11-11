@@ -3,7 +3,9 @@ export function parseIdList(input: unknown): number[] {
   const list = Array.isArray(input) ? input : String(input ?? '').split(',');
   return [
     ...new Set(
-      list.map((v) => Number(String(v).trim())).filter((n) => Number.isInteger(n) && n > 0),
+      list
+        .map((v) => Number(String(v).trim()))
+        .filter((n) => Number.isInteger(n) && n > 0),
     ),
   ];
 }

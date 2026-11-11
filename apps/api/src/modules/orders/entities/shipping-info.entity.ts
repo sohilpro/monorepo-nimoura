@@ -10,7 +10,7 @@ export class ShippingInfo extends CustomBaseEntity {
   @Column()
   last_name!: string;
 
-  @ManyToOne(() => Addresses, { cascade: false, eager: true })
+  @ManyToOne(() => Addresses, { cascade: false })
   @JoinColumn()
   address!: Addresses;
 

@@ -1,7 +1,7 @@
 <template>
   <aside
     :class="[
-      'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 right-0 bg-white dark:bg-gray-900 dark:border-gray-800 text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-l border-gray-200',
+      'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 right-0 bg-white text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-l border-gray-200',
       {
         'lg:w-[290px]': isExpanded || isMobileOpen || isHovered,
         'lg:w-[90px]': !isExpanded && !isHovered,
@@ -19,30 +19,23 @@
         !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
       ]"
     >
-      <NuxtLink to="/">
-        <img
+      <NuxtLink to="/" class="flex items-center gap-2.5">
+        <span
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-lg font-bold text-white shadow-theme-xs"
+        >
+          ن
+        </span>
+        <div
           v-if="isExpanded || isHovered || isMobileOpen"
-          class="dark:hidden"
-          src="/images/logo/logo.svg"
-          alt="Logo"
-          width="150"
-          height="40"
-        />
-        <img
-          v-if="isExpanded || isHovered || isMobileOpen"
-          class="hidden dark:block"
-          src="/images/logo/logo-dark.svg"
-          alt="Logo"
-          width="150"
-          height="40"
-        />
-        <img
-          v-else
-          src="/images/logo/logo-icon.svg"
-          alt="Logo"
-          width="32"
-          height="32"
-        />
+          class="flex flex-col leading-tight"
+        >
+          <span class="text-xl font-extrabold tracking-tight text-brand-500">
+            نیمورا
+          </span>
+          <span class="text-[11px] font-medium text-gray-500">
+            پنل مدیریت فروشگاه
+          </span>
+        </div>
       </NuxtLink>
     </div>
     <div

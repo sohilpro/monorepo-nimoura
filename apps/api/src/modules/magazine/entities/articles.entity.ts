@@ -23,6 +23,14 @@ export enum ArticleStatus {
 
 @Entity('magazine_articles')
 @Index(['status', 'publishedAt'])
+@Index('idx_mag_articles_status_featured_pub', [
+  'status',
+  'isFeatured',
+  'publishedAt',
+])
+@Index('idx_mag_articles_status_views', ['status', 'viewCount'])
+@Index('idx_mag_articles_status_likes', ['status', 'likeCount'])
+@Index('idx_mag_articles_updated_at', ['updatedAt'])
 export class Article extends CustomBaseEntity {
   @Column({ length: 255 })
   title: string;
@@ -102,21 +110,21 @@ export class Article extends CustomBaseEntity {
   canonicalUrl: string;
 
   // ---------- روابط ----------
+  @Index('idx_mag_articles_author')
   @ManyToOne(() => Author, (author) => author.articles, {
-    eager: true,
     nullable: false,
   })
   @JoinColumn({ name: 'author_id' })
   author: Author;
 
+  @Index('idx_mag_articles_category')
   @ManyToOne(() => Category, (category) => category.articles, {
-    eager: true,
     nullable: false,
   })
   @JoinColumn({ name: 'category_id' })
   category: Category;
 
-  @ManyToMany(() => Tag, (tag) => tag.articles, { eager: true, cascade: false })
+  @ManyToMany(() => Tag, (tag) => tag.articles, { cascade: false })
   @JoinTable({
     name: 'magazine_article_tags',
     joinColumn: { name: 'article_id', referencedColumnName: 'id' },

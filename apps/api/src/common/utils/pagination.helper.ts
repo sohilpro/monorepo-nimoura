@@ -4,7 +4,7 @@ export function buildPagination<T>(
   [items, total]: [T[], number],
   page: number,
   limit: number,
-  key: string = "items"
+  key: string = 'items',
 ) {
   return {
     [key]: items,
@@ -16,8 +16,6 @@ export function buildPagination<T>(
     hasPrevPage: +page > 1,
   };
 }
-
-
 
 export function buildSearchWhereClause(search: string, fields: string[]) {
   if (!search?.trim()) return {};

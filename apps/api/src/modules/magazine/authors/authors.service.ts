@@ -19,15 +19,44 @@ export class AuthorsService {
 
   findAllAdmin(): Promise<Author[]> {
     return this.authorRepo.find({
-      // where: { isActive: true },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        avatar: true,
+        jobTitle: true,
+        isActive: true,
+        createdAt: true,
+      },
       order: { name: 'ASC' },
+      loadEagerRelations: false,
     });
   }
 
   async findBySlug(slug: string): Promise<Author> {
     const author = await this.authorRepo.findOne({
       where: { slug },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        avatar: true,
+        jobTitle: true,
+        bio: true,
+        socialLinks: true,
+        articles: {
+          id: true,
+          title: true,
+          slug: true,
+          summary: true,
+          coverImage: true,
+          coverImageAlt: true,
+          readingTime: true,
+          publishedAt: true,
+        },
+      },
       relations: { articles: true },
+      loadEagerRelations: false,
     });
     if (!author) throw new NotFoundException('نویسنده یافت نشد');
     return author;

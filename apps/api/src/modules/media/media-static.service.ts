@@ -30,7 +30,9 @@ interface UploadOptions {
 @Injectable()
 export class MediaStaticService {
   // روت ذخیره‌سازی فایل‌ها داخل پوشه uploads (پشتیبانی همزمان از اجرای ریشه مونو‌ریپو و داکر)
-  private readonly rootUploadDir = existsSync(join(process.cwd(), 'apps', 'backend', 'uploads'))
+  private readonly rootUploadDir = existsSync(
+    join(process.cwd(), 'apps', 'backend', 'uploads'),
+  )
     ? join(process.cwd(), 'apps', 'backend', 'uploads')
     : join(process.cwd(), 'uploads');
 
@@ -56,7 +58,20 @@ export class MediaStaticService {
       sortOrder = 'DESC',
     } = query;
 
-    const queryBuilder = this.mediaRepo.createQueryBuilder('media');
+    const queryBuilder = this.mediaRepo
+      .createQueryBuilder('media')
+      .select([
+        'media.id',
+        'media.ownerType',
+        'media.ownerId',
+        'media.order',
+        'media.originalName',
+        'media.fileName',
+        'media.publicUrl',
+        'media.mimeType',
+        'media.size',
+        'media.createdAt',
+      ]);
 
     // ۱. فیلتر بر اساس نوع مالک (ownerType)
     if (ownerType) {
@@ -219,7 +234,20 @@ export class MediaStaticService {
   ): Promise<Media[]> {
     return this.mediaRepo.find({
       where: { ownerType, ownerId },
+      select: {
+        id: true,
+        ownerType: true,
+        ownerId: true,
+        order: true,
+        originalName: true,
+        fileName: true,
+        publicUrl: true,
+        mimeType: true,
+        size: true,
+        createdAt: true,
+      },
       order: { order: 'ASC' },
+      loadEagerRelations: false,
     });
   }
 

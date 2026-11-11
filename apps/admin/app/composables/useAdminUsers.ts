@@ -128,9 +128,9 @@ export function useAdminUsers() {
   function getRoleBadgeClass(role?: UserRole | string): string {
     switch (role) {
       case UserRole.OWNER:
-        return 'bg-purple-50 text-purple-700 border-purple-200';
+        return 'bg-brand-100 text-brand-800 border-brand-200';
       case UserRole.ADMIN:
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-nimoura-accent/40 text-nimoura-velvet border-nimoura-accent';
       case UserRole.USER:
       default:
         return 'bg-gray-50 text-gray-700 border-gray-200';

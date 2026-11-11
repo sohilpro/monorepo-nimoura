@@ -9,8 +9,8 @@ export interface PriceListRow {
   brand: string;
   categoryId: number | null;
   category: string;
-  price: number;           // قیمت اصلی
-  finalPrice: number;      // قیمت نهایی خرده‌فروشی (بعد از تخفیف)
+  price: number; // قیمت اصلی
+  finalPrice: number; // قیمت نهایی خرده‌فروشی (بعد از تخفیف)
   discountPercent: number; // محاسبه‌شده، نه از ستون percentageDiscount
   inStock: boolean;
   tiers: { minQuantity: number; price: number }[]; // قیمت عمده

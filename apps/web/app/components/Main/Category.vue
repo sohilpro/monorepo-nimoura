@@ -6,18 +6,18 @@
     >
       <div class="flex items-center gap-x-2 sm:gap-x-4">
         <span class="size-12 hidden xs:flex rounded-lg shadow-lg flex-center">
-          <svg class="size-7 text-gray-700 dark:text-gray-100">
+          <svg class="size-7 text-gray-700">
             <use href="#squares"></use>
           </svg>
         </span>
         <div class="space-y-1 md:space-y-1">
           <h3
-            class="text-xl md:text-2xl font-modam font-medium text-nimoura-text-700 dark:text-white"
+            class="text-xl md:text-2xl font-modam font-medium text-nimoura-text-700"
           >
             دسـته بندی هـای
             <span class="text-nimoura-primary">محبوب</span>
           </h3>
-          <p class="text-sm text-gray-500 dark:text-gray-300">
+          <p class="text-sm text-gray-500">
             جدیدترین و بروزترین دسته بندی ها
           </p>
         </div>
@@ -38,7 +38,7 @@
               ? `/categories/${item.category.id}/${createSlug(item.category.name)}`
               : `/brand/${createSlug(item.brand.name)}?id=${item.brand.id}`
           "
-          class="group flex-none flex flex-col items-center gap-y-1 cursor-pointer text-nimoura-text-700 dark:text-white"
+          class="group flex-none flex flex-col items-center gap-y-1 cursor-pointer text-nimoura-text-700"
         >
           <NuxtImg
             loading="lazy"
@@ -60,14 +60,14 @@
           <div
             v-for="i in 5"
             :key="i"
-            class="flex flex-col items-center gap-y-1 duration-300 cursor-pointer text-nimoura-text-700 dark:text-white relative"
+            class="flex flex-col items-center gap-y-1 duration-300 cursor-pointer text-nimoura-text-700 relative"
           >
             <div
-              class="w-[100px] h-[100px] lg:w-[120px] lg:h-[120px] bg-gray-200 dark:bg-gray-700 rounded-full object-cover"
+              class="w-[100px] h-[100px] lg:w-[120px] lg:h-[120px] bg-gray-200 rounded-full object-cover"
             ></div>
             <div class="pt-1 text-sm lg:text-lg">
               <div
-                class="w-16 h-4 mt-1 bg-gray-300 dark:bg-gray-600 rounded-md"
+                class="w-16 h-4 mt-1 bg-gray-300 rounded-md"
               ></div>
             </div>
           </div>

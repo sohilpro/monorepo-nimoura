@@ -11,7 +11,9 @@ import { Tags } from '../entities/tags.entity';
  */
 @Injectable()
 export class TagFilterService {
-  constructor(@InjectRepository(Tags) private readonly repo: Repository<Tags>) {}
+  constructor(
+    @InjectRepository(Tags) private readonly repo: Repository<Tags>,
+  ) {}
 
   async apply<T extends object>(
     qb: SelectQueryBuilder<T>,

@@ -37,11 +37,29 @@ function onInput(e: Event) {
 </script>
 
 <style scoped>
-@reference "tailwindcss";
 .input {
-  @apply w-full rounded-xl border border-neutral-200 bg-white px-3 py-2 text-sm outline-none placeholder:text-neutral-400 focus:border-neutral-400 focus:ring-2 focus:ring-neutral-100;
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-gray-200, #ebe0df);
+  background-color: #ffffff;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--color-gray-800, #3a3131);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.input::placeholder {
+  color: var(--color-gray-400, #9b9191);
+}
+.input:focus {
+  border-color: var(--color-brand-300, #e0a7b1);
+  box-shadow: 0 0 0 3px rgba(183, 110, 121, 0.12);
 }
 .label {
-  @apply mb-1 block text-xs font-medium text-neutral-600;
+  margin-bottom: 0.25rem;
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-gray-600, #665d5d);
 }
 </style>

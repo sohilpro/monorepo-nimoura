@@ -18,18 +18,50 @@ export class BannerPositionService {
   async create(dto: CreatePositionDto): Promise<BannerPosition> {
     const exists = await this.positionRepo.findOne({ where: { key: dto.key } });
     if (exists) {
-      throw new ConflictException(`جایگاهی با کلید "${dto.key}" از قبل وجود دارد`);
+      throw new ConflictException(
+        `جایگاهی با کلید "${dto.key}" از قبل وجود دارد`,
+      );
     }
     const position = this.positionRepo.create(dto);
     return this.positionRepo.save(position);
   }
 
   findAll(): Promise<BannerPosition[]> {
-    return this.positionRepo.find({ order: { createdAt: 'ASC' } });
+    return this.positionRepo.find({
+      select: {
+        id: true,
+        key: true,
+        name: true,
+        description: true,
+        recommendedWidth: true,
+        recommendedHeight: true,
+        maxItems: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      order: { createdAt: 'ASC' },
+      loadEagerRelations: false,
+    });
   }
 
   async findOne(id: number): Promise<BannerPosition> {
-    const position = await this.positionRepo.findOne({ where: { id } });
+    const position = await this.positionRepo.findOne({
+      where: { id },
+      select: {
+        id: true,
+        key: true,
+        name: true,
+        description: true,
+        recommendedWidth: true,
+        recommendedHeight: true,
+        maxItems: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+      loadEagerRelations: false,
+    });
     if (!position) throw new NotFoundException('جایگاه بنر یافت نشد');
     return position;
   }

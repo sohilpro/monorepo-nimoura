@@ -37,7 +37,12 @@ import { PendingOrdersExpiryTask } from './tasks/pending-orders-expiry.task';
     PromotionModule,
   ],
   controllers: [OrdersController, AdminOrdersController],
-  providers: [OrderService, OrdersAdminService, InvoiceService, PendingOrdersExpiryTask],
+  providers: [
+    OrderService,
+    OrdersAdminService,
+    InvoiceService,
+    PendingOrdersExpiryTask,
+  ],
   exports: [OrderService, OrdersAdminService, InvoiceService],
 })
 export class OrderModule {}

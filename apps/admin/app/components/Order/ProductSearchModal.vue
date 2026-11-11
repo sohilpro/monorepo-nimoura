@@ -39,13 +39,13 @@
               ref="searchInput"
               v-model="query"
               type="text"
-              class="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 pl-10 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              class="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 pl-10 text-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-500/15"
               placeholder="نام محصول را جستجو کنید..."
               @input="handleSearch"
             />
             <div v-if="loading" class="absolute left-3 top-3.5">
               <svg
-                class="h-5 w-5 animate-spin text-blue-500"
+                class="h-5 w-5 animate-spin text-brand-500"
                 viewBox="0 0 24 24"
                 fill="none"
               >
@@ -71,7 +71,7 @@
               <li
                 v-for="product in results"
                 :key="product.id"
-                class="flex cursor-pointer items-center gap-3 p-3 hover:bg-blue-50 transition-colors rounded-lg group"
+                class="flex cursor-pointer items-center gap-3 p-3 hover:bg-brand-50 transition-colors rounded-lg group"
                 @click="onProductClick(product)"
               >
                 <img
@@ -87,7 +87,7 @@
                   >
                     <span
                       v-if="product.type === 'variant'"
-                      class="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded"
+                      class="bg-nimoura-accent/45 text-nimoura-velvet px-1.5 py-0.5 rounded"
                     >
                       دارای تنوع
                     </span>
@@ -157,8 +157,8 @@
               class="flex items-center justify-between p-2 rounded-lg border cursor-pointer transition-all"
               :class="[
                 selectedVariant === variant
-                  ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500'
-                  : 'border-gray-200 hover:border-blue-300',
+                  ? 'border-brand-500 bg-brand-50 ring-1 ring-brand-500'
+                  : 'border-gray-200 hover:border-brand-300',
                 !isVariantSellable(variant)
                   ? 'opacity-50 cursor-not-allowed bg-gray-50'
                   : '',
@@ -179,7 +179,7 @@
                   >
                 </div>
               </div>
-              <div class="text-sm font-bold text-blue-600 text-end">
+              <div class="text-sm font-bold text-brand-600 text-end">
                 <span
                   v-if="getEffectivePrice(variant) !== Number(variant.price)"
                   class="block text-xs font-normal text-gray-400 line-through"
@@ -195,7 +195,7 @@
             <button
               @click="confirmVariantSelection"
               :disabled="!selectedVariant"
-              class="flex-1 bg-blue-600 text-white py-2.5 rounded-xl font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+              class="flex-1 bg-brand-500 text-white py-2.5 rounded-xl font-medium hover:bg-brand-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
             >
               افزودن به لیست
             </button>

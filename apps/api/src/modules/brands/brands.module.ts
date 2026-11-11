@@ -10,7 +10,10 @@ import { AdminBrandsController } from './controllers/brands-admin.controller';
 import { MediaModule } from '../media/media.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Brands, SubBrands, Products]), MediaModule],
+  imports: [
+    TypeOrmModule.forFeature([Brands, SubBrands, Products]),
+    MediaModule,
+  ],
   controllers: [BrandsController, AdminBrandsController],
   providers: [BrandsService],
   exports: [BrandsService, TypeOrmModule], // اکسپورت برای استفاده در ماژول محصولات

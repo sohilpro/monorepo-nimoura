@@ -1,6 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsOptional, IsString, Max, Min, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+  MinLength,
+} from 'class-validator';
 import { ProductFilterQueryDto } from 'src/modules/products/dtos/product-query.dto';
 
 // ⚠️ مسیر را مطابق پروژه‌ات درست کن (همان فایلی که PaginationQueryDto و ProductFilterQueryDto داخلش هستند)

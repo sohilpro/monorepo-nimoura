@@ -39,9 +39,21 @@ export class PromotionsService {
 
     const promo = await this.promoRepo.findOne({
       where: { promoCode, isActive: true },
-      relations: {
-        allowedUsers: true,
+      select: {
+        id: true,
+        type: true,
+        amount: true,
+        promoCode: true,
+        startDate: true,
+        endDate: true,
+        isActive: true,
+        maxTotalUses: true,
+        maxUsesPerUser: true,
+        minOrderAmount: true,
+        totalUsed: true,
+        maxAmount: true,
       },
+      loadEagerRelations: false,
     });
 
     if (!promo) throw new BadRequestException('کد تخفیف نامعتبر است');
@@ -58,14 +70,25 @@ export class PromotionsService {
     if (promo.maxTotalUses && promo.totalUsed >= promo.maxTotalUses)
       throw new BadRequestException('ظرفیت استفاده از کد تخفیف تمام شده');
 
+    const allowedCheck = await this.promoRepo
+      .createQueryBuilder('p')
+      .innerJoin('p.allowedUsers', 'u')
+      .select('COUNT(u.id)', 'total')
+      .addSelect('COUNT(CASE WHEN u.id = :userId THEN 1 END)', 'matched')
+      .where('p.id = :promoId', { promoId: promo.id })
+      .setParameter('userId', userId)
+      .getRawOne<{ total: string; matched: string }>();
+
     if (
-      promo.allowedUsers?.length &&
-      !promo.allowedUsers.find((u) => u.id === userId)
+      Number(allowedCheck?.total ?? 0) > 0 &&
+      Number(allowedCheck?.matched ?? 0) === 0
     )
       throw new BadRequestException('این کد برای شما مجاز نیست');
 
     const usage = await this.usageRepo.findOne({
       where: { promotion: { id: promo.id }, user: { id: userId } },
+      select: { id: true, usedCount: true },
+      loadEagerRelations: false,
     });
 
     if (
@@ -89,18 +112,26 @@ export class PromotionsService {
     const promo = this.promoRepo.create(dto);
 
     if (dto.productIds?.length) {
-      promo.products = await this.productRepo.findBy({
-        id: In(dto.productIds),
+      promo.products = await this.productRepo.find({
+        where: { id: In(dto.productIds) },
+        select: { id: true },
+        loadEagerRelations: false,
       });
     }
     if (dto.categoryIds?.length) {
-      promo.categories = await this.categoryRepo.findBy({
-        id: In(dto.categoryIds),
+      promo.categories = await this.categoryRepo.find({
+        where: { id: In(dto.categoryIds) },
+        select: { id: true },
+        loadEagerRelations: false,
       });
     }
 
     if (dto.brandIds?.length) {
-      promo.brands = await this.brandRepo.findBy({ id: In(dto.brandIds) }); // ✅
+      promo.brands = await this.brandRepo.find({
+        where: { id: In(dto.brandIds) },
+        select: { id: true },
+        loadEagerRelations: false,
+      });
     }
 
     return this.promoRepo.save(promo);
@@ -117,15 +148,29 @@ export class PromotionsService {
     const searchableFields = ['title'];
     const where = buildSearchWhereClause(search, searchableFields);
     const [data, total] = await this.promoRepo.findAndCount({
-      relations: {
-        products: true,
-        categories: true,
-        brands: true,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        amount: true,
+        promoCode: true,
+        startDate: true,
+        endDate: true,
+        isPublic: true,
+        isActive: true,
+        maxTotalUses: true,
+        maxUsesPerUser: true,
+        minOrderAmount: true,
+        totalUsed: true,
+        maxAmount: true,
+        createdAt: true,
       },
       where,
       take: +limit,
       skip: (+page - 1) * +limit,
       order: { [sortBy]: sortOrder.toUpperCase() },
+      loadEagerRelations: false,
     });
     return buildPagination([data, total], page, limit, 'promotions');
   }
@@ -133,29 +178,59 @@ export class PromotionsService {
   findOne(id: number) {
     return this.promoRepo.findOne({
       where: { id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        type: true,
+        amount: true,
+        promoCode: true,
+        startDate: true,
+        endDate: true,
+        isPublic: true,
+        isActive: true,
+        maxTotalUses: true,
+        maxUsesPerUser: true,
+        minOrderAmount: true,
+        totalUsed: true,
+        maxAmount: true,
+        createdAt: true,
+        updatedAt: true,
+        products: { id: true, title: true },
+        categories: { id: true, name: true },
+        brands: { id: true, name: true },
+      },
       relations: {
         products: true,
         categories: true,
         brands: true,
       },
+      loadEagerRelations: false,
     });
   }
 
   async update(id: number, dto: UpdatePromotionDto) {
-    const promo = await this.promoRepo.findOneBy({ id });
+    const promo = await this.promoRepo.findOne({
+      where: { id },
+      loadEagerRelations: false,
+    });
     if (!promo) throw new NotFoundException();
 
     Object.assign(promo, dto);
 
     if (dto.productIds) {
-      promo.products = await this.productRepo.findBy({
-        id: In(dto.productIds),
+      promo.products = await this.productRepo.find({
+        where: { id: In(dto.productIds) },
+        select: { id: true },
+        loadEagerRelations: false,
       });
     }
 
     if (dto.categoryIds) {
-      promo.categories = await this.categoryRepo.findBy({
-        id: In(dto.categoryIds),
+      promo.categories = await this.categoryRepo.find({
+        where: { id: In(dto.categoryIds) },
+        select: { id: true },
+        loadEagerRelations: false,
       });
     }
 

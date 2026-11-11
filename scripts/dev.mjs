@@ -27,6 +27,46 @@ function log(tag, color, text) {
 const isWin = process.platform === 'win32';
 const npmCmd = isWin ? 'npm.cmd' : 'npm';
 const children = [];
+let isCleaningUp = false;
+
+/**
+ * Terminate orphaned Nest/Nuxt watcher processes left behind in this repo from previous runs.
+ */
+function killOrphanedWorkspaceProcesses() {
+  if (!isWin) return;
+  try {
+    const repoRoot = process.cwd().replace(/'/g, "''");
+    const psScript = `
+      $root = '${repoRoot}'
+      Get-CimInstance Win32_Process -Filter "name = 'node.exe'" |
+        Where-Object {
+          $_.ProcessId -ne ${process.pid} -and
+          $_.CommandLine -and
+          $_.CommandLine.Contains($root) -and
+          ($_.CommandLine -match 'nest\\.js|nuxi|nuxt|dist[/\\\\]main')
+        } |
+        ForEach-Object { $_.ProcessId }
+    `.replace(/\s+/g, ' ').trim();
+
+    const output = execSync(`powershell -NoProfile -Command "${psScript}"`, {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+
+    const pids = output
+      .trim()
+      .split(/\r?\n/)
+      .map((s) => s.trim())
+      .filter((s) => /^\d+$/.test(s));
+
+    for (const pid of pids) {
+      try {
+        execSync(`taskkill /pid ${pid} /f /t`, { stdio: 'ignore' });
+        log('ORCHESTRATOR', colors.yellow, `Orphaned watcher/server process (PID: ${pid}) has been terminated.`);
+      } catch {}
+    }
+  } catch {}
+}
 
 /**
  * Free ports if Node.js processes from previous runs are still running.
@@ -55,7 +95,7 @@ function runService(name, filterName, color) {
   log(name, color, `Starting ${name} service...`);
 
   const proc = spawn(npmCmd, ['run', 'dev', `--workspace=${filterName}`], {
-    stdio: ['inherit', 'pipe', 'pipe'],
+    stdio: ['ignore', 'pipe', 'pipe'],
     shell: isWin,
     env: { ...process.env, FORCE_COLOR: '1' },
   });
@@ -71,7 +111,7 @@ function runService(name, filterName, color) {
   });
 
   proc.on('close', (code) => {
-    if (code !== null && code !== 0) {
+    if (!isCleaningUp && code !== null && code !== 0) {
       log(name, colors.red, `Service stopped with error code ${code}.`);
     }
   });
@@ -79,7 +119,7 @@ function runService(name, filterName, color) {
   return proc;
 }
 
-function checkHttp(url, timeoutMs = 40000) {
+function checkHttp(url, timeoutMs = 45000) {
   const startTime = Date.now();
   return new Promise((resolve) => {
     const interval = setInterval(() => {
@@ -123,7 +163,8 @@ async function start() {
     }
   }
 
-  // Free ports 4000, 3000, and 3001 if background processes are running.
+  // Stop any orphaned Nest/Nuxt processes and free ports 4000, 3000, and 3001.
+  killOrphanedWorkspaceProcesses();
   freePort(4000);
   freePort(3000);
   freePort(3001);
@@ -133,7 +174,7 @@ async function start() {
   runService('API', '@nimoura/api', colors.cyan);
 
   log('ORCHESTRATOR', colors.yellow, 'Waiting for TypeScript compilation and the backend health endpoint to become available...');
-  const apiReady = await checkHttp('http://127.0.0.1:4000/api/v1/health', 35000);
+  const apiReady = await checkHttp('http://127.0.0.1:4000/api/v1/health', 45000);
 
   if (apiReady) {
     log('ORCHESTRATOR', colors.green, '✅ Backend server successfully started and responded on port 4000.');
@@ -177,13 +218,17 @@ async function start() {
 }
 
 function cleanup() {
+  if (isCleaningUp) return;
+  isCleaningUp = true;
   console.log(`\n${colors.yellow}[ORCHESTRATOR] Gracefully stopping all services...${colors.reset}`);
-  for (const { name, proc } of children) {
+  for (const { proc } of children) {
     try {
-      if (isWin) {
-        spawn('taskkill', ['/pid', String(proc.pid), '/f', '/t']);
-      } else {
-        proc.kill('SIGINT');
+      if (proc.pid) {
+        if (isWin) {
+          execSync(`taskkill /pid ${proc.pid} /f /t`, { stdio: 'ignore' });
+        } else {
+          proc.kill('SIGINT');
+        }
       }
     } catch {}
   }
@@ -192,5 +237,9 @@ function cleanup() {
 
 process.on('SIGINT', cleanup);
 process.on('SIGTERM', cleanup);
+process.on('SIGHUP', cleanup);
+if (isWin) {
+  process.on('SIGBREAK', cleanup);
+}
 
 start();

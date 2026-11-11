@@ -20,6 +20,7 @@ export class SubBrands extends CustomBaseEntity {
   @Column({ type: 'varchar', length: 150 })
   slug!: string;
 
+  @Index('idx_sub_brands_brand')
   @Column({ type: 'int' })
   brandId!: number;
 

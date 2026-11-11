@@ -3,12 +3,12 @@
     <div
       v-for="(item, i) in safeData"
       :key="item?.id ?? i"
-      class="relative border p-4 rounded-xl shadow-xs hover:shadow-md transition bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+      class="relative border p-4 rounded-xl shadow-theme-xs hover:shadow-theme-md hover:border-brand-200 transition bg-white border-gray-200"
     >
       <!-- Item Image (Product, Brand, Banner, etc.) -->
       <div
         v-if="getCardImage(item)"
-        class="w-full h-40 mb-4 mt-6 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center border border-gray-200 dark:border-gray-700"
+        class="w-full h-40 mb-4 mt-6 overflow-hidden rounded-xl bg-gray-100 flex items-center justify-center border border-gray-200"
       >
         <img
           :src="getCardImage(item)"
@@ -33,7 +33,7 @@
           <button
             type="button"
             @click.stop="open = open === item.id ? null : item.id"
-            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            class="text-gray-500 hover:text-gray-700"
           >
             <svg
               class="fill-current"
@@ -51,18 +51,18 @@
 
           <div
             v-if="open === item.id"
-            class="absolute right-0 mt-2 w-40 rounded-xl border border-gray-200 bg-white shadow-lg z-50 dark:bg-gray-800 dark:border-gray-700"
+            class="absolute right-0 mt-2 w-40 rounded-xl border border-gray-200 bg-white shadow-lg z-50"
           >
             <NuxtLink
               :to="`/${props.urlEdit}/${item.id}`"
-              class="w-full block text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+              class="w-full block text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
             >
               ✏️ ویرایش
             </NuxtLink>
             <button
               type="button"
               @click="$emit('deleteItem', item)"
-              class="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+              class="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
             >
               🗑 حذف
             </button>
@@ -77,7 +77,7 @@
           :key="col.key"
           class="mb-2 text-sm flex gap-1 items-center flex-wrap"
         >
-          <strong class="text-gray-600 dark:text-gray-400 font-medium">
+          <strong class="text-gray-600 font-medium">
             {{ col.label }}:
           </strong>
 
@@ -87,14 +87,14 @@
               v-if="cell.type === 'badge'"
               :class="[
                 'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                cell.badgeClass || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+                cell.badgeClass || 'bg-gray-100 text-gray-700',
               ]"
             >
               {{ cell.text }}
             </span>
 
             <!-- Plain or image-text -->
-            <span v-else class="text-gray-800 dark:text-gray-200 font-medium">
+            <span v-else class="text-gray-800 font-medium">
               {{ cell.text }}
             </span>
           </template>

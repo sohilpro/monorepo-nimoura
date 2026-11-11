@@ -44,8 +44,8 @@ export class CreateBannerDto {
   @IsEnum(LinkTarget)
   linkTarget?: LinkTarget;
 
-  @ApiProperty({ 
-    description: 'شناسه‌ی جایگاه نمایش بنر (BannerPosition)', 
+  @ApiProperty({
+    description: 'شناسه‌ی جایگاه نمایش بنر (BannerPosition)',
     example: 1,
     type: Number,
   })

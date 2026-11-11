@@ -17,7 +17,7 @@ export function AdminController(path: string = '') {
   return applyDecorators(
     Controller(fullPath),
     Roles(UserRole.ADMIN, UserRole.OWNER), // محدودسازی خودکار به ادمین و مالک
-    ApiTags(tagTitle),                     // دسته‌بندی در مستندات سوگر
-    ApiBearerAuth(),                       // نمایش آیکون قفل و نیاز به توکن در سوگر
+    ApiTags(tagTitle), // دسته‌بندی در مستندات سوگر
+    ApiBearerAuth(), // نمایش آیکون قفل و نیاز به توکن در سوگر
   );
 }

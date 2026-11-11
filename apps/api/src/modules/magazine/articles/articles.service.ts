@@ -20,6 +20,34 @@ import { generateSlug, makeSlugUnique } from '../utils/slug.util';
 import { calculateReadingTime } from '../utils/reading-time.util';
 import { PaginatedResult } from '../dtos/pagination.dto';
 
+const ARTICLE_LIST_SELECT = [
+  'article.id',
+  'article.title',
+  'article.slug',
+  'article.summary',
+  'article.coverImage',
+  'article.coverImageAlt',
+  'article.status',
+  'article.isFeatured',
+  'article.readingTime',
+  'article.viewCount',
+  'article.likeCount',
+  'article.commentCount',
+  'article.publishedAt',
+  'article.createdAt',
+  'article.updatedAt',
+  'author.id',
+  'author.name',
+  'author.slug',
+  'author.avatar',
+  'category.id',
+  'category.name',
+  'category.slug',
+  'tags.id',
+  'tags.name',
+  'tags.slug',
+];
+
 @Injectable()
 export class ArticlesService {
   constructor(
@@ -33,12 +61,14 @@ export class ArticlesService {
     @InjectRepository(Tag) private readonly tagRepo: Repository<Tag>,
   ) {}
 
- async create(dto: CreateArticleDto): Promise<Article> {
+  async create(dto: CreateArticleDto): Promise<Article> {
     // ۱. پیدا کردن رابطه Author
     const author = await this.authorRepo.findOneByOrFail({ id: dto.authorId });
 
     // ۲. پیدا کردن رابطه Category
-    const category = await this.categoryRepo.findOneByOrFail({ id: dto.categoryId });
+    const category = await this.categoryRepo.findOneByOrFail({
+      id: dto.categoryId,
+    });
 
     // ۳. پیدا کردن تگ‌ها (در صورت وجود)
     const tags = dto.tagIds?.length
@@ -63,14 +93,14 @@ export class ArticlesService {
       metaDescription: dto.metaDescription,
       metaKeywords: dto.metaKeywords,
       canonicalUrl: dto.canonicalUrl,
-      
+
       // روابط و مقادیر محاسباتی
       slug,
       author,
       category,
       tags,
       readingTime: calculateReadingTime(dto.content),
-      
+
       // تعیین تاریخ انتشار (اگر وضعیت PUBLISHED بود تاریخ الان، وگرنه null یا undefined)
       publishedAt: dto.status === ArticleStatus.PUBLISHED ? new Date() : null,
     });
@@ -118,9 +148,10 @@ export class ArticlesService {
   ): Promise<PaginatedResult<Article>> {
     const qb = this.articleRepo
       .createQueryBuilder('article')
-      .leftJoinAndSelect('article.author', 'author')
-      .leftJoinAndSelect('article.category', 'category')
-      .leftJoinAndSelect('article.tags', 'tags')
+      .select(ARTICLE_LIST_SELECT)
+      .leftJoin('article.author', 'author')
+      .leftJoin('article.category', 'category')
+      .leftJoin('article.tags', 'tags')
       .where('article.status = :status', { status: ArticleStatus.PUBLISHED });
 
     if (query.search) {
@@ -174,9 +205,10 @@ export class ArticlesService {
   ): Promise<PaginatedResult<Article>> {
     const qb = this.articleRepo
       .createQueryBuilder('article')
-      .leftJoinAndSelect('article.author', 'author')
-      .leftJoinAndSelect('article.category', 'category')
-      .leftJoinAndSelect('article.tags', 'tags');
+      .select(ARTICLE_LIST_SELECT)
+      .leftJoin('article.author', 'author')
+      .leftJoin('article.category', 'category')
+      .leftJoin('article.tags', 'tags');
 
     if (query.search) {
       qb.andWhere('(article.title ILIKE :s OR article.summary ILIKE :s)', {
@@ -214,11 +246,46 @@ export class ArticlesService {
   async findBySlug(slug: string): Promise<Article> {
     const article = await this.articleRepo.findOne({
       where: { slug, status: ArticleStatus.PUBLISHED },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        summary: true,
+        content: true,
+        coverImage: true,
+        coverImageAlt: true,
+        status: true,
+        isFeatured: true,
+        readingTime: true,
+        viewCount: true,
+        likeCount: true,
+        commentCount: true,
+        metaTitle: true,
+        metaDescription: true,
+        metaKeywords: true,
+        canonicalUrl: true,
+        relatedProductIds: true,
+        publishedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          id: true,
+          name: true,
+          slug: true,
+          avatar: true,
+          jobTitle: true,
+          bio: true,
+          socialLinks: true,
+        },
+        category: { id: true, name: true, slug: true },
+        tags: { id: true, name: true, slug: true },
+      },
       relations: {
         author: true,
         category: true,
         tags: true,
       },
+      loadEagerRelations: false,
     });
     if (!article) throw new NotFoundException('مقاله یافت نشد');
     return article;
@@ -227,8 +294,25 @@ export class ArticlesService {
   async findRelated(article: Article, limit = 4): Promise<Article[]> {
     return this.articleRepo
       .createQueryBuilder('article')
-      .leftJoinAndSelect('article.author', 'author')
-      .leftJoinAndSelect('article.category', 'category')
+      .select([
+        'article.id',
+        'article.title',
+        'article.slug',
+        'article.summary',
+        'article.coverImage',
+        'article.coverImageAlt',
+        'article.readingTime',
+        'article.publishedAt',
+        'author.id',
+        'author.name',
+        'author.slug',
+        'author.avatar',
+        'category.id',
+        'category.name',
+        'category.slug',
+      ])
+      .leftJoin('article.author', 'author')
+      .leftJoin('article.category', 'category')
       .where('article.status = :status', { status: ArticleStatus.PUBLISHED })
       .andWhere('article.id != :id', { id: article.id })
       .andWhere('article.category_id = :categoryId', {
@@ -248,9 +332,16 @@ export class ArticlesService {
     fingerprint: string,
     userId?: number,
   ): Promise<{ liked: boolean; likeCount: number }> {
-    const article = await this.articleRepo.findOneByOrFail({ id: articleId });
+    const article = await this.articleRepo.findOne({
+      where: { id: articleId },
+      select: { id: true, likeCount: true },
+      loadEagerRelations: false,
+    });
+    if (!article) throw new NotFoundException('مقاله یافت نشد');
     const existing = await this.likeRepo.findOne({
       where: { article: { id: articleId }, fingerprint },
+      select: { id: true },
+      loadEagerRelations: false,
     });
 
     if (existing) {
@@ -278,11 +369,38 @@ export class ArticlesService {
   async findOneAdmin(id: number): Promise<Article> {
     const article = await this.articleRepo.findOne({
       where: { id },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        summary: true,
+        content: true,
+        coverImage: true,
+        coverImageAlt: true,
+        status: true,
+        isFeatured: true,
+        readingTime: true,
+        viewCount: true,
+        likeCount: true,
+        commentCount: true,
+        metaTitle: true,
+        metaDescription: true,
+        metaKeywords: true,
+        canonicalUrl: true,
+        relatedProductIds: true,
+        publishedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        author: { id: true, name: true, slug: true },
+        category: { id: true, name: true, slug: true },
+        tags: { id: true, name: true, slug: true },
+      },
       relations: {
         author: true,
         category: true,
         tags: true,
       },
+      loadEagerRelations: false,
     });
     if (!article) throw new NotFoundException('مقاله یافت نشد');
     return article;

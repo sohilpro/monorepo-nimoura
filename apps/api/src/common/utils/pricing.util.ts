@@ -1,5 +1,4 @@
-import { ProductPriceTiers } from "src/modules/products/entities/product-price-tiers.entity";
-
+import { ProductPriceTiers } from 'src/modules/products/entities/product-price-tiers.entity';
 
 export function calculateEffectiveUnitPrice(
   quantity: number,

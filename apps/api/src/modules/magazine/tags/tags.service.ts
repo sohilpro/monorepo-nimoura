@@ -7,7 +7,9 @@ import { CreateTagDto, UpdateTagDto } from '../dtos/misc.dto';
 
 @Injectable()
 export class TagsService {
-  constructor(@InjectRepository(Tag) private readonly tagRepo: Repository<Tag>) {}
+  constructor(
+    @InjectRepository(Tag) private readonly tagRepo: Repository<Tag>,
+  ) {}
 
   async create(dto: CreateTagDto): Promise<Tag> {
     let slug = generateSlug(dto.name);
@@ -20,18 +22,27 @@ export class TagsService {
     for (const name of names) {
       const slug = generateSlug(name);
       let tag = await this.tagRepo.findOneBy({ slug });
-      if (!tag) tag = await this.tagRepo.save(this.tagRepo.create({ name, slug }));
+      if (!tag)
+        tag = await this.tagRepo.save(this.tagRepo.create({ name, slug }));
       tags.push(tag);
     }
     return tags;
   }
 
   findAll(): Promise<Tag[]> {
-    return this.tagRepo.find({ order: { name: 'ASC' } });
+    return this.tagRepo.find({
+      select: { id: true, name: true, slug: true },
+      order: { name: 'ASC' },
+      loadEagerRelations: false,
+    });
   }
 
   async findBySlug(slug: string): Promise<Tag> {
-    const tag = await this.tagRepo.findOneBy({ slug });
+    const tag = await this.tagRepo.findOne({
+      where: { slug },
+      select: { id: true, name: true, slug: true },
+      loadEagerRelations: false,
+    });
     if (!tag) throw new NotFoundException('برچسب یافت نشد');
     return tag;
   }

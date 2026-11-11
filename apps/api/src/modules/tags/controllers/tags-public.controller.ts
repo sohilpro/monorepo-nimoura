@@ -14,7 +14,10 @@ export class TagsPublicController {
   @ApiOperation({ summary: 'گروه‌های فعال تگ همراه با تگ‌های فعال هر گروه' })
   @ApiQuery({ name: 'filterable', required: false, type: Boolean })
   @ApiQuery({ name: 'includeEmpty', required: false, type: Boolean })
-  list(@Query('filterable') filterable?: string, @Query('includeEmpty') includeEmpty?: string) {
+  list(
+    @Query('filterable') filterable?: string,
+    @Query('includeEmpty') includeEmpty?: string,
+  ) {
     const isTrue = (v?: string) => v === 'true' || v === '1';
     return this.groups.listPublic({
       onlyFilterable: isTrue(filterable),

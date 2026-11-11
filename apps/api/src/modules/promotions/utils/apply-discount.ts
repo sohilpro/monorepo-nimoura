@@ -1,8 +1,8 @@
-import { Promotions, PromotionType } from "../entities/promotion.entity";
+import { Promotions, PromotionType } from '../entities/promotion.entity';
 
 export function calculateDiscountAmount(
   promotion: Promotions,
-  cartTotal: number
+  cartTotal: number,
 ): number {
   let discount = 0;
 

@@ -1,9 +1,10 @@
-import { Entity, Column, ManyToOne, ManyToMany } from 'typeorm';
+import { Entity, Column, ManyToOne, ManyToMany, Index } from 'typeorm';
 import { CustomBaseEntity } from 'src/common/database/base.entity';
 import { Attributes } from './attributes.entity';
 import { ProductVariants } from './product-variants.entity';
 
 @Entity('attribute_values')
+@Index('idx_attribute_values_attr_val', ['attribute', 'value'])
 export class AttributeValues extends CustomBaseEntity {
   @Column()
   value!: string; // مانند: "500ml"، "شفاف"، "1kg"
@@ -12,6 +13,7 @@ export class AttributeValues extends CustomBaseEntity {
   @Column({ type: 'varchar', length: 7, nullable: true })
   colorHex?: string | null;
 
+  @Index('idx_attribute_values_attribute')
   @ManyToOne(() => Attributes, (attribute) => attribute.values, {
     onDelete: 'CASCADE',
   })

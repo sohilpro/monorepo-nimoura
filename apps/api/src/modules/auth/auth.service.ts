@@ -52,7 +52,10 @@ export class AuthService {
     const { first_name, password, last_name } = registerDto;
     const { type, username } = this.DetectUsername(registerDto.username);
 
-    let user = await this.userRepository.findOneBy({ [type]: username });
+    let user = await this.userRepository.findOne({
+      where: { [type]: username },
+      select: { id: true },
+    });
     if (user) throw new ConflictException(AuthMessage.ConflictUser);
 
     const userCount = await this.userRepository.count();
@@ -81,7 +84,21 @@ export class AuthService {
     const { password } = loginDto;
     const { type, username } = this.DetectUsername(loginDto.username);
 
-    const user = await this.userRepository.findOneBy({ [type]: username });
+    const user = await this.userRepository
+      .createQueryBuilder('u')
+      .select([
+        'u.id',
+        'u.email',
+        'u.first_name',
+        'u.last_name',
+        'u.role',
+        'u.mobile',
+        'u.verify_email',
+        'u.verify_mobile',
+      ])
+      .addSelect('u.password')
+      .where(`u.${type} = :username`, { username })
+      .getOne();
     if (!user) throw new NotFoundException(AuthMessage.NotFoundUser);
 
     if (!user.password || !compareSync(password, user.password)) {
@@ -109,8 +126,9 @@ export class AuthService {
     const { username } = sendOtpDto;
     const { type, username: validUsername } = this.DetectUsername(username);
 
-    const existingOtp = await this.otpRepository.findOneBy({
-      username: validUsername,
+    const existingOtp = await this.otpRepository.findOne({
+      where: { username: validUsername },
+      select: { id: true, expires: true },
     });
 
     if (existingOtp && existingOtp.expires > new Date()) {
@@ -159,16 +177,29 @@ export class AuthService {
     const { username, code } = checkOtpDto;
     const { type, username: validUsername } = this.DetectUsername(username);
 
-    const otp = await this.otpRepository.findOneBy({
-      username: validUsername,
-      code,
+    const otp = await this.otpRepository.findOne({
+      where: { username: validUsername, code },
+      select: { id: true, expires: true },
     });
 
     if (!otp || otp.expires < new Date()) {
       throw new BadRequestException(AuthMessage.ExpiredOtpCode);
     }
 
-    let user = await this.userRepository.findOneBy({ [type]: validUsername });
+    let user = await this.userRepository.findOne({
+      where: { [type]: validUsername },
+      select: {
+        id: true,
+        email: true,
+        first_name: true,
+        last_name: true,
+        role: true,
+        mobile: true,
+        verify_email: true,
+        verify_mobile: true,
+        identity_card: true,
+      },
+    });
 
     if (!user) {
       const userCount = await this.userRepository.count();

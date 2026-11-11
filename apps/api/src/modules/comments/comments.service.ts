@@ -33,12 +33,12 @@ export class CommentsService {
     private readonly reactionRepo: Repository<CommentReactions>,
   ) {}
 
-  async create(dto: CreateCommentDto, userId?: number): Promise<Comments> {
-    const product = await this.productRepo.findOne({
-      where: { id: dto.productId },
+  async create(dto: CreateCommentDto, userId?: number): Promise<any> {
+    const productExists = await this.productRepo.existsBy({
+      id: dto.productId,
     });
 
-    if (!product) {
+    if (!productExists) {
       throw new NotFoundException(`محصول با شناسه ${dto.productId} یافت نشد`);
     }
 
@@ -47,6 +47,8 @@ export class CommentsService {
         product: { id: dto.productId },
         user: { id: userId },
       },
+      select: { id: true },
+      loadEagerRelations: false,
     });
 
     if (existing) {
@@ -58,9 +60,9 @@ export class CommentsService {
       ...dto,
       rating: dto.rating,
       images: dto.images || [],
-      user: { id: userId },
-      product,
-      isApproved: false, // یا false بر اساس منطق پروژه
+      user: { id: userId } as Users,
+      product: { id: dto.productId } as Products,
+      isApproved: false,
     });
 
     const savedComment = await this.commentRepo.save(comment);
@@ -70,19 +72,48 @@ export class CommentsService {
       await this.updateProductRating(dto.productId);
     }
 
-    return savedComment;
+    return {
+      id: savedComment.id,
+      subject: savedComment.subject,
+      description: savedComment.description,
+      rating: savedComment.rating,
+      images: savedComment.images,
+      isApproved: savedComment.isApproved,
+      createdAt: savedComment.createdAt,
+    };
   }
 
   async findByProduct(productId: number, query: any): Promise<any> {
-    const { page = 1, limit = 10 } = query;
+    const page = Math.max(1, Number(query?.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query?.limit) || 10));
 
     const [data, total] = await this.commentRepo.findAndCount({
+      select: {
+        id: true,
+        subject: true,
+        description: true,
+        rating: true,
+        images: true,
+        isVerifiedBuyer: true,
+        likesCount: true,
+        dislikesCount: true,
+        createdAt: true,
+        user: {
+          id: true,
+          first_name: true,
+          last_name: true,
+        },
+      },
+      relations: { user: true },
       where: {
         product: { id: productId },
         isApproved: true,
         isRejected: false,
       },
       order: { createdAt: 'DESC' },
+      take: limit,
+      skip: (page - 1) * limit,
+      loadEagerRelations: false,
     });
 
     return buildPagination([data, total], page, limit, 'comments');
@@ -91,21 +122,25 @@ export class CommentsService {
   async react(commentId: number, userId: number, type: 'like' | 'dislike') {
     const comment = await this.commentRepo.findOne({
       where: { id: commentId },
+      select: { id: true, likesCount: true, dislikesCount: true },
+      loadEagerRelations: false,
     });
     if (!comment) throw new NotFoundException('کامنت پیدا نشد');
 
-    const userEntity = await this.userRepo.findOne({ where: { id: userId } });
-    if (!userEntity) throw new UnauthorizedException('کاربر معتبر نیست');
+    const userExists = await this.userRepo.existsBy({ id: userId });
+    if (!userExists) throw new UnauthorizedException('کاربر معتبر نیست');
 
     const existingReaction = await this.reactionRepo.findOne({
       where: { user: { id: userId }, comment: { id: commentId } },
+      select: { id: true, type: true },
+      loadEagerRelations: false,
     });
 
     if (!existingReaction) {
       // ثبت واکنش جدید
       const reaction = this.reactionRepo.create({
-        comment,
-        user: userEntity,
+        comment: { id: commentId } as Comments,
+        user: { id: userId } as Users,
         type,
       });
       await this.reactionRepo.save(reaction);
@@ -189,6 +224,24 @@ export class CommentsService {
     const searchableFields = ['subject'];
     const where = buildSearchWhereClause(search, searchableFields);
     const [data, total] = await this.commentRepo.findAndCount({
+      select: {
+        id: true,
+        subject: true,
+        description: true,
+        rating: true,
+        isApproved: true,
+        isRejected: true,
+        isVerifiedBuyer: true,
+        likesCount: true,
+        dislikesCount: true,
+        createdAt: true,
+        user: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          mobile: true,
+        },
+      },
       relations: {
         user: true,
       },
@@ -197,12 +250,29 @@ export class CommentsService {
       skip: (+page - 1) * +limit,
       order: { [sortBy]: sortOrder.toUpperCase() },
       withDeleted: false,
+      loadEagerRelations: false,
     });
     return buildPagination([data, total], page, limit, 'comments');
   }
 
   async findOne(id: number): Promise<Comments> {
-    const comment = await this.commentRepo.findOne({ where: { id } });
+    const comment = await this.commentRepo.findOne({
+      where: { id },
+      select: {
+        id: true,
+        subject: true,
+        description: true,
+        rating: true,
+        images: true,
+        isApproved: true,
+        isRejected: true,
+        isVerifiedBuyer: true,
+        likesCount: true,
+        dislikesCount: true,
+        createdAt: true,
+      },
+      loadEagerRelations: false,
+    });
     if (!comment) throw new NotFoundException('کامنت پیدا نشد');
     return comment;
   }
@@ -216,27 +286,46 @@ export class CommentsService {
   async remove(id: number): Promise<void> {
     const comment = await this.commentRepo.findOne({
       where: { id },
+      select: { id: true, product: { id: true } },
       relations: { product: true },
+      loadEagerRelations: false,
     });
 
     if (!comment) throw new NotFoundException('کامنت یافت نشد');
 
-    const productId = comment.product.id;
     await this.commentRepo.remove(comment);
-
-    // محاسبه مجدد امتیاز پس از حذف
-    // await this.updateProductRating(productId);
   }
 
   async findPublic(): Promise<Comments[]> {
     return this.commentRepo.find({
-      // where: { isVerifiedBuyer: true },
+      select: {
+        id: true,
+        subject: true,
+        description: true,
+        rating: true,
+        images: true,
+        isVerifiedBuyer: true,
+        likesCount: true,
+        dislikesCount: true,
+        createdAt: true,
+        user: {
+          id: true,
+          first_name: true,
+          last_name: true,
+        },
+      },
+      relations: { user: true },
       order: { createdAt: 'DESC' },
+      loadEagerRelations: false,
     });
   }
 
   async reject(id: number): Promise<Comments> {
-    const comment = await this.commentRepo.findOneBy({ id });
+    const comment = await this.commentRepo.findOne({
+      where: { id },
+      select: { id: true, isApproved: true, isRejected: true },
+      loadEagerRelations: false,
+    });
     if (!comment) throw new NotFoundException('Comment not found');
 
     comment.isApproved = false;
@@ -248,7 +337,8 @@ export class CommentsService {
   async approve(id: number): Promise<void> {
     const comment = await this.commentRepo.findOne({
       where: { id },
-      relations: { product: true },
+      select: { id: true, isApproved: true, isRejected: true },
+      loadEagerRelations: false,
     });
 
     if (!comment) throw new NotFoundException('کامنت یافت نشد');

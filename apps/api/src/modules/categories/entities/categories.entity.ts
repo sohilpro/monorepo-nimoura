@@ -11,6 +11,7 @@ export class Categories extends CustomBaseEntity {
   @Column({ nullable: true })
   slug!: string;
 
+  @Index('idx_categories_parent')
   @ManyToOne(() => Categories, (category) => category.children, {
     nullable: true,
     onDelete: 'SET NULL',

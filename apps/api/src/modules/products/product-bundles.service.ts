@@ -31,7 +31,9 @@ export class ProductBundlesService {
       }
       const key = `${item.productId}:${item.variantId ?? 0}`;
       if (seen.has(key)) {
-        throw new BadRequestException('یک محصول/تنوع بیش از یک بار در پک تکرار شده است.');
+        throw new BadRequestException(
+          'یک محصول/تنوع بیش از یک بار در پک تکرار شده است.',
+        );
       }
       seen.add(key);
     }

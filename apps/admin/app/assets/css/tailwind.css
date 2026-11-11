@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "primeicons/primeicons.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @font-face {
   font-family: IRANSansX;
   font-style: normal;
@@ -125,21 +123,53 @@
   --color-current: currentColor;
   --color-transparent: transparent;
   --color-white: #ffffff;
-  --color-black: #101828;
+  --color-black: #272121;
 
-  --color-brand-25: #f2f7ff;
-  --color-brand-50: #ecf3ff;
-  --color-brand-100: #dde9ff;
-  --color-brand-200: #c2d6ff;
-  --color-brand-300: #9cb9ff;
-  --color-brand-400: #7592ff;
-  --color-brand-500: #465fff;
-  --color-brand-600: #3641f5;
-  --color-brand-700: #2a31d8;
-  --color-brand-800: #252dae;
-  --color-brand-900: #262e89;
-  --color-brand-950: #161950;
+  /* 🎨 Nimoura Brand Rose Scale (matching @nimoura/ui nimouraPalette) */
+  --color-brand-25: #fdf9fa;
+  --color-brand-50: #fbf4f5;
+  --color-brand-100: #f5e4e6;
+  --color-brand-200: #eccad0;
+  --color-brand-300: #e0a7b1;
+  --color-brand-400: #ce7f8d;
+  --color-brand-500: #b76e79;
+  --color-brand-600: #a15661;
+  --color-brand-700: #87444f;
+  --color-brand-800: #713a43;
+  --color-brand-900: #5e333a;
+  --color-brand-950: #341a1e;
   --color-brand-primary: #b76e79;
+
+  /* 🌸 Nimoura Web Tokens */
+  --color-nimoura-primary: #b76e79;
+  --color-nimoura-base: #fff8f4;
+  --color-nimoura-accent: #d9c6e2;
+  --color-nimoura-border: #d8c8c3;
+  --color-nimoura-dark: #2e2636;
+  --color-nimoura-velvet: #3b2f45;
+  --color-nimoura-success: #2fb57e;
+  --color-nimoura-error: #f04438;
+  --color-nimoura-warning: #f79009;
+  --color-nimoura-50: #fbf4f5;
+  --color-nimoura-100: #f5e4e6;
+  --color-nimoura-200: #eccad0;
+  --color-nimoura-300: #e0a7b1;
+  --color-nimoura-400: #ce7f8d;
+  --color-nimoura-500: #b76e79;
+  --color-nimoura-600: #a15661;
+  --color-nimoura-700: #87444f;
+  --color-nimoura-800: #713a43;
+  --color-nimoura-900: #5e333a;
+  --color-nimoura-950: #341a1e;
+  --color-nimoura-text-100: #e9e6e6;
+  --color-nimoura-text-200: #cfc9c9;
+  --color-nimoura-text-300: #b5adad;
+  --color-nimoura-text-400: #9b9191;
+  --color-nimoura-text-500: #807676;
+  --color-nimoura-text-600: #665d5d;
+  --color-nimoura-text-700: #4e4545;
+  --color-nimoura-text-800: #3a3131;
+  --color-nimoura-text-900: #272121;
 
   --color-blue-light-25: #f5fbff;
   --color-blue-light-50: #f0f9ff;
@@ -154,19 +184,19 @@
   --color-blue-light-900: #0b4a6f;
   --color-blue-light-950: #062c41;
 
-  --color-gray-25: #fcfcfd;
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f2f4f7;
-  --color-gray-200: #e4e7ec;
-  --color-gray-300: #d0d5dd;
-  --color-gray-400: #98a2b3;
-  --color-gray-500: #667085;
-  --color-gray-600: #475467;
-  --color-gray-700: #344054;
-  --color-gray-800: #1d2939;
-  --color-gray-900: #101828;
-  --color-gray-950: #0c111d;
-  --color-gray-dark: #1a2231;
+  /* 🪨 Warm Nimoura Neutrals (matching #fff8f4, #4e4545, #2e2636) */
+  --color-gray-25: #fffcfb;
+  --color-gray-50: #fff8f4;
+  --color-gray-100: #f7eeec;
+  --color-gray-200: #ebe0df;
+  --color-gray-300: #d8c8c3;
+  --color-gray-400: #9b9191;
+  --color-gray-500: #807676;
+  --color-gray-600: #665d5d;
+  --color-gray-700: #4e4545;
+  --color-gray-800: #3a3131;
+  --color-gray-900: #2e2636;
+  --color-gray-950: #211a27;
 
   --color-orange-25: #fffaf5;
   --color-orange-50: #fff6ed;
@@ -182,17 +212,17 @@
   --color-orange-950: #511c10;
 
   --color-success-25: #f6fef9;
-  --color-success-50: #ecfdf3;
-  --color-success-100: #d1fadf;
-  --color-success-200: #a6f4c5;
-  --color-success-300: #6ce9a6;
-  --color-success-400: #32d583;
-  --color-success-500: #12b76a;
-  --color-success-600: #039855;
-  --color-success-700: #027a48;
-  --color-success-800: #05603a;
-  --color-success-900: #054f31;
-  --color-success-950: #053321;
+  --color-success-50: #ecfdf5;
+  --color-success-100: #d1fae5;
+  --color-success-200: #a7f3d0;
+  --color-success-300: #6ee7b7;
+  --color-success-400: #34d399;
+  --color-success-500: #2fb57e;
+  --color-success-600: #059669;
+  --color-success-700: #047857;
+  --color-success-800: #065f46;
+  --color-success-900: #064e3b;
+  --color-success-950: #022c22;
 
   --color-error-25: #fffbfa;
   --color-error-50: #fef3f2;
@@ -220,19 +250,19 @@
   --color-warning-900: #7a2e0e;
   --color-warning-950: #4e1d09;
 
-  --color-theme-pink-500: #ee46bc;
-  --color-theme-purple-500: #7a5af8;
+  --color-theme-pink-500: #b76e79;
+  --color-theme-purple-500: #d9c6e2;
 
-  --shadow-theme-md: 0px 4px 8px -2px rgba(16, 24, 40, 0.1),
-    0px 2px 4px -2px rgba(16, 24, 40, 0.06);
-  --shadow-theme-lg: 0px 12px 16px -4px rgba(16, 24, 40, 0.08),
-    0px 4px 6px -2px rgba(16, 24, 40, 0.03);
-  --shadow-theme-sm: 0px 1px 3px 0px rgba(16, 24, 40, 0.1),
-    0px 1px 2px 0px rgba(16, 24, 40, 0.06);
-  --shadow-theme-xs: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
-  --shadow-theme-xl: 0px 20px 24px -4px rgba(16, 24, 40, 0.08),
-    0px 8px 8px -4px rgba(16, 24, 40, 0.03);
-  --shadow-focus-ring: 0px 0px 0px 4px rgba(70, 95, 255, 0.12);
+  --shadow-theme-md: 0px 4px 12px -2px rgba(46, 38, 54, 0.08),
+    0px 2px 4px -2px rgba(183, 110, 121, 0.05);
+  --shadow-theme-lg: 0px 12px 20px -4px rgba(46, 38, 54, 0.1),
+    0px 4px 8px -2px rgba(183, 110, 121, 0.06);
+  --shadow-theme-sm: 0px 1px 3px 0px rgba(46, 38, 54, 0.08),
+    0px 1px 2px 0px rgba(183, 110, 121, 0.05);
+  --shadow-theme-xs: 0px 1px 2px 0px rgba(46, 38, 54, 0.05);
+  --shadow-theme-xl: 0px 20px 24px -4px rgba(46, 38, 54, 0.1),
+    0px 8px 8px -4px rgba(183, 110, 121, 0.05);
+  --shadow-focus-ring: 0px 0px 0px 4px rgba(183, 110, 121, 0.14);
 
   --drop-shadow-4xl: 0 35px 35px rgba(0, 0, 0, 0.25),
     0 45px 65px rgba(0, 0, 0, 0.15);
@@ -247,6 +277,9 @@
 }
 
 @layer base {
+  html {
+    color-scheme: light;
+  }
   *,
   ::after,
   ::before,
@@ -263,7 +296,8 @@
     font-weight: 400;
     font-family: var(--font-iranSans, "IRANSansX", sans-serif);
     z-index: 1;
-    background-color: var(--color-gray-50, #f9fafb);
+    background-color: var(--color-nimoura-base, #fff8f4);
+    color: var(--color-nimoura-text-700, #4e4545);
   }
 }
 
@@ -282,66 +316,43 @@
 }
 
 .menu-item-active {
-  background-color: var(--color-brand-50, #ecf3ff);
-  color: var(--color-brand-500, #465fff);
-}
-:is(.dark *) .menu-item-active {
-  background-color: rgba(70, 95, 255, 0.12);
-  color: var(--color-brand-400, #7592ff);
+  background-color: var(--color-brand-50, #fbf4f5);
+  color: var(--color-brand-600, #a15661);
 }
 
 .menu-item-inactive {
-  color: var(--color-gray-700, #344054);
+  color: var(--color-gray-700, #4e4545);
 }
 .menu-item-inactive:hover {
-  background-color: var(--color-gray-100, #f2f4f7);
-  color: var(--color-gray-700, #344054);
-}
-:is(.dark *) .menu-item-inactive {
-  color: var(--color-gray-300, #d0d5dd);
-}
-:is(.dark *) .menu-item-inactive:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: var(--color-gray-300, #d0d5dd);
+  background-color: var(--color-gray-100, #f7eeec);
+  color: var(--color-gray-800, #3a3131);
 }
 
 .menu-item-icon {
-  color: var(--color-gray-500, #667085);
+  color: var(--color-gray-500, #807676);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .group:hover .menu-item-icon {
-  color: var(--color-gray-700, #344054);
-}
-:is(.dark *) .menu-item-icon {
-  color: var(--color-gray-400, #98a2b3);
+  color: var(--color-gray-700, #4e4545);
 }
 
 .menu-item-icon-active {
-  color: var(--color-brand-500, #465fff);
+  color: var(--color-brand-500, #b76e79);
   display: flex;
   align-items: center;
   justify-content: center;
 }
-:is(.dark *) .menu-item-icon-active {
-  color: var(--color-brand-400, #7592ff);
-}
 
 .menu-item-icon-inactive {
-  color: var(--color-gray-500, #667085);
+  color: var(--color-gray-500, #807676);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 .group:hover .menu-item-icon-inactive {
-  color: var(--color-gray-700, #344054);
-}
-:is(.dark *) .menu-item-icon-inactive {
-  color: var(--color-gray-400, #98a2b3);
-}
-:is(.dark *) .group:hover .menu-item-icon-inactive {
-  color: var(--color-gray-300, #d0d5dd);
+  color: var(--color-gray-700, #4e4545);
 }
 
 .menu-item-arrow {
@@ -351,23 +362,14 @@
 
 .menu-item-arrow-active {
   transform: rotate(180deg);
-  color: var(--color-brand-500, #465fff);
-}
-:is(.dark *) .menu-item-arrow-active {
-  color: var(--color-brand-400, #7592ff);
+  color: var(--color-brand-500, #b76e79);
 }
 
 .menu-item-arrow-inactive {
-  color: var(--color-gray-500, #667085);
+  color: var(--color-gray-500, #807676);
 }
 .group:hover .menu-item-arrow-inactive {
-  color: var(--color-gray-700, #344054);
-}
-:is(.dark *) .menu-item-arrow-inactive {
-  color: var(--color-gray-400, #98a2b3);
-}
-:is(.dark *) .group:hover .menu-item-arrow-inactive {
-  color: var(--color-gray-300, #d0d5dd);
+  color: var(--color-gray-700, #4e4545);
 }
 
 .menu-dropdown-item {
@@ -383,25 +385,15 @@
 }
 
 .menu-dropdown-item-active {
-  background-color: var(--color-brand-50, #ecf3ff);
-  color: var(--color-brand-500, #465fff);
-}
-:is(.dark *) .menu-dropdown-item-active {
-  background-color: rgba(70, 95, 255, 0.12);
-  color: var(--color-brand-400, #7592ff);
+  background-color: var(--color-brand-50, #fbf4f5);
+  color: var(--color-brand-600, #a15661);
 }
 
 .menu-dropdown-item-inactive {
-  color: var(--color-gray-700, #344054);
+  color: var(--color-gray-700, #4e4545);
 }
 .menu-dropdown-item-inactive:hover {
-  background-color: var(--color-gray-100, #f2f4f7);
-}
-:is(.dark *) .menu-dropdown-item-inactive {
-  color: var(--color-gray-300, #d0d5dd);
-}
-:is(.dark *) .menu-dropdown-item-inactive:hover {
-  background-color: rgba(255, 255, 255, 0.05);
+  background-color: var(--color-gray-100, #f7eeec);
 }
 
 .menu-dropdown-badge {
@@ -411,30 +403,18 @@
   font-size: 0.75rem;
   font-weight: 500;
   text-transform: uppercase;
-  color: var(--color-brand-500, #465fff);
-}
-:is(.dark *) .menu-dropdown-badge {
-  color: var(--color-brand-400, #7592ff);
+  color: var(--color-brand-600, #a15661);
 }
 
 .menu-dropdown-badge-active {
-  background-color: var(--color-brand-100, #dde9ff);
-}
-:is(.dark *) .menu-dropdown-badge-active {
-  background-color: rgba(70, 95, 255, 0.2);
+  background-color: var(--color-brand-100, #f5e4e6);
 }
 
 .menu-dropdown-badge-inactive {
-  background-color: var(--color-brand-50, #ecf3ff);
+  background-color: var(--color-brand-50, #fbf4f5);
 }
 .group:hover .menu-dropdown-badge-inactive {
-  background-color: var(--color-brand-100, #dde9ff);
-}
-:is(.dark *) .menu-dropdown-badge-inactive {
-  background-color: rgba(70, 95, 255, 0.15);
-}
-:is(.dark *) .group:hover .menu-dropdown-badge-inactive {
-  background-color: rgba(70, 95, 255, 0.2);
+  background-color: var(--color-brand-100, #f5e4e6);
 }
 
 .no-scrollbar {
@@ -455,12 +435,9 @@
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: var(--color-gray-200, #e4e7ec);
+    background-color: var(--color-gray-200, #ebe0df);
     border-radius: 9999px;
   }
-}
-:is(.dark *) .custom-scrollbar::-webkit-scrollbar-thumb {
-  background-color: #344054;
 }
 
 @layer utilities {

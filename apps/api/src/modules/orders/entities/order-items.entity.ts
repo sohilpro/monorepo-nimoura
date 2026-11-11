@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { CustomBaseEntity } from 'src/common/database/base.entity';
 import { Products } from 'src/modules/products/entities/products.entity';
 import { ProductVariants } from 'src/modules/products/entities/product-variants.entity';
@@ -6,13 +6,16 @@ import { Orders } from './orders.entity';
 
 @Entity('order_items')
 export class OrderItems extends CustomBaseEntity {
+  @Index('idx_order_items_order')
   @ManyToOne(() => Orders, (order) => order.items, { onDelete: 'CASCADE' })
   order!: Orders;
 
-  @ManyToOne(() => Products, { eager: true })
+  @Index('idx_order_items_product')
+  @ManyToOne(() => Products)
   product!: Products;
 
-  @ManyToOne(() => ProductVariants, { nullable: true, eager: true })
+  @Index('idx_order_items_variant')
+  @ManyToOne(() => ProductVariants, { nullable: true })
   variant?: ProductVariants | null;
 
   @Column()

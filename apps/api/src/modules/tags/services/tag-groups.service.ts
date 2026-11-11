@@ -1,4 +1,8 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TagGroups } from '../entities/tag-groups.entity';
@@ -14,20 +18,53 @@ export class TagGroupsService {
   /** All groups for the admin panel, with the number of tags in each. */
   async listForAdmin() {
     const [groups, counts] = await Promise.all([
-      this.repo.find({ order: { sortOrder: 'ASC', id: 'ASC' } }),
+      this.repo.find({
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          icon: true,
+          description: true,
+          sortOrder: true,
+          isActive: true,
+          isFilterable: true,
+        },
+        order: { sortOrder: 'ASC', id: 'ASC' },
+      }),
       this.repo.manager.query(
         `SELECT "groupId", COUNT(*) AS count FROM "tags" WHERE "deleted_at" IS NULL GROUP BY "groupId"`,
       ) as Promise<Array<{ groupId: number; count: string }>>,
     ]);
-    const byGroup = new Map(counts.map((c) => [Number(c.groupId), Number(c.count)]));
+    const byGroup = new Map(
+      counts.map((c) => [Number(c.groupId), Number(c.count)]),
+    );
     return groups.map((g) => ({ ...g, tagCount: byGroup.get(g.id) ?? 0 }));
   }
 
   /** Active groups with their active tags, ready for the product form and storefront. */
-  async listPublic(options: { onlyFilterable?: boolean; includeEmpty?: boolean } = {}) {
+  async listPublic(
+    options: { onlyFilterable?: boolean; includeEmpty?: boolean } = {},
+  ) {
     const qb = this.repo
       .createQueryBuilder('g')
-      .leftJoinAndSelect('g.tags', 't', 't.isActive = true AND t.deleted_at IS NULL')
+      .select([
+        'g.id',
+        'g.name',
+        'g.slug',
+        'g.icon',
+        'g.description',
+        'g.sortOrder',
+        'g.isActive',
+        'g.isFilterable',
+        't.id',
+        't.groupId',
+        't.name',
+        't.slug',
+        't.color',
+        't.sortOrder',
+        't.isActive',
+      ])
+      .leftJoin('g.tags', 't', 't.isActive = true AND t.deleted_at IS NULL')
       .where('g.isActive = true')
       .orderBy('g.sortOrder', 'ASC')
       .addOrderBy('g.id', 'ASC')
@@ -37,7 +74,9 @@ export class TagGroupsService {
     if (options.onlyFilterable) qb.andWhere('g.isFilterable = true');
 
     const groups = await qb.getMany();
-    return options.includeEmpty ? groups : groups.filter((g) => (g.tags?.length ?? 0) > 0);
+    return options.includeEmpty
+      ? groups
+      : groups.filter((g) => (g.tags?.length ?? 0) > 0);
   }
 
   async findOneOrFail(id: number): Promise<TagGroups> {
@@ -78,14 +117,16 @@ export class TagGroupsService {
     if (dto.name !== undefined) {
       const name = normalizeName(dto.name);
       const clash = await this.repo.findOne({ where: { name } });
-      if (clash && clash.id !== id) throw new ConflictException('گروهی با این نام وجود دارد.');
+      if (clash && clash.id !== id)
+        throw new ConflictException('گروهی با این نام وجود دارد.');
       group.name = name;
     }
     if (dto.slug !== undefined && dto.slug !== group.slug) {
       group.slug = await this.resolveSlug(dto.slug, id);
     }
     if (dto.icon !== undefined) group.icon = dto.icon || null;
-    if (dto.description !== undefined) group.description = dto.description || null;
+    if (dto.description !== undefined)
+      group.description = dto.description || null;
     if (dto.sortOrder !== undefined) group.sortOrder = dto.sortOrder;
     if (dto.isActive !== undefined) group.isActive = dto.isActive;
     if (dto.isFilterable !== undefined) group.isFilterable = dto.isFilterable;
@@ -127,7 +168,9 @@ export class TagGroupsService {
       .select(['g.id', 'g.slug'])
       .where('g.slug LIKE :like', { like: `${base}%` })
       .getMany();
-    const taken = new Set(rows.filter((r) => r.id !== ignoreId).map((r) => r.slug));
+    const taken = new Set(
+      rows.filter((r) => r.id !== ignoreId).map((r) => r.slug),
+    );
     return uniqueSlug(base, taken);
   }
 }

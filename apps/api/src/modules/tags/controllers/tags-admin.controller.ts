@@ -16,7 +16,11 @@ import { ApiOperation } from '@nestjs/swagger';
 import { AdminController } from 'src/common/auth/decorators/admin-controller.decorator';
 import { TagGroupsService } from '../services/tag-groups.service';
 import { TagsService } from '../services/tags.service';
-import { CreateTagGroupDto, ReorderDto, UpdateTagGroupDto } from '../dtos/tag-group.dto';
+import {
+  CreateTagGroupDto,
+  ReorderDto,
+  UpdateTagGroupDto,
+} from '../dtos/tag-group.dto';
 import {
   BulkCreateTagsDto,
   CreateTagDto,
@@ -55,7 +59,10 @@ export class TagsAdminController {
 
   @Patch('groups/:id')
   @ApiOperation({ summary: 'ویرایش گروه تگ' })
-  updateGroup(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateTagGroupDto) {
+  updateGroup(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateTagGroupDto,
+  ) {
     return this.groups.update(id, dto);
   }
 

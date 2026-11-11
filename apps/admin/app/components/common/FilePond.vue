@@ -1,6 +1,6 @@
 <template>
   <div
-    class="border-gray-300 border-dashed border-2 rounded-xl transition-all duration-300 bg-gray-50 p-7 hover:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:hover:border-brand-500 lg:p-10 cursor-pointer"
+    class="border-gray-300 border-dashed border-2 rounded-xl transition-all duration-300 bg-gray-50 p-7 hover:border-brand-500 lg:p-10 cursor-pointer"
     :class="{ '!border-brand-500 opacity-50': isDragging }"
     @click="emit('browse')"
     @dragover.prevent="isDragging = true"
@@ -10,7 +10,7 @@
     <div class="dz-message m-0! text-center">
       <div class="mb-[22px] flex justify-center">
         <div
-          class="flex h-[68px] w-[68px] items-center justify-center rounded-full bg-gray-200 text-gray-700 dark:bg-gray-800 dark:text-gray-400"
+          class="flex h-[68px] w-[68px] items-center justify-center rounded-full bg-gray-200 text-gray-700"
         >
           <svg
             class="fill-current"
@@ -29,12 +29,12 @@
         </div>
       </div>
       <h4
-        class="mb-3 font-semibold text-gray-800 text-theme-xl dark:text-white/90"
+        class="mb-3 font-semibold text-gray-800 text-theme-xl"
       >
         فایل خود را بکشید و رها کنید
       </h4>
       <span
-        class="mx-auto mb-5 block w-full max-w-[290px] text-sm text-gray-700 dark:text-gray-400"
+        class="mx-auto mb-5 block w-full max-w-[290px] text-sm text-gray-700"
       >
         تصاویر PNG، JPG، WebP یا SVG خود را اینجا بکشید و رها کنید یا فایل را
         انتخاب کنید

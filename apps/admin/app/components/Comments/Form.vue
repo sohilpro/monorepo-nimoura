@@ -8,14 +8,14 @@
         <button
           type="button"
           @click="approve"
-          class="bg-blue-500 text-white flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-blue-500/90"
+          class="bg-emerald-600 text-white flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium hover:bg-emerald-700 transition"
         >
           تایید
         </button>
         <button
           type="button"
           @click="reject"
-          class="bg-red-500 text-white flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-red-500/90"
+          class="bg-rose-600 text-white flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-medium hover:bg-rose-700 transition"
         >
           رد
         </button>

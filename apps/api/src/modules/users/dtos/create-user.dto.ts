@@ -17,7 +17,9 @@ export class CreateUserDto {
   })
   @IsNotEmpty({ message: 'شماره موبایل الزامی است' })
   @IsString()
-  @Matches(/^0\d{10}$/, { message: 'شماره موبایل نامعتبر است (باید ۱۱ رقم و با ۰ شروع شود)' })
+  @Matches(/^0\d{10}$/, {
+    message: 'شماره موبایل نامعتبر است (باید ۱۱ رقم و با ۰ شروع شود)',
+  })
   mobile!: string;
 
   @ApiPropertyOptional({ example: 'علی' })

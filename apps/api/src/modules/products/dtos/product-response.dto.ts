@@ -322,7 +322,9 @@ export class ProductResponseDto {
         name: t.name,
         slug: t.slug,
         color: t.color ?? null,
-        group: t.group ? { id: t.group.id, name: t.group.name, slug: t.group.slug } : undefined,
+        group: t.group
+          ? { id: t.group.id, name: t.group.name, slug: t.group.slug }
+          : undefined,
       })),
   )
   @ApiPropertyOptional({ type: () => [ProductTagResponseDto] })

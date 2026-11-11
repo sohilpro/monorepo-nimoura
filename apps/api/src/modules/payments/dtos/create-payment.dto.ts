@@ -1,11 +1,11 @@
-import { IsInt, IsPositive, IsString, MinLength } from "class-validator";
-import { Type, Transform } from "class-transformer";
-import { ApiProperty } from "@nestjs/swagger";
+import { IsInt, IsPositive, IsString, MinLength } from 'class-validator';
+import { Type, Transform } from 'class-transformer';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePaymentDto {
   @ApiProperty({
     example: 1024,
-    description: "شناسه سفارش که باید پرداخت شود",
+    description: 'شناسه سفارش که باید پرداخت شود',
   })
   @IsInt()
   @Type(() => Number)
@@ -13,7 +13,7 @@ export class CreatePaymentDto {
 
   @ApiProperty({
     example: 150000,
-    description: "مبلغ به ریال (مثلاً ۱۵۰ هزار تومان = ۱۵۰۰۰۰)",
+    description: 'مبلغ به ریال (مثلاً ۱۵۰ هزار تومان = ۱۵۰۰۰۰)',
   })
   @IsInt()
   @IsPositive()

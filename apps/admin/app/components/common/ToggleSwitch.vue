@@ -1,7 +1,7 @@
 <template>
   <label
     :for="id"
-    class="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer select-none dark:text-gray-400"
+    class="flex items-center gap-3 text-sm font-medium text-gray-700 cursor-pointer select-none"
     :class="{ 'opacity-50 cursor-not-allowed': disabled }"
   >
     <div class="relative">
@@ -17,8 +17,8 @@
         class="block h-6 w-11 rounded-full transition-colors duration-300 ease-in-out"
         :class="
           modelValue
-            ? 'bg-brand-500 dark:bg-brand-500'
-            : 'bg-gray-200 dark:bg-white/10'
+            ? 'bg-brand-500'
+            : 'bg-gray-200'
         "
       ></div>
       <div

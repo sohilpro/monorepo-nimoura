@@ -426,12 +426,12 @@ function badgeTone(st: OrderStatus) {
     case OrderStatus.CANCELLED:
       return 'bg-rose-50 text-rose-700 border border-rose-200';
     case OrderStatus.SHIPPED:
-      return 'bg-blue-50 text-blue-700 border border-blue-200';
+      return 'bg-nimoura-accent/40 text-nimoura-velvet border border-nimoura-accent';
     case OrderStatus.PENDING:
     case OrderStatus.PROCESSING:
       return 'bg-amber-50 text-amber-700 border border-amber-200';
     default:
-      return 'bg-neutral-50 text-neutral-700 border border-neutral-200';
+      return 'bg-gray-50 text-gray-700 border border-gray-200';
   }
 }
 
@@ -443,12 +443,12 @@ function dotTone(st: OrderStatus) {
     case OrderStatus.CANCELLED:
       return 'bg-rose-500';
     case OrderStatus.SHIPPED:
-      return 'bg-blue-500';
+      return 'bg-nimoura-velvet';
     case OrderStatus.PENDING:
     case OrderStatus.PROCESSING:
       return 'bg-amber-500';
     default:
-      return 'bg-neutral-400';
+      return 'bg-gray-400';
   }
 }
 
@@ -615,24 +615,70 @@ const formattedShippedAt = computed(() => {
 @reference "tailwindcss";
 /* Buttons */
 .btn-primary {
-  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold shadow-sm bg-blue-500 text-white hover:bg-blue-800 transition;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background-color: var(--color-brand-500, #b76e79);
+  color: #ffffff;
+  box-shadow: var(--shadow-theme-xs);
+  transition: background-color 0.15s ease;
+}
+.btn-primary:hover {
+  background-color: var(--color-brand-600, #a15661);
 }
 .btn-secondary {
-  @apply inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold shadow-sm border border-neutral-200 hover:bg-neutral-50 transition;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 1rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 1px solid var(--color-gray-200, #ebe0df);
+  background-color: #ffffff;
+  color: var(--color-gray-700, #4e4545);
+  transition: background-color 0.15s ease;
+}
+.btn-secondary:hover {
+  background-color: var(--color-brand-50, #fbf4f5);
 }
 .btn-ghost {
-  @apply inline-flex items-center justify-center rounded-xl px-3 py-1.5 text-sm font-medium text-neutral-600 hover:bg-neutral-100 transition;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-600, #665d5d);
+  transition: background-color 0.15s ease;
+}
+.btn-ghost:hover {
+  background-color: var(--color-gray-100, #f7eeec);
 }
 
 /* Card */
 .card {
-  @apply rounded-2xl border border-neutral-200 bg-white shadow-sm;
+  border-radius: 1rem;
+  border: 1px solid var(--color-gray-200, #ebe0df);
+  background-color: #ffffff;
+  box-shadow: var(--shadow-theme-xs);
 }
 .card-header {
-  @apply flex items-center justify-between border-b border-neutral-100 px-4 py-3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-gray-100, #f7eeec);
+  padding: 0.75rem 1rem;
 }
 .card-title {
-  @apply text-sm font-semibold text-neutral-800;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-gray-800, #3a3131);
 }
 .card-body {
   @apply p-4;

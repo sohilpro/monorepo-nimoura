@@ -131,7 +131,7 @@ async function handleSubmit() {
   >
     <div class="flex flex-col gap-4">
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">کد تخفیف</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">کد تخفیف</label>
         <div class="flex gap-2">
           <InputText
             v-model="form.code"
@@ -151,13 +151,13 @@ async function handleSubmit() {
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">توضیحات (اختیاری)</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">توضیحات (اختیاری)</label>
         <Textarea v-model="form.description" rows="2" class="w-full" />
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">نوع تخفیف</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">نوع تخفیف</label>
           <SelectButton
             v-model="form.discountType"
             :options="discountOptions"
@@ -167,7 +167,7 @@ async function handleSubmit() {
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
             مقدار تخفیف {{ form.discountType === 'percentage' ? '(٪)' : '(تومان)' }}
           </label>
           <InputNumber
@@ -181,41 +181,41 @@ async function handleSubmit() {
       </div>
 
       <div v-if="form.discountType === 'percentage'">
-        <label class="block text-sm font-medium text-slate-700 mb-1">سقف مبلغ تخفیف (تومان، اختیاری)</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">سقف مبلغ تخفیف (تومان، اختیاری)</label>
         <InputNumber v-model="form.maxDiscountAmount" class="w-full" placeholder="بدون سقف" />
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">حداقل مبلغ سفارش (تومان)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">حداقل مبلغ سفارش (تومان)</label>
           <InputNumber v-model="form.minOrderAmount" class="w-full" placeholder="بدون محدودیت" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">سقف استفاده کل</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">سقف استفاده کل</label>
           <InputNumber v-model="form.usageLimit" class="w-full" placeholder="نامحدود" />
         </div>
       </div>
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">تاریخ شروع</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">تاریخ شروع</label>
           <DatePicker v-model="form.startDate" show-time class="w-full" :invalid="!!errors.startDate" />
           <small v-if="errors.startDate" class="text-red-500">{{ errors.startDate }}</small>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">تاریخ پایان (اختیاری)</label>
+          <label class="block text-sm font-medium text-gray-700 mb-1">تاریخ پایان (اختیاری)</label>
           <DatePicker v-model="form.endDate" show-time class="w-full" :invalid="!!errors.endDate" />
           <small v-if="errors.endDate" class="text-red-500">{{ errors.endDate }}</small>
         </div>
       </div>
 
       <div class="flex items-center justify-between">
-        <label class="text-sm font-medium text-slate-700">فقط برای اولین سفارش کاربر</label>
+        <label class="text-sm font-medium text-gray-700">فقط برای اولین سفارش کاربر</label>
         <ToggleSwitch v-model="form.firstOrderOnly" />
       </div>
 
       <div class="flex items-center justify-between">
-        <label class="text-sm font-medium text-slate-700">فعال باشد</label>
+        <label class="text-sm font-medium text-gray-700">فعال باشد</label>
         <ToggleSwitch v-model="form.isActive" />
       </div>
     </div>

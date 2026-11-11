@@ -40,7 +40,10 @@ export class MediaService {
    * فرقی نمی‌کند تامبنیل محصول باشد یا عکس داخل کامنت یا ویدیوی اکسپلور —
    * همه از همین متد رد می‌شوند، فقط ownerType فرق می‌کند.
    */
-  async upload(file: Express.Multer.File, options: UploadOptions): Promise<Media> {
+  async upload(
+    file: Express.Multer.File,
+    options: UploadOptions,
+  ): Promise<Media> {
     // چک حجم/فرمت همیشه قبل از هرچیز دیگه، تا فایل سنگین/نامعتبر اصلاً به sharp نرسه
     this.validateFile(file, options.ownerType);
 
@@ -50,7 +53,8 @@ export class MediaService {
 
     // فقط بخش‌های تصویری از optimizer رد می‌شن؛ ویدیو دست‌نخورده می‌ره روی FTP
     if (MEDIA_OWNER_TYPE_OPTIMIZABLE[options.ownerType]) {
-      const optimizeOptions = MEDIA_OWNER_TYPE_OPTIMIZE_OPTIONS[options.ownerType];
+      const optimizeOptions =
+        MEDIA_OWNER_TYPE_OPTIMIZE_OPTIONS[options.ownerType];
       const result = await this.imageOptimizer.optimizeToWebp(
         file.buffer,
         file.mimetype,
@@ -64,7 +68,11 @@ export class MediaService {
     const remoteDir = MEDIA_OWNER_TYPE_TO_FTP_DIR[options.ownerType];
     const fileName = `${randomUUID()}${extension}`;
 
-    const ftpPath = await this.ftpService.uploadBuffer(buffer, remoteDir, fileName);
+    const ftpPath = await this.ftpService.uploadBuffer(
+      buffer,
+      remoteDir,
+      fileName,
+    );
 
     const baseUrl =
       this.config.get<string>('APP_URL') ||
@@ -104,7 +112,10 @@ export class MediaService {
   }
 
   /** گرفتن همه مدیاهای یک مالک خاص (مثلاً همه عکس‌های یک محصول) */
-  async findByOwner(ownerType: MediaOwnerType, ownerId: string): Promise<Media[]> {
+  async findByOwner(
+    ownerType: MediaOwnerType,
+    ownerId: string,
+  ): Promise<Media[]> {
     return this.mediaRepo.find({
       where: { ownerType, ownerId },
       order: { order: 'ASC' },
@@ -132,7 +143,10 @@ export class MediaService {
    *     await this.productRepo.delete(id);
    *   }
    */
-  async deleteByOwner(ownerType: MediaOwnerType, ownerId: string): Promise<void> {
+  async deleteByOwner(
+    ownerType: MediaOwnerType,
+    ownerId: string,
+  ): Promise<void> {
     const mediaList = await this.findByOwner(ownerType, ownerId);
     if (mediaList.length === 0) return;
 
@@ -141,13 +155,19 @@ export class MediaService {
   }
 
   /** حذف همه انواع مدیای مرتبط با یک مالک، بدون دانستن ownerType دقیق (پاک‌سازی کامل) */
-  async deleteAllForOwnerId(ownerId: string, ownerTypes: MediaOwnerType[]): Promise<void> {
+  async deleteAllForOwnerId(
+    ownerId: string,
+    ownerTypes: MediaOwnerType[],
+  ): Promise<void> {
     for (const ownerType of ownerTypes) {
       await this.deleteByOwner(ownerType, ownerId);
     }
   }
 
-  private validateFile(file: Express.Multer.File, ownerType: MediaOwnerType): void {
+  private validateFile(
+    file: Express.Multer.File,
+    ownerType: MediaOwnerType,
+  ): void {
     if (!file) throw new BadRequestException('فایلی ارسال نشده است');
 
     const allowedMimes = MEDIA_OWNER_TYPE_ALLOWED_MIME[ownerType];

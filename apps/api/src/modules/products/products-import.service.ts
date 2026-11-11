@@ -31,7 +31,10 @@ export class ProductsImportService {
   }
 
   /** اعتبارسنجی پله‌های قیمت عمده نسبت به قیمت اصلی جدید */
-  private validateTiers(tiers: PriceTierDto[], basePrice: number): string | null {
+  private validateTiers(
+    tiers: PriceTierDto[],
+    basePrice: number,
+  ): string | null {
     if (!tiers.length) return null; // آرایه خالی یعنی حذف همه پله‌ها؛ مجاز است
 
     const seen = new Set<number>();
@@ -51,11 +54,16 @@ export class ProductsImportService {
   }
 
   /** آیا پله‌های جدید با پله‌های فعلی تفاوت دارند؟ */
-  private tiersChanged(current: ProductPriceTiers[], incoming: PriceTierDto[]): boolean {
+  private tiersChanged(
+    current: ProductPriceTiers[],
+    incoming: PriceTierDto[],
+  ): boolean {
     if (current.length !== incoming.length) return true;
     const a = [...current].sort((x, y) => x.minQuantity - y.minQuantity);
     const b = [...incoming].sort((x, y) => x.minQuantity - y.minQuantity);
-    return a.some((t, i) => t.minQuantity !== b[i].minQuantity || t.price !== b[i].price);
+    return a.some(
+      (t, i) => t.minQuantity !== b[i].minQuantity || t.price !== b[i].price,
+    );
   }
 
   /** همگام‌سازی پله‌های قیمت یک محصول یا واریانت (insert/update/delete) */
@@ -88,10 +96,11 @@ export class ProductsImportService {
     }
 
     if (toDelete.length) await manager.remove(ProductPriceTiers, toDelete);
-    if (toSave.length) await manager.save(ProductPriceTiers, toSave, { chunk: 200 });
+    if (toSave.length)
+      await manager.save(ProductPriceTiers, toSave, { chunk: 200 });
   }
 
-  async importPrices(dto: ImportPricesDto) {    
+  async importPrices(dto: ImportPricesDto) {
     const errors: RowError[] = [];
     const dryRun = dto.dryRun ?? true;
 
@@ -144,7 +153,11 @@ export class ProductsImportService {
           variantMap.get(it.sku) ?? productMap.get(it.sku);
 
         if (!entity) {
-          errors.push({ row: it.row, sku: it.sku, message: 'SKU در سیستم یافت نشد' });
+          errors.push({
+            row: it.row,
+            sku: it.sku,
+            message: 'SKU در سیستم یافت نشد',
+          });
           continue;
         }
 
@@ -152,7 +165,8 @@ export class ProductsImportService {
           errors.push({
             row: it.row,
             sku: it.sku,
-            message: 'این SKU متعلق به محصول دارای واریانت است؛ ردیف واریانت‌ها را ویرایش کنید',
+            message:
+              'این SKU متعلق به محصول دارای واریانت است؛ ردیف واریانت‌ها را ویرایش کنید',
           });
           continue;
         }
@@ -174,7 +188,10 @@ export class ProductsImportService {
             errors.push({ row: it.row, sku: it.sku, message: tierErr });
             continue;
           }
-          tierChanged = this.tiersChanged((entity as any).priceTiers ?? [], it.priceTiers);
+          tierChanged = this.tiersChanged(
+            (entity as any).priceTiers ?? [],
+            it.priceTiers,
+          );
         }
 
         const newStock = it.stock ?? entity.stock;
@@ -201,7 +218,7 @@ export class ProductsImportService {
           variantsToSave.push(entity);
           if (entity.product?.id) parentIdsSet.add(entity.product.id);
         } else {
-          productsToSave.push(entity as Products);
+          productsToSave.push(entity);
         }
 
         if (tierChanged) {
@@ -213,7 +230,9 @@ export class ProductsImportService {
 
       if (!dryRun) {
         if (variantsToSave.length)
-          await qr.manager.save(ProductVariants, variantsToSave, { chunk: 200 });
+          await qr.manager.save(ProductVariants, variantsToSave, {
+            chunk: 200,
+          });
         if (productsToSave.length)
           await qr.manager.save(Products, productsToSave, { chunk: 200 });
 
@@ -248,12 +267,17 @@ export class ProductsImportService {
 
     const active = vs.filter((v) => v.isAvailable && v.stock > 0);
     const pool = active.length ? active : vs;
-    const cheapest = pool.reduce((a, b) => (effective(a) <= effective(b) ? a : b));
+    const cheapest = pool.reduce((a, b) =>
+      effective(a) <= effective(b) ? a : b,
+    );
 
     await manager.update(Products, productId, {
       price: cheapest.price,
       priceDiscount: cheapest.priceDiscount,
-      percentageDiscount: this.calcPercent(cheapest.price, cheapest.priceDiscount),
+      percentageDiscount: this.calcPercent(
+        cheapest.price,
+        cheapest.priceDiscount,
+      ),
       stock: vs.reduce((s, v) => s + v.stock, 0),
       isAvailable: active.length > 0,
     });

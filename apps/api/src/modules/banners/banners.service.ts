@@ -64,7 +64,27 @@ export class BannersService {
 
     const qb = this.bannerRepo
       .createQueryBuilder('banner')
-      .leftJoinAndSelect('banner.position', 'position');
+      .select([
+        'banner.id',
+        'banner.title',
+        'banner.imageUrl',
+        'banner.mobileImageUrl',
+        'banner.link',
+        'banner.linkTarget',
+        'banner.positionId',
+        'banner.device',
+        'banner.status',
+        'banner.sortOrder',
+        'banner.startAt',
+        'banner.endAt',
+        'banner.views',
+        'banner.clicks',
+        'banner.createdAt',
+        'position.id',
+        'position.key',
+        'position.name',
+      ])
+      .leftJoin('banner.position', 'position');
 
     if (positionId)
       qb.andWhere('banner.positionId = :positionId', { positionId });
@@ -84,9 +104,31 @@ export class BannersService {
   async findOne(id: number): Promise<Banner> {
     const banner = await this.bannerRepo.findOne({
       where: { id },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        imageUrl: true,
+        mobileImageUrl: true,
+        link: true,
+        linkTarget: true,
+        positionId: true,
+        device: true,
+        status: true,
+        sortOrder: true,
+        startAt: true,
+        endAt: true,
+        views: true,
+        clicks: true,
+        metadata: true,
+        createdAt: true,
+        updatedAt: true,
+        position: { id: true, key: true, name: true },
+      },
       relations: {
         position: true,
       },
+      loadEagerRelations: false,
     });
     if (!banner) throw new NotFoundException('بنر یافت نشد');
     return banner;
@@ -104,7 +146,7 @@ export class BannersService {
 
   async remove(id: number): Promise<void> {
     const banner = await this.bannerRepo.findOne({
-      where: { id: Number(id) as any },
+      where: { id: Number(id) },
     });
     if (!banner) {
       throw new NotFoundException('بنر مورد نظر یافت نشد');
@@ -149,7 +191,19 @@ export class BannersService {
 
     const qb = this.bannerRepo
       .createQueryBuilder('banner')
-      .innerJoinAndSelect('banner.position', 'position')
+      .select([
+        'banner.id',
+        'banner.title',
+        'banner.description',
+        'banner.imageUrl',
+        'banner.mobileImageUrl',
+        'banner.link',
+        'banner.linkTarget',
+        'banner.device',
+        'banner.sortOrder',
+        'banner.metadata',
+      ])
+      .innerJoin('banner.position', 'position')
       .where('position.key = :positionKey', { positionKey })
       .andWhere('position.isActive = true')
       .andWhere('banner.status = :status', { status: BannerStatus.ACTIVE })

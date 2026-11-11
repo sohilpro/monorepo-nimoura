@@ -21,7 +21,8 @@ import { buildSlug, normalizeName, uniqueSlug } from '../utils/tag-normalizer';
 export class TagsService {
   constructor(
     @InjectRepository(Tags) private readonly repo: Repository<Tags>,
-    @InjectRepository(TagGroups) private readonly groupRepo: Repository<TagGroups>,
+    @InjectRepository(TagGroups)
+    private readonly groupRepo: Repository<TagGroups>,
   ) {}
 
   /** Paginated list for the admin panel, including how many products use each tag. */
@@ -35,9 +36,19 @@ export class TagsService {
 
     const [items, total] = await this.repo.findAndCount({
       where,
+      select: {
+        id: true,
+        groupId: true,
+        name: true,
+        slug: true,
+        color: true,
+        sortOrder: true,
+        isActive: true,
+      },
       order: { groupId: 'ASC', sortOrder: 'ASC', name: 'ASC' },
       take: limit,
       skip: (page - 1) * limit,
+      loadEagerRelations: false,
     });
 
     const counts = await this.productCounts(items.map((t) => t.id));
@@ -54,11 +65,15 @@ export class TagsService {
   async findActiveByIdsOrFail(ids: number[]): Promise<Tags[]> {
     const unique = [...new Set(ids)];
     if (!unique.length) return [];
-    const tags = await this.repo.find({ where: { id: In(unique), isActive: true } });
+    const tags = await this.repo.find({
+      where: { id: In(unique), isActive: true },
+    });
     if (tags.length !== unique.length) {
       const found = new Set(tags.map((t) => t.id));
       const missing = unique.filter((id) => !found.has(id));
-      throw new BadRequestException(`تگ‌های نامعتبر یا غیرفعال: ${missing.join('، ')}`);
+      throw new BadRequestException(
+        `تگ‌های نامعتبر یا غیرفعال: ${missing.join('، ')}`,
+      );
     }
     return tags;
   }
@@ -69,7 +84,9 @@ export class TagsService {
     if (!name) throw new BadRequestException('نام تگ نمی‌تواند خالی باشد.');
 
     if (await this.repo.findOne({ where: { groupId: group.id, name } })) {
-      throw new ConflictException(`تگ «${name}» در گروه «${group.name}» وجود دارد.`);
+      throw new ConflictException(
+        `تگ «${name}» در گروه «${group.name}» وجود دارد.`,
+      );
     }
 
     const slug = await this.resolveSlug(group.id, dto.slug ?? buildSlug(name));
@@ -122,8 +139,11 @@ export class TagsService {
     if (dto.name !== undefined || dto.groupId !== undefined) {
       const name = dto.name !== undefined ? normalizeName(dto.name) : tag.name;
       if (!name) throw new BadRequestException('نام تگ نمی‌تواند خالی باشد.');
-      const clash = await this.repo.findOne({ where: { groupId: targetGroupId, name } });
-      if (clash && clash.id !== id) throw new ConflictException('تگی با این نام در این گروه وجود دارد.');
+      const clash = await this.repo.findOne({
+        where: { groupId: targetGroupId, name },
+      });
+      if (clash && clash.id !== id)
+        throw new ConflictException('تگی با این نام در این گروه وجود دارد.');
       tag.name = name;
     }
 
@@ -171,7 +191,9 @@ export class TagsService {
          ON CONFLICT DO NOTHING`,
         [source.id, target.id],
       );
-      await m.query(`DELETE FROM "product_tag" WHERE "tag_id" = $1`, [source.id]);
+      await m.query(`DELETE FROM "product_tag" WHERE "tag_id" = $1`, [
+        source.id,
+      ]);
       await m.delete(Tags, source.id);
     });
     return this.findOneOrFail(target.id);
@@ -207,23 +229,30 @@ export class TagsService {
     return Number(row?.max ?? 0) + 10;
   }
 
-  private async resolveSlug(groupId: number, base: string, ignoreId?: number): Promise<string> {
+  private async resolveSlug(
+    groupId: number,
+    base: string,
+    ignoreId?: number,
+  ): Promise<string> {
     const rows = await this.repo
       .createQueryBuilder('t')
       .select(['t.id', 't.slug'])
       .where('t.groupId = :groupId', { groupId })
       .andWhere('t.slug LIKE :like', { like: `${base}%` })
       .getMany();
-    const taken = new Set(rows.filter((r) => r.id !== ignoreId).map((r) => r.slug));
+    const taken = new Set(
+      rows.filter((r) => r.id !== ignoreId).map((r) => r.slug),
+    );
     return uniqueSlug(base, taken);
   }
 
   private async productCounts(ids: number[]): Promise<Map<number, number>> {
     if (!ids.length) return new Map();
-    const rows: Array<{ tag_id: number; count: string }> = await this.repo.query(
-      `SELECT "tag_id", COUNT(*) AS count FROM "product_tag" WHERE "tag_id" = ANY($1) GROUP BY "tag_id"`,
-      [ids],
-    );
+    const rows: Array<{ tag_id: number; count: string }> =
+      await this.repo.query(
+        `SELECT "tag_id", COUNT(*) AS count FROM "product_tag" WHERE "tag_id" = ANY($1) GROUP BY "tag_id"`,
+        [ids],
+      );
     return new Map(rows.map((r) => [Number(r.tag_id), Number(r.count)]));
   }
 }

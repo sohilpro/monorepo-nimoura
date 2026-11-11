@@ -7,7 +7,9 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import ZarinPalCheckout from 'zarinpal-checkout';
+import ZarinPalCheckout, {
+  type PaymentVerificationResponse,
+} from 'zarinpal-checkout';
 import { CartService } from '../cart/cart.service';
 import { OrderService } from '../orders/order.service';
 import { Orders } from '../orders/entities/orders.entity';
@@ -62,7 +64,7 @@ export class PaymentService {
     const amount = Number(order.finalTotal);
 
     const email = order.user?.email;
-    const response: any = await this.gateway.PaymentRequest({
+    const response = await this.gateway.PaymentRequest({
       Amount: amount,
       CallbackURL: this.callbackUrl,
       Description: `خرید از فروشگاه - سفارش ${order.orderCode}`,
@@ -85,8 +87,8 @@ export class PaymentService {
 
     return {
       success: true,
-      authority: response.authority as string,
-      url: response.url as string, // آدرس انتقال به درگاه
+      authority: response.authority,
+      url: response.url, // آدرس انتقال به درگاه
     };
   }
 
@@ -107,7 +109,7 @@ export class PaymentService {
       return this.verifyTorobReport(query, Number(torobOrderId), internalKey);
     }
 
-    const payment: any = await this.paymentRepo.findOne({
+    const payment = await this.paymentRepo.findOne({
       where: { authority: query.Authority },
       select: {
         id: true,
@@ -152,7 +154,7 @@ export class PaymentService {
       return { success: false, message: blocker };
     }
 
-    let response: any;
+    let response: PaymentVerificationResponse;
     try {
       response = await this.gateway.PaymentVerification({
         Amount: payment.amount,
@@ -166,18 +168,19 @@ export class PaymentService {
       };
     }
 
-    if (!ZARINPAL_OK_CODES.includes(response?.status)) {
+    if (!ZARINPAL_OK_CODES.includes(response.status)) {
       await this.markPaymentFailed(payment);
       return {
         success: false,
         message: 'تایید پرداخت از سوی بانک ناموفق بود',
-        code: response?.status,
+        code: response.status,
       };
     }
 
     // ── از این‌جا وجه کسر شده است
+    const refId = String(response.refId);
     payment.status = PaymentStatus.SUCCESS;
-    payment.refId = String(response.refId);
+    payment.refId = refId;
     payment.verifiedAt = new Date();
     await this.paymentRepo.save(payment);
 
@@ -185,13 +188,13 @@ export class PaymentService {
       `[VERIFY] authority=${payment.authority}, orderId=${payment.orderId}, paymentStatus=${payment.status}`,
     );
 
-    const completed = await this.completeOrder(payment.orderId, payment.refId);
+    const completed = await this.completeOrder(payment.orderId, refId);
     if (!completed) {
       return {
         success: false,
         message:
           'پرداخت شما دریافت شد اما ثبت نهایی سفارش با مشکل مواجه شد. لطفاً با پشتیبانی تماس بگیرید.',
-        refId: payment.refId,
+        refId,
       };
     }
 
@@ -204,7 +207,7 @@ export class PaymentService {
     return {
       success: true,
       message: 'پرداخت با موفقیت انجام شد',
-      refId: payment.refId,
+      refId,
       orderCode: order!.orderCode,
     };
   }
@@ -221,13 +224,13 @@ export class PaymentService {
       throw new ForbiddenException('دسترسی غیرمجاز');
     }
 
-    const order: any = await this.ordersService
+    const order = await this.ordersService
       .getOrderForPayment(orderId)
       .catch(() => null);
     if (!order) throw new NotFoundException('سفارش یافت نشد');
 
     // ردیف Payment برای ترب موقع اولین گزارش ساخته می‌شه (Authority = transactionId یکتا)
-    let payment: any = await this.paymentRepo.findOne({
+    let payment = await this.paymentRepo.findOne({
       where: { authority: query.Authority },
       select: {
         id: true,
@@ -244,11 +247,10 @@ export class PaymentService {
       payment = await this.paymentRepo.save(
         this.paymentRepo.create({
           orderId,
-          amount: order.finalTotal, // ⚠️ همون فیلد مبلغی که برای زرین‌پال ذخیره می‌کنی
+          amount: Number(order.finalTotal),
           authority: query.Authority,
-          status: PaymentStatus.INITIATED, // ⚠️ اسم enum رو با خودت تطبیق بده
-          gateway: 'torobpay', // ⚠️ اگه ستون gateway نداری حذفش کن
-        } as any),
+          status: PaymentStatus.INITIATED,
+        }),
       );
     }
 
@@ -272,18 +274,19 @@ export class PaymentService {
     }
 
     // ── از این‌جا وجه قطعی است (ترب verify شده)
+    const refId = query.Authority;
     payment.status = PaymentStatus.SUCCESS;
-    payment.refId = query.Authority;
+    payment.refId = refId;
     payment.verifiedAt = new Date();
     await this.paymentRepo.save(payment);
 
-    const completed = await this.completeOrder(payment.orderId, payment.refId);
+    const completed = await this.completeOrder(payment.orderId, refId);
     if (!completed) {
       return {
         success: false,
         message:
           'پرداخت شما دریافت شد اما ثبت نهایی سفارش با مشکل مواجه شد. لطفاً با پشتیبانی تماس بگیرید.',
-        refId: payment.refId,
+        refId,
       };
     }
 
@@ -292,7 +295,7 @@ export class PaymentService {
     return {
       success: true,
       message: 'پرداخت با موفقیت انجام شد',
-      refId: payment.refId,
+      refId,
       orderCode: order.orderCode,
     };
   }

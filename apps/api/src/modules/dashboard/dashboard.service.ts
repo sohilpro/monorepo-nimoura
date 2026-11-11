@@ -16,6 +16,20 @@ import { OrderStatus } from '../orders/enums/order-status.enum';
 import { PaymentMethod } from '../orders/enums/payment-method.enum';
 import { PAID_STATUSES } from '../orders/constants/order.constant';
 
+interface RecentOrderRow {
+  id: number | string;
+  orderCode: string | null;
+  status: OrderStatus;
+  finalTotal: number | string;
+  createdAt: Date | string;
+  first_name: string | null;
+  last_name: string | null;
+  phone: string | null;
+  paymentMethod: PaymentMethod | null;
+  isPaid: boolean | null;
+  itemsCount: number | string;
+}
+
 interface RangeWindow {
   range: DashboardRange;
   start: Date | null;
@@ -279,7 +293,7 @@ export class DashboardService {
     win: RangeWindow,
     paidStatuses: OrderStatus[],
   ) {
-    const rows = (await this.dataSource.query(
+    const rows = await this.dataSource.query<Array<Record<string, string>>>(
       `SELECT
          COALESCE(SUM(CASE WHEN ($1::timestamptz IS NULL OR COALESCE(o."purchasedAt", o.created_at) >= $1) THEN o."finalTotal" ELSE 0 END), 0) AS current_revenue,
          COUNT(CASE WHEN ($1::timestamptz IS NULL OR COALESCE(o."purchasedAt", o.created_at) >= $1) THEN 1 END) AS current_paid_orders,
@@ -289,7 +303,7 @@ export class DashboardService {
        WHERE o.deleted_at IS NULL
          AND o.status = ANY($4)`,
       [win.start, win.prevStart, win.prevEnd, paidStatuses],
-    )) as Array<Record<string, string>>;
+    );
 
     const r = rows[0] ?? {};
     const current = Number(r.current_revenue ?? 0);
@@ -303,7 +317,7 @@ export class DashboardService {
   }
 
   private async fetchOrdersStats(win: RangeWindow) {
-    const rows = (await this.dataSource.query(
+    const rows = await this.dataSource.query<Array<Record<string, string>>>(
       `SELECT
          COUNT(CASE WHEN ($1::timestamptz IS NULL OR o.created_at >= $1) THEN 1 END) AS current_orders,
          COUNT(CASE WHEN ($2::timestamptz IS NOT NULL AND o.created_at >= $2 AND o.created_at < $3) THEN 1 END) AS prev_orders,
@@ -314,7 +328,7 @@ export class DashboardService {
        FROM "orders" o
        WHERE o.deleted_at IS NULL`,
       [win.start, win.prevStart, win.prevEnd],
-    )) as Array<Record<string, string>>;
+    );
 
     const r = rows[0] ?? {};
     return {
@@ -328,7 +342,7 @@ export class DashboardService {
   }
 
   private async fetchCustomersStats(win: RangeWindow) {
-    const rows = (await this.dataSource.query(
+    const rows = await this.dataSource.query<Array<Record<string, string>>>(
       `SELECT
          COUNT(*) AS total,
          COUNT(CASE WHEN ($1::timestamptz IS NULL OR u.created_at >= $1) THEN 1 END) AS new_in_range,
@@ -337,7 +351,7 @@ export class DashboardService {
        FROM "users" u
        WHERE u.deleted_at IS NULL`,
       [win.start, win.prevStart, win.prevEnd],
-    )) as Array<Record<string, string>>;
+    );
 
     const r = rows[0] ?? {};
     return {
@@ -350,7 +364,7 @@ export class DashboardService {
 
   private async fetchCatalogStats() {
     const [productRows, taxonomyRows] = await Promise.all([
-      this.dataSource.query(
+      this.dataSource.query<Array<Record<string, string>>>(
         `SELECT
            COUNT(*) AS total_products,
            COUNT(CASE WHEN p."isAvailable" = true THEN 1 END) AS active_products,
@@ -359,13 +373,13 @@ export class DashboardService {
            COUNT(CASE WHEN p."isAvailable" = false OR p.stock <= 0 THEN 1 END) AS out_of_stock
          FROM "products" p
          WHERE p.deleted_at IS NULL`,
-      ) as Promise<Array<Record<string, string>>>,
-      this.dataSource.query(
+      ),
+      this.dataSource.query<Array<Record<string, string>>>(
         `SELECT
            (SELECT COUNT(*) FROM "categories" WHERE deleted_at IS NULL) AS categories_count,
            (SELECT COUNT(*) FROM "brands" WHERE deleted_at IS NULL) AS brands_count,
            (SELECT COUNT(*) FROM "tags" WHERE deleted_at IS NULL AND "isActive" = true) AS tags_count`,
-      ) as Promise<Array<Record<string, string>>>,
+      ),
     ]);
 
     const p = productRows[0] ?? {};
@@ -383,7 +397,7 @@ export class DashboardService {
   }
 
   private async fetchEngagementStats() {
-    const rows = (await this.dataSource.query(
+    const rows = await this.dataSource.query<Array<Record<string, string>>>(
       `SELECT
          (SELECT COUNT(*) FROM "comments" WHERE deleted_at IS NULL AND "isApproved" = false AND "isRejected" = false) AS pending_product_comments,
          (SELECT COUNT(*) FROM "comments" WHERE deleted_at IS NULL) AS total_product_comments,
@@ -395,7 +409,7 @@ export class DashboardService {
          (SELECT COUNT(*) FROM "banners" WHERE deleted_at IS NULL AND status = 'active') AS active_banners,
          (SELECT COALESCE(SUM(views), 0) FROM "banners" WHERE deleted_at IS NULL) AS total_banner_views,
          (SELECT COALESCE(SUM(clicks), 0) FROM "banners" WHERE deleted_at IS NULL) AS total_banner_clicks`,
-    )) as Array<Record<string, string>>;
+    );
 
     const r = rows[0] ?? {};
     return {
@@ -423,7 +437,14 @@ export class DashboardService {
         ? new Date(win.seriesStart.getTime() + 23 * 3_600_000)
         : startOfTehranDay(win.end);
 
-    const rows = (await this.dataSource.query(
+    const rows = await this.dataSource.query<
+      Array<{
+        date: Date | string;
+        revenue: string;
+        orders: string;
+        new_users: string;
+      }>
+    >(
       `WITH buckets AS (
          SELECT generate_series($1::timestamptz, $2::timestamptz, $3::interval) AS bucket
        ),
@@ -462,12 +483,7 @@ export class DashboardService {
        LEFT JOIN usr ON usr.b = b.bucket
        ORDER BY b.bucket ASC`,
       [win.seriesStart, seriesEnd, step, trunc, paidStatuses],
-    )) as Array<{
-      date: Date | string;
-      revenue: string;
-      orders: string;
-      new_users: string;
-    }>;
+    );
 
     return rows.map((r) => ({
       date: r.date instanceof Date ? r.date.toISOString() : String(r.date),
@@ -478,7 +494,9 @@ export class DashboardService {
   }
 
   private async fetchOrderStatuses(win: RangeWindow) {
-    return (await this.dataSource.query(
+    return await this.dataSource.query<
+      Array<{ status: OrderStatus; count: string; totalAmount: string }>
+    >(
       `SELECT o.status AS status,
               COUNT(*) AS count,
               COALESCE(SUM(o."finalTotal"), 0) AS "totalAmount"
@@ -487,14 +505,16 @@ export class DashboardService {
          AND ($1::timestamptz IS NULL OR o.created_at >= $1)
        GROUP BY o.status`,
       [win.start],
-    )) as Array<{ status: OrderStatus; count: string; totalAmount: string }>;
+    );
   }
 
   private async fetchPaymentMethods(
     win: RangeWindow,
     paidStatuses: OrderStatus[],
   ) {
-    return (await this.dataSource.query(
+    return await this.dataSource.query<
+      Array<{ method: PaymentMethod; count: string; revenue: string }>
+    >(
       `SELECT p.method AS method,
               COUNT(*) AS count,
               COALESCE(SUM(o."finalTotal"), 0) AS revenue
@@ -505,14 +525,14 @@ export class DashboardService {
          AND ($1::timestamptz IS NULL OR COALESCE(o."purchasedAt", o.created_at) >= $1)
        GROUP BY p.method`,
       [win.start, paidStatuses],
-    )) as Array<{ method: PaymentMethod; count: string; revenue: string }>;
+    );
   }
 
   private async fetchTopProducts(
     win: RangeWindow,
     paidStatuses: OrderStatus[],
   ) {
-    return (await this.dataSource.query(
+    return await this.dataSource.query<Array<Record<string, string>>>(
       `SELECT pr.id,
               pr.title,
               pr.sku,
@@ -530,14 +550,14 @@ export class DashboardService {
        ORDER BY revenue DESC, "unitsSold" DESC
        LIMIT 6`,
       [win.start, paidStatuses],
-    )) as Array<Record<string, string>>;
+    );
   }
 
   private async fetchTopCategories(
     win: RangeWindow,
     paidStatuses: OrderStatus[],
   ) {
-    return (await this.dataSource.query(
+    return await this.dataSource.query<Array<Record<string, string>>>(
       `SELECT c.id,
               c.name,
               COALESCE(SUM(oi.quantity * oi."unitPrice"), 0) AS revenue,
@@ -557,22 +577,22 @@ export class DashboardService {
        ORDER BY revenue DESC, "productsCount" DESC
        LIMIT 6`,
       [win.start, paidStatuses],
-    )) as Array<Record<string, string>>;
+    );
   }
 
   private async fetchLowStockProducts() {
-    return (await this.dataSource.query(
+    return await this.dataSource.query<Array<Record<string, string>>>(
       `SELECT p.id, p.title, p.sku, p.stock, p."lowStockThreshold", p.thumbnail, p."isAvailable"
        FROM "products" p
        WHERE p.deleted_at IS NULL
          AND (p.stock <= 0 OR p.stock <= p."lowStockThreshold" OR p."isAvailable" = false)
        ORDER BY p.stock ASC, p.id DESC
        LIMIT 6`,
-    )) as Array<Record<string, string>>;
+    );
   }
 
   private async fetchRecentOrders() {
-    return (await this.dataSource.query(
+    return await this.dataSource.query<RecentOrderRow[]>(
       `SELECT o.id,
               o."orderCode",
               o.status,
@@ -590,6 +610,6 @@ export class DashboardService {
        WHERE o.deleted_at IS NULL
        ORDER BY o.created_at DESC
        LIMIT 6`,
-    )) as Array<Record<string, any>>;
+    );
   }
 }

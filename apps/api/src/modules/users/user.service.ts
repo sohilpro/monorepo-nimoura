@@ -21,6 +21,7 @@ import { Orders } from 'src/modules/orders/entities/orders.entity';
 import { Comments } from 'src/modules/comments/entities/comments.entity';
 import { Users } from './entities/users.entity';
 import { UserRole } from 'src/common/auth/jwt.types';
+import { getErrorCode, getErrorMessage } from 'src/common/utils/error.helper';
 
 const USER_PUBLIC_SELECT = {
   id: true,
@@ -596,9 +597,9 @@ export class UsersService {
         throw new NotFoundException('کاربر مورد نظر یافت نشد.');
       }
       return { message: 'کاربر با موفقیت حذف شد.', archived: false };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If orders or promotion usages reference this user, soft-delete so history stays intact.
-      if (error?.code === '23503') {
+      if (getErrorCode(error) === '23503') {
         await this.userRepository.softDelete(id);
         return {
           message:
@@ -621,10 +622,10 @@ export class UsersService {
         const res = await this.deleteUser(id, currentUserId);
         if (res.archived) archived++;
         else deleted++;
-      } catch (err: any) {
+      } catch (err: unknown) {
         errors.push({
           id,
-          message: err?.message || 'خطا در حذف کاربر',
+          message: getErrorMessage(err) || 'خطا در حذف کاربر',
         });
       }
     }

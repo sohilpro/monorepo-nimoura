@@ -36,7 +36,11 @@ describe('AuthService - DetectUsername', () => {
   });
 
   it('should throw BadRequestException for invalid input', () => {
-    expect(() => authService.DetectUsername('not-an-email-or-phone')).toThrow(BadRequestException);
-    expect(() => authService.DetectUsername('12345')).toThrow(BadRequestException);
+    expect(() => authService.DetectUsername('not-an-email-or-phone')).toThrow(
+      BadRequestException,
+    );
+    expect(() => authService.DetectUsername('12345')).toThrow(
+      BadRequestException,
+    );
   });
 });

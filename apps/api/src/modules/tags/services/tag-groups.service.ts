@@ -31,9 +31,9 @@ export class TagGroupsService {
         },
         order: { sortOrder: 'ASC', id: 'ASC' },
       }),
-      this.repo.manager.query(
+      this.repo.manager.query<Array<{ groupId: number; count: string }>>(
         `SELECT "groupId", COUNT(*) AS count FROM "tags" WHERE "deleted_at" IS NULL GROUP BY "groupId"`,
-      ) as Promise<Array<{ groupId: number; count: string }>>,
+      ),
     ]);
     const byGroup = new Map(
       counts.map((c) => [Number(c.groupId), Number(c.count)]),

@@ -26,8 +26,12 @@ describe('Products, Categories & Brands Service Projections', () => {
 
   it('ProductsService.findAllActive should select only card fields (no introduce/howToUse/shortDescription/specifications)', async () => {
     const productQb = makeQb([], 0);
-    const productRepo = { createQueryBuilder: vi.fn().mockReturnValue(productQb) } as any;
-    const listingFilters = { apply: vi.fn().mockResolvedValue(undefined) } as any;
+    const productRepo = {
+      createQueryBuilder: vi.fn().mockReturnValue(productQb),
+    } as any;
+    const listingFilters = {
+      apply: vi.fn().mockResolvedValue(undefined),
+    } as any;
 
     const service = new ProductsService(
       productRepo,
@@ -59,7 +63,9 @@ describe('Products, Categories & Brands Service Projections', () => {
 
   it('ProductsService.findAllForAdmin should select only table/export columns without heavy HTML fields', async () => {
     const productQb = makeQb([], 0);
-    const productRepo = { createQueryBuilder: vi.fn().mockReturnValue(productQb) } as any;
+    const productRepo = {
+      createQueryBuilder: vi.fn().mockReturnValue(productQb),
+    } as any;
 
     const service = new ProductsService(
       productRepo,
@@ -96,13 +102,18 @@ describe('Products, Categories & Brands Service Projections', () => {
       { id: 2, name: 'رژ لب', slug: 'lipstick', parent: { id: 1 } },
     ];
     const qb = makeQb(rawCats);
-    const categoryRepo = { createQueryBuilder: vi.fn().mockReturnValue(qb) } as any;
+    const categoryRepo = {
+      createQueryBuilder: vi.fn().mockReturnValue(qb),
+    } as any;
 
     const service = new CategoryService(categoryRepo);
     const tree = await service.getCategoryTree();
 
     expect(qb.select).toHaveBeenCalled();
-    expect(qb.leftJoinAndSelect).not.toHaveBeenCalledWith('category.children', expect.anything());
+    expect(qb.leftJoinAndSelect).not.toHaveBeenCalledWith(
+      'category.children',
+      expect.anything(),
+    );
     expect(tree).toEqual([
       {
         id: 1,
@@ -127,7 +138,12 @@ describe('Products, Categories & Brands Service Projections', () => {
       findAndCount: vi.fn().mockResolvedValue([[], 0]),
     } as any;
 
-    const service = new BrandsService(brandRepo, {} as any, {} as any, {} as any);
+    const service = new BrandsService(
+      brandRepo,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
     await service.findAll({ page: 1, limit: 10 });
 
     const opts = brandRepo.findAndCount.mock.calls[0][0];

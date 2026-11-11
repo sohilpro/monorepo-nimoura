@@ -1,6 +1,5 @@
 // src/modules/brands/admin-brands.controller.ts
 import {
-  Controller,
   Param,
   Delete,
   ParseIntPipe,
@@ -24,6 +23,7 @@ import { UpdateBrandDto } from '../dtos/update-brand.dto';
 import { BrandsService } from '../brands.service';
 import { Consumes } from 'src/common/auth/enums/consumes.enum';
 import { AdminController } from 'src/common/auth/decorators/admin-controller.decorator';
+import type { ListQuery } from 'src/common/utils/pagination.helper';
 
 @ApiTags('Admin - Brands')
 @AdminController('brands')
@@ -33,7 +33,7 @@ export class AdminBrandsController {
   @Get()
   @ApiOperation({ summary: 'لیست تمام برندها برای مدیریت' })
   @ApiResponse({ status: 200, description: 'لیست برندها دریافت شد' })
-  findAll(@Query() query: any) {
+  findAll(@Query() query: ListQuery) {
     return this.brandService.findAll(query);
   }
 

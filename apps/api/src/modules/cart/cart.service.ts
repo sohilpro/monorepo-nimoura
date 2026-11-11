@@ -80,7 +80,7 @@ export class CartService {
     return basePrice;
   }
 
-  async getCartByUser(userId: number): Promise<any> {
+  async getCartByUser(userId: number) {
     let cart = await this.cartRepo
       .createQueryBuilder('cart')
       .select([
@@ -275,7 +275,7 @@ export class CartService {
 
     const targetStock = variantEntity
       ? variantEntity.stock
-      : ((product as any).stock ?? 0);
+      : (product.stock ?? 0);
 
     const newQuantity = existingItem
       ? existingItem.quantity + quantity
@@ -321,7 +321,7 @@ export class CartService {
     productId: number,
     quantity: number,
     variant?: number | { id?: number; sku?: string; label?: string } | null,
-  ): Promise<any> {
+  ) {
     const targetVariantId =
       typeof variant === 'number'
         ? variant
@@ -388,7 +388,7 @@ export class CartService {
     // بررسی موجودی انبار
     const maxStock = targetItem.variant
       ? targetItem.variant.stock
-      : ((targetItem.product as any).stock ?? 0);
+      : (targetItem.product.stock ?? 0);
 
     if (quantity > maxStock) {
       throw new BadRequestException(
@@ -414,7 +414,7 @@ export class CartService {
     userId: number,
     productId: number,
     variantId?: number | null,
-  ): Promise<any> {
+  ) {
     const cart = await this.cartRepo.findOne({
       where: { user: { id: userId } },
       select: {
@@ -460,7 +460,7 @@ export class CartService {
     };
   }
 
-  async syncCart(userId: number, dto: SyncCartDto): Promise<any> {
+  async syncCart(userId: number, dto: SyncCartDto) {
     const { guestId, items } = dto;
 
     let userCart = await this.cartRepo.findOne({
@@ -700,7 +700,10 @@ export class CartService {
       }
 
       let selectedVariant: ProductVariants | null = null;
-      const targetVariantId = item.variantId ?? (item as any).variant?.id;
+      // legacy clients may still send `variant: { id }` (nested items are not whitelisted)
+      const legacyVariantId = (item as { variant?: { id?: number } | null })
+        .variant?.id;
+      const targetVariantId = item.variantId ?? legacyVariantId;
 
       if (targetVariantId) {
         const variantEntity = product.variants?.find(

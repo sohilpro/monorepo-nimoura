@@ -5,7 +5,11 @@ import { TorobService } from '../../../src/modules/torob/torob.service';
 import { OrderStatus } from '../../../src/modules/orders/enums/order-status.enum';
 import { PaymentMethod } from '../../../src/modules/orders/enums/payment-method.enum';
 
-function createMockQb(result: { getMany?: any[]; getManyAndCount?: [any[], number]; getOne?: any }) {
+function createMockQb(result: {
+  getMany?: any[];
+  getManyAndCount?: [any[], number];
+  getOne?: any;
+}) {
   const qb: any = {
     select: vi.fn().mockReturnThis(),
     addSelect: vi.fn().mockReturnThis(),
@@ -19,7 +23,9 @@ function createMockQb(result: { getMany?: any[]; getManyAndCount?: [any[], numbe
     skip: vi.fn().mockReturnThis(),
     take: vi.fn().mockReturnThis(),
     getMany: vi.fn().mockResolvedValue(result.getMany ?? []),
-    getManyAndCount: vi.fn().mockResolvedValue(result.getManyAndCount ?? [[], 0]),
+    getManyAndCount: vi
+      .fn()
+      .mockResolvedValue(result.getManyAndCount ?? [[], 0]),
     getOne: vi.fn().mockResolvedValue(result.getOne ?? null),
   };
   return qb;
@@ -74,11 +80,24 @@ describe('Orders & Torob Service Projections', () => {
           id: 10,
           quantity: 2,
           unitPrice: 125000,
-          product: { id: 20, title: 'رژ لب', slug: 'lipstick', thumbnail: '/a.webp', sku: 'SKU-1' },
+          product: {
+            id: 20,
+            title: 'رژ لب',
+            slug: 'lipstick',
+            thumbnail: '/a.webp',
+            sku: 'SKU-1',
+          },
           variant: {
             id: 30,
             sku: 'VAR-1',
-            attributeValues: [{ id: 1, value: 'رزگلد', colorHex: '#B76E79', attribute: { id: 1, name: 'رنگ', kind: 'color' } }],
+            attributeValues: [
+              {
+                id: 1,
+                value: 'رزگلد',
+                colorHex: '#B76E79',
+                attribute: { id: 1, name: 'رنگ', kind: 'color' },
+              },
+            ],
           },
         },
       ],
@@ -162,8 +181,12 @@ describe('Orders & Torob Service Projections', () => {
     };
 
     const qb = createMockQb({ getMany: [mockOrder] });
-    const orderRepo = { createQueryBuilder: vi.fn().mockReturnValue(qb) } as any;
-    const config = { get: vi.fn().mockReturnValue('https://nimoura.shop') } as any;
+    const orderRepo = {
+      createQueryBuilder: vi.fn().mockReturnValue(qb),
+    } as any;
+    const config = {
+      get: vi.fn().mockReturnValue('https://nimoura.shop'),
+    } as any;
 
     const service = new TorobService(orderRepo, config);
     const rows = await service.listOrders('2026-10-01T00:00:00Z', 50);

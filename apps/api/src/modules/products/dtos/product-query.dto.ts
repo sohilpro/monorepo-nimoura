@@ -76,7 +76,7 @@ export class PaginationQueryDto {
     description: 'وضعیت موجودی (در این اندپوینت نادیده گرفته می‌شود)',
   })
   @IsOptional()
-  isAvailable?: any;
+  isAvailable?: unknown;
 
   @ApiPropertyOptional({ description: 'حداقل قیمت (تومان/ریال)' })
   @IsOptional()

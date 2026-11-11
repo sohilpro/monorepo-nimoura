@@ -20,6 +20,7 @@ import {
   MediaOwnerType,
 } from './enums/media-owner-type.enum';
 import { MediaQueryDto } from './dtos/media-query.dto';
+import { getErrorCode } from 'src/common/utils/error.helper';
 
 interface UploadOptions {
   ownerType: MediaOwnerType;
@@ -334,8 +335,8 @@ export class MediaStaticService {
     try {
       const fullPath = join(this.rootUploadDir, relativePath);
       await fs.unlink(fullPath);
-    } catch (error: any) {
-      if (error?.code !== 'ENOENT') {
+    } catch (error: unknown) {
+      if (getErrorCode(error) !== 'ENOENT') {
         throw error;
       }
     }

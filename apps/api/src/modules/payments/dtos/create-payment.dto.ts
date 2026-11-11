@@ -1,5 +1,5 @@
-import { IsInt, IsPositive, IsString, MinLength } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { IsInt, IsPositive } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreatePaymentDto {

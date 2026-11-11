@@ -20,8 +20,7 @@ export class CategoriesService {
     const category = this.categoryRepo.create({
       ...dto,
       slug,
-      // استفاده از as any برای جلوگیری از خطای TypeScript
-      parent: dto.parentId ? ({ id: dto.parentId } as any) : null,
+      parent: dto.parentId ? { id: dto.parentId } : undefined,
     });
     return this.categoryRepo.save(category);
   }
@@ -39,7 +38,9 @@ export class CategoriesService {
 
     // بررسی دقیق‌تر برای والد (حالت آپدیت و امکان حذف والد)
     if (dto.parentId !== undefined) {
-      category.parent = dto.parentId ? ({ id: dto.parentId } as any) : null;
+      category.parent = dto.parentId
+        ? ({ id: dto.parentId } as Category)
+        : null;
     }
 
     Object.assign(category, dto);

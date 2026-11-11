@@ -15,6 +15,8 @@ import { CreatePromotionDto } from './dtos/create-promotion.dto';
 import {
   buildPagination,
   buildSearchWhereClause,
+  ListQuery,
+  toSortDirection,
 } from 'src/common/utils/pagination.helper';
 import { UpdatePromotionDto } from './dtos/update-promotion.dto';
 import { calculateDiscountAmount } from './utils/apply-discount';
@@ -137,7 +139,7 @@ export class PromotionsService {
     return this.promoRepo.save(promo);
   }
 
-  async findAll(query: any) {
+  async findAll(query: ListQuery) {
     const {
       page = 1,
       limit = 10,
@@ -169,7 +171,7 @@ export class PromotionsService {
       where,
       take: +limit,
       skip: (+page - 1) * +limit,
-      order: { [sortBy]: sortOrder.toUpperCase() },
+      order: { [sortBy]: toSortDirection(sortOrder) },
       loadEagerRelations: false,
     });
     return buildPagination([data, total], page, limit, 'promotions');

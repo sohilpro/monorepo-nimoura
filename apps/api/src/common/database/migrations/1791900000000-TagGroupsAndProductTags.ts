@@ -63,12 +63,12 @@ export class TagGroupsAndProductTags1791900000000 implements MigrationInterface 
       `ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "isActive" boolean NOT NULL DEFAULT true`,
     );
 
-    const hasType = await q.query(
+    const hasType = (await q.query(
       `SELECT 1 FROM information_schema.columns WHERE table_name='tags' AND column_name='type'`,
-    );
-    const hasValue = await q.query(
+    )) as unknown[];
+    const hasValue = (await q.query(
       `SELECT 1 FROM information_schema.columns WHERE table_name='tags' AND column_name='value'`,
-    );
+    )) as unknown[];
 
     if (hasType.length) {
       // groups for any custom type that is not one of the defaults
@@ -87,10 +87,9 @@ export class TagGroupsAndProductTags1791900000000 implements MigrationInterface 
     }
 
     // --- slugs (unique per group) ------------------------------------------
-    const rows: Array<{ id: number; groupId: number; name: string }> =
-      await q.query(
-        `SELECT "id","groupId","name" FROM "tags" WHERE "slug" IS NULL ORDER BY "id"`,
-      );
+    const rows = (await q.query(
+      `SELECT "id","groupId","name" FROM "tags" WHERE "slug" IS NULL ORDER BY "id"`,
+    )) as Array<{ id: number; groupId: number; name: string }>;
     const taken = new Map<number, Set<string>>();
     for (const row of rows) {
       const used = taken.get(row.groupId) ?? new Set<string>();

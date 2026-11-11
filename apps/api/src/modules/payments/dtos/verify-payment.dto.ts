@@ -1,7 +1,7 @@
-import { IsString, IsIn } from 'class-validator';
+import { IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { PaymentStatus } from '../enum/status-payment.enum';
+import { trimIfString } from 'src/common/utils/transform.helper';
 
 export class VerifyPaymentDto {
   @ApiProperty({
@@ -9,10 +9,13 @@ export class VerifyPaymentDto {
     description: 'کد یکتای تراکنش برگشتی از زرین‌پال (Authority)',
   })
   @IsString()
-  @Transform(({ value }) => value.trim())
+  @Transform(trimIfString)
   Authority!: string;
 
-  @ApiProperty({ enum: PaymentStatus, description: 'وضعیت پرداخت' })
+  @ApiProperty({
+    enum: ['OK', 'NOK'],
+    description: 'وضعیت پرداخت برگشتی از درگاه',
+  })
   @IsString()
-  Status!: PaymentStatus;
+  Status!: string;
 }

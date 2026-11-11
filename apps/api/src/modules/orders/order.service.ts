@@ -19,7 +19,6 @@ import {
   ObjectLiteral,
   Repository,
 } from 'typeorm';
-import { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity';
 import { PaginationQueryDto } from 'src/modules/products/dtos/product-query.dto';
 import { Products } from 'src/modules/products/entities/products.entity';
 import { ProductVariants } from 'src/modules/products/entities/product-variants.entity';
@@ -163,6 +162,14 @@ const ORDER_INTERNAL_LINES_SELECT: FindOptionsSelect<Orders> = {
     paidAt: true,
     trackingCode: true,
   },
+};
+
+/** Variant enriched in-memory with display fields for the order response. */
+type VariantSnapshot = ProductVariants & {
+  alt?: string;
+  colorHex?: string | null;
+  kind?: string | null;
+  value?: string | null;
 };
 
 @Injectable()
@@ -690,12 +697,12 @@ export class OrderService {
 
   decorateVariantSnapshots(order: Orders) {
     for (const item of order.items ?? []) {
-      const v: any = item.variant;
+      const v: VariantSnapshot | null | undefined = item.variant;
       if (!v) continue;
-      const attrs: any[] = v.attributeValues ?? [];
+      const attrs = v.attributeValues ?? [];
       if (attrs.length) {
         const primary =
-          attrs.find((a) => a?.attribute?.kind === 'color') ?? attrs[0];
+          attrs.find((a) => a.attribute?.kind === 'color') ?? attrs[0];
         v.alt ??= attrs
           .map((a) => a.value)
           .filter(Boolean)

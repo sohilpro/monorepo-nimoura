@@ -1,4 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEmail,
@@ -6,7 +7,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -31,8 +31,9 @@ export class CreateCategoryDto {
   icon?: string;
 
   @IsOptional()
-  @IsUUID()
-  parentId?: string;
+  @Type(() => Number)
+  @IsInt()
+  parentId?: number;
 
   @IsOptional()
   @IsInt()

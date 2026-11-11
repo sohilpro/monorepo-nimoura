@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
 import {
   ImportPriceItemDto,
   ImportPricesDto,
@@ -67,8 +67,12 @@ export class ProductsImportService {
   }
 
   /** همگام‌سازی پله‌های قیمت یک محصول یا واریانت (insert/update/delete) */
-  private async syncTiers(manager: any, entity: Owner, tiers: PriceTierDto[]) {
-    const current: ProductPriceTiers[] = (entity as any).priceTiers ?? [];
+  private async syncTiers(
+    manager: EntityManager,
+    entity: Owner,
+    tiers: PriceTierDto[],
+  ) {
+    const current: ProductPriceTiers[] = entity.priceTiers ?? [];
     const existingMap = new Map(current.map((t) => [t.minQuantity, t]));
     const incomingQtys = new Set(tiers.map((t) => t.minQuantity));
 
@@ -88,8 +92,8 @@ export class ProductsImportService {
         const newTier = manager.create(ProductPriceTiers, {
           minQuantity: t.minQuantity,
           price: t.price,
-          product: isVariant ? null : { id: entity.id },
-          variant: isVariant ? { id: entity.id } : null,
+          product: isVariant ? undefined : { id: entity.id },
+          variant: isVariant ? { id: entity.id } : undefined,
         });
         toSave.push(newTier);
       }
@@ -189,7 +193,7 @@ export class ProductsImportService {
             continue;
           }
           tierChanged = this.tiersChanged(
-            (entity as any).priceTiers ?? [],
+            entity.priceTiers ?? [],
             it.priceTiers,
           );
         }
@@ -255,8 +259,8 @@ export class ProductsImportService {
     }
   }
 
-  private async syncParent(manager: any, productId: number) {
-    const vs: ProductVariants[] = await manager.find(ProductVariants, {
+  private async syncParent(manager: EntityManager, productId: number) {
+    const vs = await manager.find(ProductVariants, {
       where: { product: { id: productId } },
       loadEagerRelations: false,
     });

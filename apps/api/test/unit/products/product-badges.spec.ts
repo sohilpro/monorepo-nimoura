@@ -5,7 +5,10 @@ import {
   getStockStatus,
 } from 'src/modules/products/utils/product-badges';
 import { parseIdList } from 'src/modules/tags/utils/parse-id-list';
-import { normalizeName, uniqueSlug } from 'src/modules/tags/utils/tag-normalizer';
+import {
+  normalizeName,
+  uniqueSlug,
+} from 'src/modules/tags/utils/tag-normalizer';
 
 const NOW = new Date('2026-11-08T12:00:00Z');
 const types = (p: Parameters<typeof buildProductBadges>[0]) =>
@@ -14,13 +17,17 @@ const types = (p: Parameters<typeof buildProductBadges>[0]) =>
 describe('getStockStatus', () => {
   it('detects out of stock, low stock and in stock', () => {
     expect(getStockStatus({ stock: 0 })).toBe('out_of_stock');
-    expect(getStockStatus({ stock: 10, isAvailable: false })).toBe('out_of_stock');
+    expect(getStockStatus({ stock: 10, isAvailable: false })).toBe(
+      'out_of_stock',
+    );
     expect(getStockStatus({ stock: 5 })).toBe('low_stock'); // default threshold is 5
     expect(getStockStatus({ stock: 6 })).toBe('in_stock');
   });
 
   it('respects a custom threshold and allows disabling it', () => {
-    expect(getStockStatus({ stock: 20, lowStockThreshold: 20 })).toBe('low_stock');
+    expect(getStockStatus({ stock: 20, lowStockThreshold: 20 })).toBe(
+      'low_stock',
+    );
     expect(getStockStatus({ stock: 1, lowStockThreshold: 0 })).toBe('in_stock');
   });
 });
@@ -28,12 +35,23 @@ describe('getStockStatus', () => {
 describe('buildProductBadges', () => {
   it('shows the remaining count in Persian digits', () => {
     const [badge] = buildProductBadges({ stock: 3 }, NOW);
-    expect(badge).toMatchObject({ type: 'low_stock', value: 3, label: 'تنها ۳ عدد در انبار باقی مانده' });
+    expect(badge).toMatchObject({
+      type: 'low_stock',
+      value: 3,
+      label: 'تنها ۳ عدد در انبار باقی مانده',
+    });
   });
 
   it('orders badges by importance', () => {
     expect(
-      types({ stock: 2, price: 100, priceDiscount: 80, isAmazingOffer: true, createdAt: '2026-11-05', type: 'bundle' }),
+      types({
+        stock: 2,
+        price: 100,
+        priceDiscount: 80,
+        isAmazingOffer: true,
+        createdAt: '2026-11-05',
+        type: 'bundle',
+      }),
     ).toEqual(['low_stock', 'discount', 'amazing_offer', 'new', 'bundle']);
   });
 

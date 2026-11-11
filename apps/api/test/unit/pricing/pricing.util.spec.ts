@@ -61,9 +61,7 @@ describe('Pricing Utilities (pricing.util & pricing.helper)', () => {
       const variant: any = {
         price: 120000,
         priceDiscount: 110000,
-        priceTiers: [
-          { minQuantity: 5, price: 95000 },
-        ],
+        priceTiers: [{ minQuantity: 5, price: 95000 }],
       };
 
       expect(resolveEffectiveUnitPrice(1, product, variant)).toBe(110000);

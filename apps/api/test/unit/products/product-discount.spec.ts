@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { calculateDiscountPercentage, calculateDiscountAmount } from '@nimoura/utils';
+import {
+  calculateDiscountPercentage,
+  calculateDiscountAmount,
+} from '@nimoura/utils';
 
 describe('Product Discount and Pricing Calculations', () => {
   it('calculates percentage correctly for discounted products', () => {

@@ -39,11 +39,26 @@ const fileValidationPipe = new ParseFilePipe({
   fileIsRequired: false,
 });
 
+type RawBody = Record<string, unknown>;
+
+const isTruthyFlag = (value: unknown): boolean =>
+  value === true || value === 'true' || value === '1' || value === 1;
+
+const NUMERIC_FIELDS = [
+  'price',
+  'priceDiscount',
+  'stock',
+  'categoryId',
+  'brandId',
+  'subBrandId',
+  'lowStockThreshold',
+] as const;
+
 /**
  * تبدیل فیلدهای رشته‌ای فرم multipart/form-data به آبجکت و نوع‌های واقعی
  */
-function transformMultipartBody<T>(rawBody: any): T {
-  const payload = { ...rawBody };
+function transformMultipartBody<T>(rawBody: object): T {
+  const payload: RawBody = { ...rawBody };
 
   const jsonFields = [
     'specifications',
@@ -56,9 +71,10 @@ function transformMultipartBody<T>(rawBody: any): T {
   ];
 
   for (const field of jsonFields) {
-    if (typeof payload[field] === 'string' && payload[field].trim()) {
+    const raw = payload[field];
+    if (typeof raw === 'string' && raw.trim()) {
       try {
-        payload[field] = JSON.parse(payload[field]);
+        payload[field] = JSON.parse(raw);
       } catch {
         // در صورت عدم تطابق با JSON مقدار تغییر نمی‌کند تا پایپ ولیدیشن متوجه شود
       }
@@ -73,33 +89,17 @@ function transformMultipartBody<T>(rawBody: any): T {
   }
 
   if (payload.isAmazingOffer !== undefined) {
-    payload.isAmazingOffer =
-      payload.isAmazingOffer === true ||
-      payload.isAmazingOffer === 'true' ||
-      payload.isAmazingOffer === '1' ||
-      payload.isAmazingOffer === 1;
+    payload.isAmazingOffer = isTruthyFlag(payload.isAmazingOffer);
   }
 
   if (payload.isAvailable !== undefined) {
-    payload.isAvailable =
-      payload.isAvailable === true ||
-      payload.isAvailable === 'true' ||
-      payload.isAvailable === '1' ||
-      payload.isAvailable === 1;
+    payload.isAvailable = isTruthyFlag(payload.isAvailable);
   }
 
   // تبدیل فیلدهای عددی پایه
-  if (payload.price !== undefined) payload.price = Number(payload.price);
-  if (payload.priceDiscount !== undefined)
-    payload.priceDiscount = Number(payload.priceDiscount);
-  if (payload.stock !== undefined) payload.stock = Number(payload.stock);
-  if (payload.categoryId !== undefined)
-    payload.categoryId = Number(payload.categoryId);
-  if (payload.brandId !== undefined) payload.brandId = Number(payload.brandId);
-  if (payload.subBrandId !== undefined)
-    payload.subBrandId = Number(payload.subBrandId);
-  if (payload.lowStockThreshold !== undefined)
-    payload.lowStockThreshold = Number(payload.lowStockThreshold);
+  for (const field of NUMERIC_FIELDS) {
+    if (payload[field] !== undefined) payload[field] = Number(payload[field]);
+  }
 
   return payload as T;
 }

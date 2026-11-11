@@ -1,12 +1,52 @@
 // src/modules/products/dtos/product-response.dto.ts
 import { Expose, Transform, Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { buildProductBadges, getStockStatus } from '../utils/product-badges';
+import {
+  BadgeSource,
+  buildProductBadges,
+  getStockStatus,
+  ProductBadge,
+  StockStatus,
+} from '../utils/product-badges';
+
+/** Shapes of the raw entities/rows that the transforms below read from. */
+interface AttributeValueSource {
+  value?: string;
+  colorHex?: string | null;
+  attributeName?: string;
+  attribute?: { kind?: string; name?: string } | null;
+}
+
+interface VariantSource {
+  attributeValues?: AttributeValueSource[];
+}
+
+interface TagSource {
+  id: number;
+  name: string;
+  slug: string;
+  color?: string | null;
+  isActive?: boolean;
+  group?: {
+    id: number;
+    name: string;
+    slug: string;
+    isActive?: boolean;
+  } | null;
+}
+
+interface ProductSource extends BadgeSource {
+  stockStatus?: StockStatus;
+  badges?: ProductBadge[];
+  tags?: TagSource[];
+}
 
 /** The color value when the variant has one, otherwise the first attribute value. */
-function primaryAttributeValue(variant: any): any {
-  const values: any[] = variant?.attributeValues ?? [];
-  return values.find((a) => a?.attribute?.kind === 'color') ?? values[0];
+function primaryAttributeValue(
+  variant: VariantSource,
+): AttributeValueSource | undefined {
+  const values = variant.attributeValues ?? [];
+  return values.find((a) => a.attribute?.kind === 'color') ?? values[0];
 }
 
 export class ProductBadgeResponseDto {
@@ -140,7 +180,10 @@ export class AttributeValueBriefResponseDto {
 
   // ۱. استخراج خودکار نام ویژگی از رابطه attribute.name
   @Expose()
-  @Transform(({ obj }) => obj.attribute?.name || obj.attributeName || null)
+  @Transform(
+    ({ obj }: { obj: AttributeValueSource }) =>
+      obj.attribute?.name || obj.attributeName || null,
+  )
   @ApiPropertyOptional()
   attributeName?: string;
 
@@ -194,18 +237,24 @@ export class ProductVariantResponseDto {
   attributeValues: AttributeValueBriefResponseDto[];
 
   @Expose()
-  @Transform(({ obj }) => primaryAttributeValue(obj)?.attribute?.kind ?? null)
+  @Transform(
+    ({ obj }: { obj: VariantSource }) =>
+      primaryAttributeValue(obj)?.attribute?.kind ?? null,
+  )
   @ApiPropertyOptional({ enum: ['volume', 'weight', 'color', 'custom'] })
   kind?: string | null;
 
   @Expose()
-  @Transform(({ obj }) => primaryAttributeValue(obj)?.colorHex ?? null)
+  @Transform(
+    ({ obj }: { obj: VariantSource }) =>
+      primaryAttributeValue(obj)?.colorHex ?? null,
+  )
   @ApiPropertyOptional()
   colorHex?: string | null;
 
   /** رنگ (در تنوع رنگی) یا همان برچسب نمایشی؛ برای سازگاری با ویترین */
   @Expose()
-  @Transform(({ obj }) => {
+  @Transform(({ obj }: { obj: VariantSource }) => {
     const attr = primaryAttributeValue(obj);
     return attr?.colorHex ?? attr?.value ?? null;
   })
@@ -214,8 +263,8 @@ export class ProductVariantResponseDto {
 
   /** برچسب نمایشی تنوع، مثل «۵۰۰ میلی‌لیتر» یا «رزگلد» */
   @Expose()
-  @Transform(({ obj }) =>
-    (obj.attributeValues ?? []).map((a: any) => a.value).join(' / '),
+  @Transform(({ obj }: { obj: VariantSource }) =>
+    (obj.attributeValues ?? []).map((a) => a.value).join(' / '),
   )
   @ApiProperty()
   alt: string;
@@ -303,21 +352,25 @@ export class ProductResponseDto {
 
   /** Computed here when the service did not already add it (e.g. detail endpoints). */
   @Expose()
-  @Transform(({ obj }) => obj.stockStatus ?? getStockStatus(obj))
+  @Transform(
+    ({ obj }: { obj: ProductSource }) => obj.stockStatus ?? getStockStatus(obj),
+  )
   @ApiProperty({ enum: ['in_stock', 'low_stock', 'out_of_stock'] })
   stockStatus: string;
 
   @Expose()
-  @Transform(({ obj }) => obj.badges ?? buildProductBadges(obj))
+  @Transform(
+    ({ obj }: { obj: ProductSource }) => obj.badges ?? buildProductBadges(obj),
+  )
   @ApiProperty({ type: () => [ProductBadgeResponseDto] })
   badges: ProductBadgeResponseDto[];
 
   /** Only active tags of active groups are public. */
   @Expose()
-  @Transform(({ obj }) =>
+  @Transform(({ obj }: { obj: ProductSource }) =>
     (obj.tags ?? [])
-      .filter((t: any) => t.isActive !== false && t.group?.isActive !== false)
-      .map((t: any) => ({
+      .filter((t) => t.isActive !== false && t.group?.isActive !== false)
+      .map((t) => ({
         id: t.id,
         name: t.name,
         slug: t.slug,

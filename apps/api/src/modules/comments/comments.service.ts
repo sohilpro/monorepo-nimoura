@@ -12,6 +12,8 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import {
   buildPagination,
   buildSearchWhereClause,
+  ListQuery,
+  toSortDirection,
 } from 'src/common/utils/pagination.helper';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { CommentReactions } from './entities/comment-reactions.entity';
@@ -33,7 +35,7 @@ export class CommentsService {
     private readonly reactionRepo: Repository<CommentReactions>,
   ) {}
 
-  async create(dto: CreateCommentDto, userId?: number): Promise<any> {
+  async create(dto: CreateCommentDto, userId?: number) {
     const productExists = await this.productRepo.existsBy({
       id: dto.productId,
     });
@@ -83,7 +85,7 @@ export class CommentsService {
     };
   }
 
-  async findByProduct(productId: number, query: any): Promise<any> {
+  async findByProduct(productId: number, query?: ListQuery) {
     const page = Math.max(1, Number(query?.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(query?.limit) || 10));
 
@@ -197,7 +199,7 @@ export class CommentsService {
       .addSelect('COUNT(comment.id)', 'count')
       .where('comment.productId = :productId', { productId })
       .andWhere('comment.isApproved = :isApproved', { isApproved: true }) // فقط نظرات تایید شده
-      .getRawOne();
+      .getRawOne<{ avg: string | null; count: string | null }>();
 
     const averageRating = stats?.avg
       ? Number(parseFloat(stats.avg).toFixed(2))
@@ -213,7 +215,7 @@ export class CommentsService {
 
   //  Admin
 
-  async findAll(query: any): Promise<any> {
+  async findAll(query: ListQuery) {
     const {
       page = 1,
       limit = 10,
@@ -248,7 +250,7 @@ export class CommentsService {
       where,
       take: +limit,
       skip: (+page - 1) * +limit,
-      order: { [sortBy]: sortOrder.toUpperCase() },
+      order: { [sortBy]: toSortDirection(sortOrder) },
       withDeleted: false,
       loadEagerRelations: false,
     });

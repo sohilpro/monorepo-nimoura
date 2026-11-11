@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Client } from 'basic-ftp';
 import { Readable } from 'stream';
+import { getErrorMessage } from 'src/common/utils/error.helper';
 
 /**
  * تمام تعامل با هاست دانلودی (FTP) از این سرویس عبور می‌کند.
@@ -55,8 +56,10 @@ export class FtpService {
     try {
       await client.remove(remotePath, true); // true => اگر وجود نداشت ignore کن
       this.logger.log(`Deleted from FTP: ${remotePath}`);
-    } catch (err: any) {
-      this.logger.warn(`FTP delete failed for ${remotePath}: ${err.message}`);
+    } catch (err: unknown) {
+      this.logger.warn(
+        `FTP delete failed for ${remotePath}: ${getErrorMessage(err)}`,
+      );
     } finally {
       client.close();
     }
@@ -69,8 +72,10 @@ export class FtpService {
       for (const path of remotePaths) {
         await client
           .remove(path, true)
-          .catch((err) =>
-            this.logger.warn(`FTP delete failed for ${path}: ${err.message}`),
+          .catch((err: unknown) =>
+            this.logger.warn(
+              `FTP delete failed for ${path}: ${getErrorMessage(err)}`,
+            ),
           );
       }
     } finally {

@@ -88,7 +88,7 @@ export class TorobService {
     const siteUrl = this.config.get<string>('SITE_URL')!.replace(/\/$/, '');
 
     const purchased = o.purchasedAt!;
-    const updatedRaw = (o as any).updatedAt as Date | undefined; // از CustomBaseEntity
+    const updatedRaw: Date | undefined = o.updatedAt; // از CustomBaseEntity
     const updated =
       updatedRaw && updatedRaw > purchased ? updatedRaw : purchased;
 
@@ -97,8 +97,7 @@ export class TorobService {
     const orderValue = toToman(o.finalTotal) - shipping;
 
     const phone =
-      normalizePhone(o.shippingInfo?.phone) ??
-      normalizePhone((o.user as any)?.mobile ?? (o.user as any)?.phone);
+      normalizePhone(o.shippingInfo?.phone) ?? normalizePhone(o.user?.mobile);
     const psp = o.paymentInfo?.method as string | undefined;
 
     return {
@@ -113,7 +112,7 @@ export class TorobService {
       products: (o.items ?? [])
         .filter((it) => !!it.product)
         .map((it) => ({
-          product_url: `${siteUrl}${productPath(it.product as any)}`,
+          product_url: `${siteUrl}${productPath(it.product)}`,
           product_price: toToman(it.unitPrice), // قیمت واحد نهایی (بعد از تخفیف/قیمت پله‌ای)
           quantity: Number(it.quantity),
         })),

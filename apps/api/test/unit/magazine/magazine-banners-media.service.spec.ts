@@ -18,10 +18,18 @@ describe('Magazine, Banners & Media Service Projections', () => {
       getManyAndCount: vi.fn().mockResolvedValue([[], 0]),
     };
 
-    const articleRepo = { createQueryBuilder: vi.fn().mockReturnValue(qb) } as any;
-    const service = new ArticlesService(articleRepo, {} as any, {} as any, {} as any, {} as any);
+    const articleRepo = {
+      createQueryBuilder: vi.fn().mockReturnValue(qb),
+    } as any;
+    const service = new ArticlesService(
+      articleRepo,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+    );
 
-    await service.findAllPublished({ page: 1, limit: 9, skip: 0 } as any);
+    await service.findAllPublished({ page: 1, limit: 9, skip: 0 });
 
     expect(qb.select).toHaveBeenCalled();
     const selectedCols = qb.select.mock.calls[0][0] as string[];
@@ -65,7 +73,9 @@ describe('Magazine, Banners & Media Service Projections', () => {
       getMany: vi.fn().mockResolvedValue([]),
     };
 
-    const bannerRepo = { createQueryBuilder: vi.fn().mockReturnValue(qb) } as any;
+    const bannerRepo = {
+      createQueryBuilder: vi.fn().mockReturnValue(qb),
+    } as any;
     const service = new BannersService(bannerRepo, {} as any);
 
     await service.findActiveForPosition('home-hero', BannerDevice.DESKTOP);
@@ -88,7 +98,9 @@ describe('Magazine, Banners & Media Service Projections', () => {
       getManyAndCount: vi.fn().mockResolvedValue([[], 0]),
     };
 
-    const mediaRepo = { createQueryBuilder: vi.fn().mockReturnValue(qb) } as any;
+    const mediaRepo = {
+      createQueryBuilder: vi.fn().mockReturnValue(qb),
+    } as any;
     const service = new MediaStaticService(mediaRepo, {} as any, {} as any);
 
     await service.findAll({ page: 1, limit: 20 });

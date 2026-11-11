@@ -11,7 +11,11 @@ import { UpdateBrandDto } from './dtos/update-brand.dto';
 import { generateSlug } from 'src/common/utils/slug.helper';
 
 import { Products } from '../products/entities/products.entity';
-import { buildSearchWhereClause } from 'src/common/utils/pagination.helper';
+import {
+  buildSearchWhereClause,
+  ListQuery,
+  parseListQuery,
+} from 'src/common/utils/pagination.helper';
 import { Brands } from './entities/brands.entity';
 import { SubBrands } from './entities/sub-brands.entity';
 import { MediaOwnerType } from '../media/enums/media-owner-type.enum';
@@ -72,14 +76,16 @@ export class BrandsService {
       Array.isArray(dto.subBrands) &&
       dto.subBrands.length > 0
     ) {
-      const subBrandEntities = dto.subBrands.map((sb: any) => {
-        const sbName = typeof sb === 'string' ? sb : sb.name;
-        return this.subBrandRepo.create({
-          name: sbName,
-          slug: generateSlug(sbName),
-          brand: saved,
-        });
-      });
+      const subBrandEntities = dto.subBrands.map(
+        (sb: string | { name: string }) => {
+          const sbName = typeof sb === 'string' ? sb : sb.name;
+          return this.subBrandRepo.create({
+            name: sbName,
+            slug: generateSlug(sbName),
+            brand: saved,
+          });
+        },
+      );
 
       await this.subBrandRepo.save(subBrandEntities);
     }
@@ -90,18 +96,13 @@ export class BrandsService {
     };
   }
 
-  async findAll(query: any) {
-    const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
-    const search = (query.search || '').trim();
-    const sortOrder =
-      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC'
-        ? 'ASC'
-        : 'DESC';
-    const allowedSortFields = ['id', 'name', 'createdAt', 'updatedAt'];
-    const sortBy = allowedSortFields.includes(query.sortBy)
-      ? query.sortBy
-      : 'id';
+  async findAll(query: ListQuery) {
+    const { page, limit, search, sortOrder, sortBy } = parseListQuery(query, [
+      'id',
+      'name',
+      'createdAt',
+      'updatedAt',
+    ]);
 
     const searchableFields = ['name'];
     const where = search
@@ -239,12 +240,10 @@ export class BrandsService {
         where: { brand: { id: brand.id } },
       });
 
-      const toDelete = existing.filter(
-        (e: any) => !dto.subBrands?.includes(e.name),
-      );
+      const toDelete = existing.filter((e) => !dto.subBrands?.includes(e.name));
 
       const toAdd = dto.subBrands.filter(
-        (sb: string) => !existing.some((e: any) => e.name === sb),
+        (sb: string) => !existing.some((e) => e.name === sb),
       );
 
       if (toDelete.length > 0) {

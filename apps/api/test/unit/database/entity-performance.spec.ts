@@ -42,7 +42,9 @@ import { Users } from '../../../src/modules/users/entities/users.entity';
 describe('Entity Performance Metadata', () => {
   it('should have zero eager relations across all entities', () => {
     const storage = getMetadataArgsStorage();
-    const eagerRelations = storage.relations.filter((rel) => rel.options?.eager === true);
+    const eagerRelations = storage.relations.filter(
+      (rel) => rel.options?.eager === true,
+    );
 
     expect(eagerRelations).toEqual([]);
   });
@@ -59,7 +61,9 @@ describe('Entity Performance Metadata', () => {
 
   it('should register critical FK and lookup indexes on entities', () => {
     const storage = getMetadataArgsStorage();
-    const indexNames = new Set(storage.indices.map((i) => i.name).filter(Boolean));
+    const indexNames = new Set(
+      storage.indices.map((i) => i.name).filter(Boolean),
+    );
 
     const expectedIndexes = [
       'idx_products_category',

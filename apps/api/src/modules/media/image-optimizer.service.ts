@@ -8,6 +8,7 @@ import sharp from 'sharp';
 import { fileTypeFromBuffer } from 'file-type';
 import pLimit from 'p-limit';
 import { SafeExtension } from './dtos/upload-media.dto';
+import { getErrorMessage } from 'src/common/utils/error.helper';
 
 export interface OptimizeOptions {
   maxWidth?: number;
@@ -76,8 +77,10 @@ export class ImageOptimizerService implements OnModuleInit {
           .toBuffer();
 
         return { buffer: optimizedBuffer, extension: '.webp' as SafeExtension };
-      } catch (error: any) {
-        this.logger.error(`خطا در پردازش تصویر با شارپ: ${error.message}`);
+      } catch (error: unknown) {
+        this.logger.error(
+          `خطا در پردازش تصویر با شارپ: ${getErrorMessage(error)}`,
+        );
         // هیچ fallback به فایل خام نداریم - فایل مشکوک/خراب هرگز ذخیره نمی‌شه
         throw new UnprocessableEntityException(
           'فایل تصویر معتبر نیست یا قابل پردازش نمی‌باشد',

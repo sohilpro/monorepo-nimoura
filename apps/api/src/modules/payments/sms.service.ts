@@ -1,30 +1,32 @@
 import { Injectable } from '@nestjs/common';
-const MelipayamakApi = require('melipayamak');
+import MelipayamakApi from 'melipayamak';
 
 @Injectable()
 export class SmsService {
   async sendOtpViaMeliSms(phone: string, code: string) {
-    const username = process.env.MELI_SMS_USER;
-    // const password = process.env.MELI_SMS_PASS;
-    const password = 'e22a0333-87c6-4ca3-9c45-0c3651828d3f';
-    const bodyId = process.env.MELI_SMS_PATTERN_CODE;
-    const api = new MelipayamakApi(username, password);
-    const sms = api.sms();
-
-    const res = await sms.sendByBaseNumber([code], phone, bodyId);
-
-    if (res.StrRetStatus !== 'Ok') {
-      throw new Error('ارسال پیامک ناموفق بود');
-    }
+    await this.sendPattern(phone, code, 'MELI_SMS_PATTERN_CODE');
   }
-  async sendOrderViaMeliSms(phone: string, code: string) {
-    const username = process.env.MELI_SMS_USER;
-    // const password = process.env.MELI_SMS_PASS;
-    const password = 'e22a0333-87c6-4ca3-9c45-0c3651828d3f';
-    const bodyId = process.env.MELI_SMS_PATTERN_ORDER;
-    const api = new MelipayamakApi(username, password);
-    const sms = api.sms();
 
+  async sendOrderViaMeliSms(phone: string, code: string) {
+    await this.sendPattern(phone, code, 'MELI_SMS_PATTERN_ORDER');
+  }
+
+  private async sendPattern(
+    phone: string,
+    code: string,
+    patternEnvKey: 'MELI_SMS_PATTERN_CODE' | 'MELI_SMS_PATTERN_ORDER',
+  ) {
+    const username = process.env.MELI_SMS_USER;
+    const password = process.env.MELI_SMS_PASS;
+    const bodyId = process.env[patternEnvKey];
+
+    if (!username || !password || !bodyId) {
+      throw new Error(
+        `SMS provider is not configured (MELI_SMS_USER, MELI_SMS_PASS, ${patternEnvKey})`,
+      );
+    }
+
+    const sms = new MelipayamakApi(username, password).sms();
     const res = await sms.sendByBaseNumber([code], phone, bodyId);
 
     if (res.StrRetStatus !== 'Ok') {

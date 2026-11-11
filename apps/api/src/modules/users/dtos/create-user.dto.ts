@@ -8,9 +8,10 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, TransformFnParams } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from 'src/common/auth/jwt.types';
+import { IR_MOBILE_REGEX } from 'src/common/utils/mobile.helper';
 
 const toEnDigits = (value: string) =>
   value
@@ -37,14 +38,14 @@ const toBoolOptional = ({ value }: { value: unknown }) => {
 export class CreateUserDto {
   @ApiProperty({
     example: '09121234567',
-    description: 'شماره موبایل معتبر (۱۱ رقم با پیشوند ۰)',
+    description: 'شماره موبایل معتبر (۱۱ رقم با پیشوند ۰۹)',
   })
-  @Transform(({ value }) =>
+  @Transform(({ value }: TransformFnParams): unknown =>
     typeof value === 'string' ? toEnDigits(value).trim() : value,
   )
   @IsNotEmpty({ message: 'شماره موبایل الزامی است' })
   @IsString()
-  @Matches(/^09\d{9}$/, {
+  @Matches(IR_MOBILE_REGEX, {
     message: 'شماره موبایل نامعتبر است (باید ۱۱ رقم و با ۰۹ شروع شود)',
   })
   mobile!: string;

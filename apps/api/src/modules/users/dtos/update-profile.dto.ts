@@ -9,6 +9,7 @@ import {
   Matches,
 } from 'class-validator';
 import { TrimString } from 'src/common/decorators/trim-string.decorator';
+import { emptyToNull } from 'src/common/utils/transform.helper';
 
 export class UpdateProfileDto {
   @ApiPropertyOptional({
@@ -23,7 +24,7 @@ export class UpdateProfileDto {
     { host_whitelist: ['gmail.com'] },
     { message: 'ایمیل باید از دامنه gmail.com باشد' },
   )
-  @Transform(({ value }) => (value === '' ? null : value))
+  @Transform(emptyToNull)
   email?: string;
 
   @ApiPropertyOptional({
@@ -34,7 +35,7 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsIdentityCard('IR', { message: 'کد ملی وارد شده معتبر نیست' })
   @Matches(/^\d{10}$/, { message: 'کد ملی باید ۱۰ رقم باشد' })
-  @Transform(({ value }) => (value === '' ? null : value))
+  @Transform(emptyToNull)
   identity_card?: string;
 
   @ApiPropertyOptional({
@@ -43,7 +44,7 @@ export class UpdateProfileDto {
     example: 'علی',
   })
   @IsOptional()
-  @Transform(({ value }) => (value === '' ? null : value))
+  @Transform(emptyToNull)
   @IsString()
   first_name?: string;
 
@@ -52,7 +53,7 @@ export class UpdateProfileDto {
     description: 'نام خانوادگی',
     example: 'رضایی',
   })
-  @Transform(({ value }) => (value === '' ? null : value))
+  @Transform(emptyToNull)
   @IsOptional()
   @IsString()
   last_name?: string;
@@ -62,7 +63,7 @@ export class UpdateProfileDto {
     description: 'رمز عبور جدید (حداقل ۶ و حداکثر ۳۲ کاراکتر)',
     example: 'StrongPass123',
   })
-  @Transform(({ value }) => (value === '' ? null : value))
+  @Transform(emptyToNull)
   @IsOptional()
   @Length(6, 32, { message: 'رمز عبور باید حداقل ۶ و حداکثر ۳۲ کاراکتر باشد' })
   password?: string;

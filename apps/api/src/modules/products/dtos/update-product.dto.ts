@@ -6,8 +6,10 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 function coerceToNumberArray(input: unknown): number[] {
   if (Array.isArray(input)) {
     return input
-      .flatMap((v) =>
-        typeof v === 'string' && v.startsWith('[') ? JSON.parse(v) : v,
+      .flatMap((v: unknown): unknown =>
+        typeof v === 'string' && v.startsWith('[')
+          ? (JSON.parse(v) as unknown)
+          : v,
       )
       .map((v) => Number(v))
       .filter((n) => Number.isFinite(n));
@@ -17,7 +19,7 @@ function coerceToNumberArray(input: unknown): number[] {
     const s = input.trim();
     if (s.startsWith('[') && s.endsWith(']')) {
       try {
-        const arr = JSON.parse(s);
+        const arr: unknown = JSON.parse(s);
         return Array.isArray(arr)
           ? arr.map(Number).filter(Number.isFinite)
           : [];

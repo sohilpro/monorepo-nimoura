@@ -7,7 +7,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { DataSource, In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Products } from './entities/products.entity';
 import { ProductImages } from './entities/product-images.entity';
 import { ProductVariants } from './entities/product-variants.entity';
@@ -30,6 +30,8 @@ import {
   buildProductBadges,
   getDiscountPercent,
   getStockStatus,
+  ProductBadge,
+  StockStatus,
 } from './utils/product-badges';
 import { buildPagination } from 'src/common/utils/pagination.helper';
 import { MediaOwnerType } from '../media/enums/media-owner-type.enum';
@@ -38,6 +40,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { ProductVariantsService } from './product-variants.service';
 import { ProductBundlesService } from './product-bundles.service';
 import { ProductPriceTiers } from './entities/product-price-tiers.entity';
+import { getErrorMessage } from 'src/common/utils/error.helper';
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 12;
@@ -68,6 +71,13 @@ const PRODUCT_CARD_SELECT = [
   'b.name',
   'b.slug',
 ];
+
+/** Product enriched with computed storefront fields (discount, stock status, badges). */
+export type ProductWithBadges = Products & {
+  discountPercent: number;
+  stockStatus: StockStatus;
+  badges: ProductBadge[];
+};
 
 @Injectable()
 export class ProductsService {
@@ -131,8 +141,10 @@ export class ProductsService {
       this.logger.log(
         `Amazing Offers sync completed. Activated: ${activatedResult.affected || 0}, Deactivated: ${deactivatedResult.affected || 0}`,
       );
-    } catch (error: any) {
-      this.logger.error(`Error in syncAmazingOffersDaily: ${error.message}`);
+    } catch (error: unknown) {
+      this.logger.error(
+        `Error in syncAmazingOffersDaily: ${getErrorMessage(error)}`,
+      );
     }
   }
 
@@ -186,7 +198,7 @@ export class ProductsService {
       }
     }
     for (const variant of variants) {
-      delete (variant as any).product; // جلوگیری از Circular JSON و تکرار داده‌ها
+      delete (variant as Partial<ProductVariants>).product; // جلوگیری از Circular JSON و تکرار داده‌ها
     }
 
     // متصل کردن واریانت‌ها به هر محصول
@@ -312,7 +324,7 @@ export class ProductsService {
       sort = 'createdAt',
       sortOrder = 'DESC',
       isAvailable,
-    } = query as any;
+    } = query;
 
     const qb = this.productRepo
       .createQueryBuilder('p')
@@ -427,7 +439,7 @@ export class ProductsService {
         .groupBy('c.id')
         .addGroupBy('c.name')
         .orderBy('count', 'DESC')
-        .getRawMany(),
+        .getRawMany<{ id: string; name: string; count: string }>(),
       base()
         .innerJoin('p.brand', 'b')
         .select('b.id', 'id')
@@ -436,10 +448,10 @@ export class ProductsService {
         .groupBy('b.id')
         .addGroupBy('b.name')
         .orderBy('count', 'DESC')
-        .getRawMany(),
+        .getRawMany<{ id: string; name: string; count: string }>(),
     ]);
 
-    const toNum = (r: any) => ({
+    const toNum = (r: { id: string; name: string; count: string }) => ({
       id: Number(r.id),
       name: r.name,
       count: Number(r.count),
@@ -504,7 +516,7 @@ export class ProductsService {
   async findAmazing(query: PaginationQueryDto) {
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = this.sanitizeLimit(query.limit, 10);
-    const { minPrice, maxPrice } = query as any;
+    const { minPrice, maxPrice } = query;
 
     // تاریخ امروز به عنوان Seed روزانه
     const todaySeed = new Date().toISOString().split('T')[0];
@@ -528,7 +540,7 @@ export class ProductsService {
       );
 
     // ۲. فیلتر حداقل قیمت (هم برای محصول ساده هم واریانت‌ها)
-    if (minPrice !== undefined && minPrice !== null && minPrice !== '') {
+    if (minPrice !== undefined && minPrice !== null) {
       qb.andWhere(
         '( (p.type = :simple AND p.price >= :minPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_min WHERE v_min."productId" = p.id AND v_min.deleted_at IS NULL AND v_min.price >= :minPrice)) )',
         { minPrice: Number(minPrice) },
@@ -536,7 +548,7 @@ export class ProductsService {
     }
 
     // ۳. فیلتر حداکثر قیمت (هم برای محصول ساده هم واریانت‌ها)
-    if (maxPrice !== undefined && maxPrice !== null && maxPrice !== '') {
+    if (maxPrice !== undefined && maxPrice !== null) {
       qb.andWhere(
         '( (p.type = :simple AND p.price <= :maxPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_max WHERE v_max."productId" = p.id AND v_max.deleted_at IS NULL AND v_max.price <= :maxPrice)) )',
         { maxPrice: Number(maxPrice) },
@@ -1061,9 +1073,8 @@ export class ProductsService {
    */
   async findSimilarProducts(
     productId: number,
-    page = 1,
     limit = 8,
-  ): Promise<Products[]> {
+  ): Promise<ProductWithBadges[]> {
     const current = await this.productRepo.findOne({
       where: { id: productId },
       select: { id: true, category: { id: true } },
@@ -1103,9 +1114,8 @@ export class ProductsService {
    */
   async findRelatedProducts(
     productId: number,
-    page = 1,
     limit = 8,
-  ): Promise<Products[]> {
+  ): Promise<ProductWithBadges[]> {
     const current = await this.productRepo.findOne({
       where: { id: productId },
       select: { id: true, brand: { id: true } },
@@ -1155,7 +1165,7 @@ export class ProductsService {
       images: rawGalleryUrls,
       specifications: rawSpecs,
       ...rest
-    } = dto as any;
+    } = dto;
 
     // ۱. بررسی صحت روابط پایه (دسته‌بندی، برند و زیربرند)
     const [category, brand, subBrand] = await Promise.all([
@@ -1198,8 +1208,8 @@ export class ProductsService {
     const cleanSpecifications = Array.isArray(rawSpecs)
       ? rawSpecs
           .flat()
-          .filter((item: any) => item && typeof item === 'object' && item.key)
-          .map((item: any) => ({
+          .filter((item) => item && typeof item === 'object' && item.key)
+          .map((item) => ({
             key: String(item.key).trim(),
             value: String(item.value ?? '').trim(),
           }))
@@ -1211,9 +1221,7 @@ export class ProductsService {
     const uploadedMediaIds: number[] = [];
 
     const initialGalleryUrls = Array.isArray(rawGalleryUrls)
-      ? rawGalleryUrls.filter(
-          (u: any) => typeof u === 'string' && u.trim() !== '',
-        )
+      ? rawGalleryUrls.filter((u) => typeof u === 'string' && u.trim() !== '')
       : [];
 
     try {
@@ -1238,7 +1246,7 @@ export class ProductsService {
             manager,
             newProduct,
             [],
-            variants,
+            variants ?? [],
           );
           const pricing = this.variantsService.derivePricing(
             newProduct.variants,
@@ -1265,10 +1273,10 @@ export class ProductsService {
 
         return newProduct;
       });
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
       if (dbError instanceof BadRequestException) throw dbError;
       throw new InternalServerErrorException(
-        'خطا در ایجاد رکورد محصول در پایگاه داده: ' + dbError.message,
+        'خطا در ایجاد رکورد محصول در پایگاه داده: ' + getErrorMessage(dbError),
       );
     }
 
@@ -1339,14 +1347,15 @@ export class ProductsService {
       }
 
       return this.cleanCircularReferences(savedProduct);
-    } catch (uploadOrUpdateError: any) {
+    } catch (uploadOrUpdateError: unknown) {
       await this.productRepo.remove(savedProduct).catch(() => {});
       for (const mediaId of uploadedMediaIds) {
         await this.mediaService.deleteById(mediaId).catch(() => {});
       }
 
       throw new InternalServerErrorException(
-        'خطا در پردازش و ذخیره تصاویر محصول: ' + uploadOrUpdateError.message,
+        'خطا در پردازش و ذخیره تصاویر محصول: ' +
+          getErrorMessage(uploadOrUpdateError),
       );
     }
   }
@@ -1387,7 +1396,7 @@ export class ProductsService {
       specifications: rawSpecs,
       bundleItems,
       ...rest
-    } = dto as any;
+    } = dto;
 
     const previousType = product.type;
 
@@ -1427,12 +1436,13 @@ export class ProductsService {
       : undefined;
 
     // پاکسازی مشخصات فنی
+    let cleanSpecifications: { key: string; value: string }[] | undefined;
     if (rawSpecs !== undefined) {
-      rest.specifications = Array.isArray(rawSpecs)
+      cleanSpecifications = Array.isArray(rawSpecs)
         ? rawSpecs
             .flat()
-            .filter((item: any) => item && typeof item === 'object' && item.key)
-            .map((item: any) => ({
+            .filter((item) => item && typeof item === 'object' && item.key)
+            .map((item) => ({
               key: String(item.key).trim(),
               value: String(item.value ?? '').trim(),
             }))
@@ -1462,12 +1472,12 @@ export class ProductsService {
         newGalleryUrls = uploadedGallery.map((m) => m.publicUrl);
         freshlyUploadedMediaIds.push(...uploadedGallery.map((m) => m.id));
       }
-    } catch (uploadError: any) {
+    } catch (uploadError: unknown) {
       for (const mediaId of freshlyUploadedMediaIds) {
         await this.mediaService.deleteById(mediaId).catch(() => {});
       }
       throw new InternalServerErrorException(
-        'خطا در بارگذاری تصاویر جدید: ' + uploadError.message,
+        'خطا در بارگذاری تصاویر جدید: ' + getErrorMessage(uploadError),
       );
     }
 
@@ -1496,6 +1506,9 @@ export class ProductsService {
       const updatedProduct = await this.dataSource.transaction(
         async (manager) => {
           Object.assign(product, rest);
+          if (cleanSpecifications !== undefined) {
+            product.specifications = cleanSpecifications;
+          }
 
           if (dto.title && dto.title !== product.title) {
             product.slug = this.generateSlug(dto.title);
@@ -1504,7 +1517,7 @@ export class ProductsService {
           if (newThumbnailUrl) {
             product.thumbnail = newThumbnailUrl;
           } else if (removeOldThumbnail && !thumbnailFile) {
-            product.thumbnail = null as any;
+            product.thumbnail = null;
           }
 
           // ۴. مدیریت تصاویر گالری
@@ -1533,9 +1546,9 @@ export class ProductsService {
 
           if (Array.isArray(incomingGallery) || newGalleryUrls.length > 0) {
             const rawIncomingUrls: string[] = Array.isArray(incomingGallery)
-              ? incomingGallery
-                  .map((img: any) => (typeof img === 'string' ? img : img?.url))
-                  .filter(Boolean)
+              ? (incomingGallery as Array<string | { url?: string } | null>)
+                  .map((img) => (typeof img === 'string' ? img : img?.url))
+                  .filter((url): url is string => !!url)
               : [];
 
             const allTargetUrls = Array.from(
@@ -1594,7 +1607,7 @@ export class ProductsService {
                 manager,
                 product,
                 product.variants ?? [],
-                variants,
+                variants ?? [],
               );
             }
             Object.assign(
@@ -1629,14 +1642,14 @@ export class ProductsService {
       );
 
       return this.cleanCircularReferences(updatedProduct);
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
       for (const mediaId of freshlyUploadedMediaIds) {
         await this.mediaService.deleteById(mediaId).catch(() => {});
       }
 
       if (dbError instanceof BadRequestException) throw dbError;
       throw new InternalServerErrorException(
-        'خطا در به‌روزرسانی محصول در پایگاه داده: ' + dbError.message,
+        'خطا در به‌روزرسانی محصول در پایگاه داده: ' + getErrorMessage(dbError),
       );
     }
   }
@@ -1653,22 +1666,22 @@ export class ProductsService {
    */
   private cleanCircularReferences(product: Products): Products {
     if (Array.isArray(product.images)) {
-      product.images = product.images.map((img: any) => {
-        delete img.product;
+      product.images = product.images.map((img) => {
+        delete (img as Partial<ProductImages>).product;
         return img;
       });
     }
 
     if (Array.isArray(product.variants)) {
-      product.variants = product.variants.map((v: any) => {
-        delete v.product;
+      product.variants = product.variants.map((v) => {
+        delete (v as Partial<ProductVariants>).product;
         return v;
       });
     }
 
     if (Array.isArray(product.bundleItems)) {
-      product.bundleItems = product.bundleItems.map((item: any) => {
-        delete item.bundle;
+      product.bundleItems = product.bundleItems.map((item) => {
+        delete (item as Partial<typeof item>).bundle;
         return item;
       });
     }
@@ -1689,7 +1702,7 @@ export class ProductsService {
       .trim()
       .toLowerCase()
       .replace(/[\s\-_]+/g, '-')
-      .replace(/[^\u0600-\u06FF\w\-]+/g, '');
+      .replace(/[^\u0600-\u06FF\w-]+/g, '');
   }
 
   /**
@@ -1722,10 +1735,10 @@ export class ProductsService {
         MediaOwnerType.PRODUCT_GALLERY,
         String(id),
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       // خطا در حذف فایل‌های هاست نباید باعث شکست کل عملیات حذف محصول در دیتابیس شود، پس فقط لاگ می‌کنیم
       this.logger.error(
-        `خطا در حذف فایل‌های مرتبط با محصول ${id}: ${err.message}`,
+        `خطا در حذف فایل‌های مرتبط با محصول ${id}: ${getErrorMessage(err)}`,
       );
     }
 
@@ -1741,7 +1754,7 @@ export class ProductsService {
     return Math.min(limit, MAX_LIMIT);
   }
 
-  private applySorting(qb: any, sort: string) {
+  private applySorting(qb: SelectQueryBuilder<Products>, sort: string) {
     switch (sort) {
       case 'cheapest':
         qb.orderBy('p.price', 'ASC');
@@ -1775,7 +1788,7 @@ export class ProductsService {
       .addSelect('p.id', 'productId')
       .where('p.id IN (:...ids)', { ids })
       .orderBy('img.id', 'ASC')
-      .getRawAndEntities();
+      .getRawAndEntities<{ productId: string }>();
 
     const grouped = new Map<number, ProductImages[]>();
     images.forEach((img, i) => {
@@ -1814,11 +1827,11 @@ export class ProductsService {
       .getMany();
   }
 
-  private calculateDiscounts(products: Products[]): any[] {
+  private calculateDiscounts(products: Products[]): ProductWithBadges[] {
     return products.map((p) => this.calculateSingleDiscount(p));
   }
 
-  private calculateSingleDiscount(product: Products): any {
+  private calculateSingleDiscount(product: Products): ProductWithBadges {
     const discountPercent = getDiscountPercent(product);
 
     return {
@@ -1826,7 +1839,7 @@ export class ProductsService {
       discountPercent,
       stockStatus: getStockStatus(product),
       badges: buildProductBadges(product),
-    };
+    } as ProductWithBadges;
   }
 
   async exportAll() {

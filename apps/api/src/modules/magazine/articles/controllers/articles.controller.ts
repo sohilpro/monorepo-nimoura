@@ -27,7 +27,7 @@ export class ArticlesController {
   async findOne(@Param('slug') slug: string) {
     const article = await this.articlesService.findBySlug(slug);
     // شمارش بازدید به صورت غیرمسدودکننده
-    this.articlesService.incrementView(article.id);
+    this.articlesService.incrementView(article.id).catch(() => undefined);
     const related = await this.articlesService.findRelated(article);
     return { article, related };
   }

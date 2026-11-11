@@ -22,14 +22,15 @@ export class AllExceptionsFilter implements ExceptionFilter {
       ? exception.getStatus()
       : HttpStatus.INTERNAL_SERVER_ERROR;
 
-    let message: any = 'خطای داخلی سرور';
+    let message: string | string[] = 'خطای داخلی سرور';
 
     if (isHttp) {
       const res = exception.getResponse();
       if (typeof res === 'string') {
         message = res;
       } else if (typeof res === 'object' && res !== null) {
-        message = (res as any).message || (res as any).error || 'خطا در عملیات';
+        const body = res as { message?: string | string[]; error?: string };
+        message = body.message || body.error || 'خطا در عملیات';
       }
     } else {
       this.logger.error('Unhandled Exception:', exception);

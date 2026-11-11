@@ -91,11 +91,15 @@ export class TorobAuthGuard implements CanActivate {
     if (parts.length !== 3) this.fail('Malformed token');
     const [h, p, s] = parts;
 
-    let header: any;
-    let payload: any;
+    let header: { alg?: string };
+    let payload: { exp?: unknown; nbf?: unknown; aud?: string | string[] };
     try {
-      header = JSON.parse(Buffer.from(h, 'base64url').toString('utf8'));
-      payload = JSON.parse(Buffer.from(p, 'base64url').toString('utf8'));
+      header = JSON.parse(
+        Buffer.from(h, 'base64url').toString('utf8'),
+      ) as typeof header;
+      payload = JSON.parse(
+        Buffer.from(p, 'base64url').toString('utf8'),
+      ) as typeof payload;
     } catch {
       this.fail('Malformed token');
     }
@@ -138,7 +142,9 @@ export class TorobAuthGuard implements CanActivate {
       this.config.get<string>('TOROB_AUDIENCE') || req.headers.host;
     const aud: string[] = Array.isArray(payload.aud)
       ? payload.aud
-      : [payload.aud];
+      : payload.aud === undefined
+        ? []
+        : [payload.aud];
     if (!expected || !aud.includes(expected)) {
       this.fail('Invalid audience', {
         tokenAud: payload.aud,

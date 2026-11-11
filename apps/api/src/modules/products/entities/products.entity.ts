@@ -78,8 +78,8 @@ export class Products extends CustomBaseEntity {
   @Column('jsonb')
   specifications!: { key: string; value: string }[];
 
-  @Column({ nullable: true })
-  thumbnail!: string;
+  @Column({ type: 'varchar', nullable: true })
+  thumbnail!: string | null;
 
   @OneToMany(() => ProductImages, (image) => image.product, {
     cascade: true,

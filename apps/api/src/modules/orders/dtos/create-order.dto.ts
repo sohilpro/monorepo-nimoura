@@ -12,6 +12,7 @@ import {
 } from 'class-validator';
 import { ShippingInfoDto } from './shipping-info.dto';
 import { PaymentInfoDto } from './payment-info.dto';
+import { refToIdNumber } from 'src/common/utils/transform.helper';
 
 export class OrderItemDto {
   @ApiProperty({ type: Number, description: 'شناسه محصول', example: 101 })
@@ -45,13 +46,7 @@ export class OrderItemDto {
     example: { id: 15 },
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value && typeof value === 'object' && 'id' in value)
-      return Number(value.id);
-    if (value !== null && value !== undefined && value !== '')
-      return Number(value);
-    return null;
-  })
+  @Transform(refToIdNumber)
   @IsInt({ message: 'شناسه تنوع باید یک عدد صحیح باشد' })
   @IsPositive({ message: 'شناسه تنوع باید بزرگتر از صفر باشد' })
   variant?: number | null;

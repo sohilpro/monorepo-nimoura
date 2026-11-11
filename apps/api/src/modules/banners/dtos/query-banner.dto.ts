@@ -9,6 +9,7 @@ import {
 import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BannerStatus, BannerDevice } from '../enums';
+import { emptyToUndefined } from 'src/common/utils/transform.helper';
 
 export class QueryBannerDto {
   @ApiPropertyOptional({ type: Number })
@@ -18,7 +19,7 @@ export class QueryBannerDto {
   positionId?: number;
 
   @ApiPropertyOptional({ enum: BannerStatus })
-  @Transform(({ value }) => (value === '' ? undefined : value))
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsEnum(BannerStatus)
   status?: BannerStatus;

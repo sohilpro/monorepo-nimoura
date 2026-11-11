@@ -37,7 +37,8 @@ import { BannersModule } from './modules/banners/banners.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PriceListModule } from './modules/price-list/price-list.module';
-import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import type { Request } from 'express';
 import { TorobModule } from './modules/torob/torob.module';
 import { validateEnv } from './config/env.validation';
 import { HealthModule } from './modules/health/health.module';
@@ -78,7 +79,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
       throttlers: [{ name: 'default', ttl: 60_000, limit: 300 }], // سقف بالاتر
       // درخواست‌های سرور Nuxt را محدود نکن (آی‌پی داخلی/لوکال خودت را بگذار)
       skipIf: (ctx) => {
-        const ip = ctx.switchToHttp().getRequest().ip;
+        const ip = ctx.switchToHttp().getRequest<Request>().ip ?? '';
         return ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(ip);
       },
     }),

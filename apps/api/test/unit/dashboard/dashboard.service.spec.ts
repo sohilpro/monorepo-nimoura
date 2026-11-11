@@ -127,11 +127,14 @@ describe('DashboardService', () => {
     expect(res.kpis.orders.deltaPercent).toBe(100);
     expect(res.kpis.customers.deltaPercent).toBe(100);
     expect(
-      res.orderStatuses.find((s) => s.status === OrderStatus.PAID)?.share,
+      res.orderStatuses.find(
+        (s) => String(s.status) === String(OrderStatus.PAID),
+      )?.share,
     ).toBe(75);
     expect(
-      res.paymentMethods.find((m) => m.method === PaymentMethod.ZARINPAL)
-        ?.share,
+      res.paymentMethods.find(
+        (m) => String(m.method) === String(PaymentMethod.ZARINPAL),
+      )?.share,
     ).toBe(80);
     expect(res.dailySeries).toHaveLength(2);
   });

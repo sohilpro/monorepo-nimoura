@@ -1,5 +1,4 @@
 import {
-  Controller,
   Get,
   Post,
   Body,
@@ -10,19 +9,12 @@ import {
   Patch,
   Query,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-  ApiBearerAuth,
-} from '@nestjs/swagger';
-import { Roles } from 'src/common/auth/auth.decorators';
-import { UserRole } from 'src/common/auth/jwt.types';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { CommentsService } from '../comments.service';
 import { CreateCommentDto } from '../dto/create-comment.dto';
 import { UpdateCommentDto } from '../dto/update-comment.dto';
 import { AdminController } from 'src/common/auth/decorators/admin-controller.decorator';
+import type { ListQuery } from 'src/common/utils/pagination.helper';
 
 @ApiTags('Admin - Comments')
 @AdminController('comments')
@@ -45,7 +37,7 @@ export class AdminCommentsController {
     description: 'نمایش تمام کامنت‌های ثبت‌شده در سیستم.',
   })
   @ApiResponse({ status: 200, description: 'لیست نظرات با موفقیت دریافت شد.' })
-  async findAll(@Query() query: any) {
+  async findAll(@Query() query: ListQuery) {
     return await this.commentsService.findAll(query);
   }
 

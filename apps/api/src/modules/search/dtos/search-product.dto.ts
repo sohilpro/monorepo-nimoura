@@ -9,6 +9,7 @@ import {
   MinLength,
 } from 'class-validator';
 import { ProductFilterQueryDto } from 'src/modules/products/dtos/product-query.dto';
+import { trimIfString } from 'src/common/utils/transform.helper';
 
 // ⚠️ مسیر را مطابق پروژه‌ات درست کن (همان فایلی که PaginationQueryDto و ProductFilterQueryDto داخلش هستند)
 
@@ -22,7 +23,7 @@ import { ProductFilterQueryDto } from 'src/modules/products/dtos/product-query.d
  */
 export class SearchProductDto extends ProductFilterQueryDto {
   @ApiProperty({ description: 'عبارت جستجو' })
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))
+  @Transform(trimIfString)
   @IsString()
   @MinLength(1, { message: 'عبارت جستجو نمی‌تواند خالی باشد' })
   q!: string;

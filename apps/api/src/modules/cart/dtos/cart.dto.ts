@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsInt, IsPositive, IsOptional } from 'class-validator';
 import { Type, Transform } from 'class-transformer';
+import { refToIdNumber } from 'src/common/utils/transform.helper';
 
 export class CartDto {
   @ApiProperty({
@@ -28,17 +29,7 @@ export class CartDto {
     example: 55,
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    // اگر آبجکت کامل بود، فقط فیلد id را بیرون بکش
-    if (value && typeof value === 'object' && 'id' in value) {
-      return Number(value.id);
-    }
-    // اگر مستقیماً عدد یا رشته عددی بود
-    if (value !== null && value !== undefined && value !== '') {
-      return Number(value);
-    }
-    return null;
-  })
+  @Transform(refToIdNumber)
   @IsInt({ message: 'شناسه تنوع باید یک عدد صحیح باشد' })
   @IsPositive({ message: 'شناسه تنوع باید بزرگتر از صفر باشد' })
   variant?: number | null;
@@ -57,15 +48,7 @@ export class CartDto {
 export class RemoveCartItemDto {
   @ApiPropertyOptional({ description: 'شناسه تنوع یا آبجکت تنوع' })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value && typeof value === 'object' && 'id' in value) {
-      return Number(value.id);
-    }
-    if (value !== null && value !== undefined && value !== '') {
-      return Number(value);
-    }
-    return null;
-  })
+  @Transform(refToIdNumber)
   @IsInt()
   @IsPositive()
   variant?: number | null;

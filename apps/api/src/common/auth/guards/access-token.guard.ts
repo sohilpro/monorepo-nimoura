@@ -46,8 +46,8 @@ export class AccessTokenGuard implements CanActivate {
 
       request['user'] = user;
       return true;
-    } catch (error: any) {
-      if (error.name === 'TokenExpiredError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'TokenExpiredError') {
         throw new UnauthorizedException('نشست کاربری شما منقضی شده است');
       }
       throw new UnauthorizedException('توکن نامعتبر یا دستکاری شده است');

@@ -12,7 +12,16 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { plainToInstance, Transform, Type } from 'class-transformer';
+import {
+  plainToInstance,
+  Transform,
+  TransformFnParams,
+  Type,
+} from 'class-transformer';
+import {
+  parseJsonOrEmptyArray,
+  toTrimmedString,
+} from 'src/common/utils/transform.helper';
 import { CreateVariantDto } from './create-variant.dto';
 import { BundleItemDto } from './create-bundle.dto';
 
@@ -125,8 +134,8 @@ export class CreateProductDto {
     type: [SpecificationItemDto],
   })
   @IsOptional()
-  @Transform(({ value }) => {
-    let parsed = value;
+  @Transform(({ value }: TransformFnParams): unknown => {
+    let parsed: unknown = value;
 
     // اگر از طریق multipart/form-data به شکل رشته آمده باشد
     if (typeof value === 'string') {
@@ -142,14 +151,15 @@ export class CreateProductDto {
     }
 
     // فیلتر کردن و تبدیل صریح هر آیتم به نمونه‌ای از کلاس SpecificationItemDto
-    return parsed
+    return (parsed as unknown[])
       .filter(
-        (item) => item && typeof item === 'object' && !Array.isArray(item),
+        (item): item is Record<string, unknown> =>
+          !!item && typeof item === 'object' && !Array.isArray(item),
       )
       .map((item) =>
         plainToInstance(SpecificationItemDto, {
-          key: String(item.key || '').trim(),
-          value: String(item.value || '').trim(),
+          key: toTrimmedString(item.key),
+          value: toTrimmedString(item.value),
         }),
       )
       .filter((item) => item.key !== '');
@@ -204,13 +214,7 @@ export class CreateProductDto {
     description:
       'لیست تنوع‌ها (حجمی، وزنی یا رنگی) در صورتی که نوع محصول variant باشد',
   })
-  @Transform(({ value }) => {
-    try {
-      return typeof value === 'string' ? JSON.parse(value) : value;
-    } catch {
-      return [];
-    }
-  })
+  @Transform(parseJsonOrEmptyArray)
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
@@ -221,10 +225,13 @@ export class CreateProductDto {
     type: [Number],
     description: 'شناسه تگ‌های محصول (از گروه‌های تگ)',
   })
-  @Transform(({ value }) => {
+  @Transform(({ value }: TransformFnParams): unknown => {
     try {
-      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
-      return Array.isArray(parsed) ? parsed.map((v) => Number(v)) : parsed;
+      const parsed: unknown =
+        typeof value === 'string' ? JSON.parse(value) : value;
+      return Array.isArray(parsed)
+        ? (parsed as unknown[]).map((v) => Number(v))
+        : parsed;
     } catch {
       return [];
     }
@@ -261,13 +268,7 @@ export class CreateProductDto {
   @IsBoolean()
   isAvailable?: boolean;
 
-  @Transform(({ value }) => {
-    try {
-      return typeof value === 'string' ? JSON.parse(value) : value;
-    } catch {
-      return [];
-    }
-  })
+  @Transform(parseJsonOrEmptyArray)
   @IsOptional()
   @IsArray({ message: 'اقلام پک باید به صورت آرایه ارسال شوند.' })
   @ValidateNested({ each: true })

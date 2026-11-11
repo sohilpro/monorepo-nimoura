@@ -178,7 +178,10 @@ describe('Cart, Wishlist & Promotions Service Projections', () => {
       {} as any,
     );
 
-    const res = await service.applyDiscountToCart({ promoCode: 'VIP20', cartTotal: 100000 }, 15);
+    const res = await service.applyDiscountToCart(
+      { promoCode: 'VIP20', cartTotal: 100000 },
+      15,
+    );
     expect(res.discountAmount).toBe(20000);
     expect(res.finalTotal).toBe(80000);
     expect(promoRepo.findOne).toHaveBeenCalledWith(

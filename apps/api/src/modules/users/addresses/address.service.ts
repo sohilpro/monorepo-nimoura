@@ -12,6 +12,8 @@ import { Users } from '../entities/users.entity';
 import {
   buildPagination,
   buildSearchWhereClause,
+  ListQuery,
+  toSortDirection,
 } from 'src/common/utils/pagination.helper';
 
 const ADDRESS_SELECT = {
@@ -33,7 +35,7 @@ export class AddressesService {
     private readonly userRepo: Repository<Users>,
   ) {}
 
-  async create(dto: CreateAddressDto, userId: number): Promise<any> {
+  async create(dto: CreateAddressDto, userId: number) {
     const userExists = await this.userRepo.existsBy({ id: userId });
     if (!userExists) {
       throw new NotFoundException(`کاربر با شناسه ${userId} یافت نشد.`);
@@ -60,7 +62,7 @@ export class AddressesService {
     };
   }
 
-  async findMyAddresses(userId: number, query: any): Promise<any> {
+  async findMyAddresses(userId: number, query: ListQuery) {
     const {
       page = 1,
       limit = 10,
@@ -85,7 +87,7 @@ export class AddressesService {
       where,
       take: +limit,
       skip: (+page - 1) * +limit,
-      order: { [sortBy]: sortOrder.toUpperCase() },
+      order: { [sortBy]: toSortDirection(sortOrder) },
       withDeleted: false,
       loadEagerRelations: false,
     });
@@ -103,11 +105,7 @@ export class AddressesService {
     return address;
   }
 
-  async update(
-    id: number,
-    dto: UpdateAddressDto,
-    userId: number,
-  ): Promise<any> {
+  async update(id: number, dto: UpdateAddressDto, userId: number) {
     const address = await this.addressRepo.findOne({
       where: { id },
       select: ADDRESS_SELECT,
@@ -135,7 +133,7 @@ export class AddressesService {
     };
   }
 
-  async remove(id: number, userId: number): Promise<any> {
+  async remove(id: number, userId: number) {
     const address = await this.addressRepo.findOne({
       where: { id },
       select: { id: true, userId: true },

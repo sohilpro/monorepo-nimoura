@@ -9,7 +9,20 @@ import { generateSlug } from 'src/common/utils/slug.helper';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { Categories } from './entities/categories.entity';
-import { buildSearchWhereClause } from 'src/common/utils/pagination.helper';
+import {
+  buildSearchWhereClause,
+  ListQuery,
+  parseListQuery,
+} from 'src/common/utils/pagination.helper';
+
+export interface CategoryTreeNode {
+  id: number;
+  name: string;
+  slug: string;
+  parentId: number | null;
+  products?: Array<{ id: number; name: string }>;
+  children: CategoryTreeNode[];
+}
 
 @Injectable()
 export class CategoryService {
@@ -18,18 +31,13 @@ export class CategoryService {
     private readonly categoryRepo: Repository<Categories>,
   ) {}
 
-  async findAll(query: any) {
-    const page = Math.max(1, Number(query.page) || 1);
-    const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
-    const search = (query.search || '').trim();
-    const sortOrder =
-      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC'
-        ? 'ASC'
-        : 'DESC';
-    const allowedSortFields = ['id', 'name', 'createdAt', 'updatedAt'];
-    const sortBy = allowedSortFields.includes(query.sortBy)
-      ? query.sortBy
-      : 'id';
+  async findAll(query: ListQuery) {
+    const { page, limit, search, sortOrder, sortBy } = parseListQuery(query, [
+      'id',
+      'name',
+      'createdAt',
+      'updatedAt',
+    ]);
 
     const searchableFields = ['name'];
     const where = search
@@ -93,15 +101,15 @@ export class CategoryService {
     return category;
   }
 
-  async getCategoryTree(): Promise<any[]> {
+  async getCategoryTree(): Promise<CategoryTreeNode[]> {
     const rawCategories = await this.categoryRepo
       .createQueryBuilder('category')
       .select(['category.id', 'category.name', 'category.slug', 'parent.id'])
       .leftJoin('category.parent', 'parent')
       .getMany();
 
-    const map = new Map<number, any>();
-    const roots: any[] = [];
+    const map = new Map<number, CategoryTreeNode>();
+    const roots: CategoryTreeNode[] = [];
 
     for (const cat of rawCategories) {
       const item = {
@@ -116,6 +124,7 @@ export class CategoryService {
 
     for (const cat of rawCategories) {
       const current = map.get(cat.id);
+      if (!current) continue;
       if (current.parentId) {
         const parent = map.get(current.parentId);
         if (parent) {
@@ -207,7 +216,7 @@ export class CategoryService {
     };
   }
 
-  async getCategoryTreeWithProducts(): Promise<any[]> {
+  async getCategoryTreeWithProducts(): Promise<CategoryTreeNode[]> {
     const rawCategories = await this.categoryRepo
       .createQueryBuilder('category')
       .select([
@@ -222,8 +231,8 @@ export class CategoryService {
       .leftJoin('category.products', 'products')
       .getMany();
 
-    const map = new Map<number, any>();
-    const roots: any[] = [];
+    const map = new Map<number, CategoryTreeNode>();
+    const roots: CategoryTreeNode[] = [];
 
     for (const cat of rawCategories) {
       const item = {
@@ -242,6 +251,7 @@ export class CategoryService {
 
     for (const cat of rawCategories) {
       const current = map.get(cat.id);
+      if (!current) continue;
       if (current.parentId) {
         const parent = map.get(current.parentId);
         if (parent) {

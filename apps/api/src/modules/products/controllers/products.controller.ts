@@ -136,7 +136,6 @@ export class ProductsController {
   ) {
     const items = await this.productsService.findSimilarProducts(
       id,
-      pagination.page,
       pagination.limit,
     );
     return plainToInstance(ProductResponseDto, items, {
@@ -153,7 +152,6 @@ export class ProductsController {
   ) {
     const items = await this.productsService.findRelatedProducts(
       id,
-      pagination.page,
       pagination.limit,
     );
     return plainToInstance(ProductResponseDto, items, {

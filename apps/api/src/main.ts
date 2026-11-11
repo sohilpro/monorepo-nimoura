@@ -57,4 +57,4 @@ async function bootstrap() {
   logger.log(`Store Docs: http://localhost:${port}/docs/store`);
 }
 
-bootstrap();
+void bootstrap();

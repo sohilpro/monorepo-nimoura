@@ -24,7 +24,6 @@ export class CommentsService {
       email: dto.email,
       content: dto.content,
       article,
-      // اصلاح این بخش: حذف as Comment و استفاده از ساختار استاندارد
       parent: dto.parentId ? { id: dto.parentId } : undefined,
       status: CommentStatus.PENDING,
       ipAddress,

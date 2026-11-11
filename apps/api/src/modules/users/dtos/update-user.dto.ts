@@ -7,7 +7,7 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { Transform, TransformFnParams } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from 'src/common/auth/jwt.types';
 
@@ -81,7 +81,7 @@ export class UpdateUserDto {
     description: 'رمز عبور جدید (حداقل ۶ و حداکثر ۳۲ کاراکتر)',
     example: 'StrongPass123',
   })
-  @Transform(({ value }) => {
+  @Transform(({ value }: TransformFnParams): unknown => {
     if (value === undefined || value === null) return undefined;
     if (typeof value !== 'string') return value;
     const trimmed = value.trim();
@@ -106,7 +106,7 @@ export class UpdateUserDto {
     description: 'شماره موبایل کاربر',
     example: '09121234567',
   })
-  @Transform(({ value }) =>
+  @Transform(({ value }: TransformFnParams): unknown =>
     typeof value === 'string' ? toEnDigits(value).trim() : value,
   )
   @IsOptional()

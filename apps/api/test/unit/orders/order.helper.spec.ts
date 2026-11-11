@@ -1,5 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { generateOrderCode, calculateShipping } from '../../../src/common/utils/order.helper';
+import {
+  generateOrderCode,
+  calculateShipping,
+} from '../../../src/common/utils/order.helper';
 
 describe('Order Helper (order.helper)', () => {
   describe('generateOrderCode', () => {
@@ -35,7 +38,9 @@ describe('Order Helper (order.helper)', () => {
     });
 
     it('should throw error for unknown shipping method', () => {
-      expect(() => calculateShipping('unknown_carrier')).toThrow('روش ارسال نامعتبر است');
+      expect(() => calculateShipping('unknown_carrier')).toThrow(
+        'روش ارسال نامعتبر است',
+      );
     });
   });
 });

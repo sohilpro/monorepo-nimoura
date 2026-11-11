@@ -3,6 +3,7 @@ import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { Public } from 'src/common/auth/auth.decorators';
 import { CategoryService } from '../categories.service';
+import type { ListQuery } from 'src/common/utils/pagination.helper';
 
 @ApiTags('Store - Categories')
 @Public() // دسترسی آزاد و بدون نیاز به توکن برای عموم کاربران
@@ -26,7 +27,7 @@ export class CategoryController {
     status: 200,
     description: 'لیست تمام دسته‌بندی‌ها با روابط آن‌ها',
   })
-  async findAll(@Query() query: any) {
+  async findAll(@Query() query: ListQuery) {
     return await this.categoryService.findAll(query);
   }
 

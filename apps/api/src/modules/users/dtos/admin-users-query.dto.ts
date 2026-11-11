@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Transform, TransformFnParams, Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -11,6 +11,7 @@ import {
   Min,
 } from 'class-validator';
 import { UserRole } from 'src/common/auth/jwt.types';
+import { emptyToUndefined } from 'src/common/utils/transform.helper';
 
 const toBool = ({ value }: { value: unknown }) => {
   if (value === undefined || value === null || value === '') return undefined;
@@ -65,7 +66,7 @@ export class AdminUsersQueryDto {
   sort?: string;
 
   @ApiPropertyOptional({ enum: ['ASC', 'DESC'], default: 'DESC' })
-  @Transform(({ value }) =>
+  @Transform(({ value }: TransformFnParams): unknown =>
     typeof value === 'string' ? value.toUpperCase() : value,
   )
   @IsOptional()
@@ -73,7 +74,7 @@ export class AdminUsersQueryDto {
   sortOrder?: 'ASC' | 'DESC' = 'DESC';
 
   @ApiPropertyOptional({ enum: UserRole, description: 'فیلتر بر اساس نقش' })
-  @Transform(({ value }) => (value === '' ? undefined : value))
+  @Transform(emptyToUndefined)
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;

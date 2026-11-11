@@ -1,6 +1,5 @@
 // src/modules/categories/controllers/admin-category.controller.ts
 import {
-  Controller,
   Post,
   Get,
   Param,
@@ -15,6 +14,7 @@ import { CreateCategoryDto } from '../dtos/create-category.dto';
 import { UpdateCategoryDto } from '../dtos/update-category.dto';
 import { CategoryService } from '../categories.service';
 import { AdminController } from 'src/common/auth/decorators/admin-controller.decorator';
+import type { ListQuery } from 'src/common/utils/pagination.helper';
 
 @AdminController('categories')
 export class AdminCategoryController {
@@ -36,7 +36,7 @@ export class AdminCategoryController {
     status: 200,
     description: 'لیست تمام دسته‌بندی‌ها با روابط آن‌ها',
   })
-  async findAll(@Query() query: any) {
+  async findAll(@Query() query: ListQuery) {
     return await this.categoryService.findAll(query);
   }
 

@@ -1,20 +1,26 @@
 import {
+  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
   Optional,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
-import { buildSearchWhereClause } from 'src/common/utils/pagination.helper';
-import { WishlistService } from 'src/modules/wishlist/wishlist.service'; // مسیر سرویس ویش‌لیست
+import {
+  AdminUsersQueryDto,
+  USER_SORTABLE_FIELDS,
+} from './dtos/admin-users-query.dto';
+import { WishlistService } from 'src/modules/wishlist/wishlist.service';
 import { Addresses } from './addresses/entities/addresses.entity';
 import { Orders } from 'src/modules/orders/entities/orders.entity';
+import { Comments } from 'src/modules/comments/entities/comments.entity';
 import { Users } from './entities/users.entity';
+import { UserRole } from 'src/common/auth/jwt.types';
 
 const USER_PUBLIC_SELECT = {
   id: true,
@@ -164,12 +170,15 @@ export class UsersService {
   async createUser(dto: CreateUserDto) {
     const existingMobile = await this.userRepository.findOne({
       where: { mobile: dto.mobile },
-      select: { id: true },
+      select: { id: true, deletedAt: true },
+      withDeleted: true,
       loadEagerRelations: false,
     });
     if (existingMobile) {
       throw new ConflictException(
-        'کاربری با این شماره موبایل قبلاً ثبت‌نام کرده است.',
+        existingMobile.deletedAt
+          ? 'حسابی با این شماره موبایل قبلاً حذف بایگانی شده است.'
+          : 'کاربری با این شماره موبایل قبلاً ثبت‌نام کرده است.',
       );
     }
 
@@ -177,6 +186,7 @@ export class UsersService {
       const existingEmail = await this.userRepository.findOne({
         where: { email: dto.email },
         select: { id: true },
+        withDeleted: true,
         loadEagerRelations: false,
       });
       if (existingEmail) {
@@ -188,6 +198,7 @@ export class UsersService {
       const existingId = await this.userRepository.findOne({
         where: { identity_card: dto.identity_card },
         select: { id: true },
+        withDeleted: true,
         loadEagerRelations: false,
       });
       if (existingId) {
@@ -205,10 +216,10 @@ export class UsersService {
       last_name: dto.last_name,
       email: dto.email,
       password: hashedPassword,
-      role: dto.role,
+      role: dto.role ?? UserRole.USER,
       identity_card: dto.identity_card,
-      verify_mobile: true,
-      verify_email: !!dto.email,
+      verify_mobile: dto.verify_mobile ?? true,
+      verify_email: dto.email ? (dto.verify_email ?? true) : false,
     });
 
     const saved = await this.userRepository.save(user);
@@ -230,7 +241,7 @@ export class UsersService {
     };
   }
 
-  async getUsers(query: any) {
+  async getUsers(query: AdminUsersQueryDto) {
     const page = Math.max(1, Number(query.page) || 1);
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
     const search = (query.search || '').trim();
@@ -238,36 +249,130 @@ export class UsersService {
       String(query.sortOrder || 'DESC').toUpperCase() === 'ASC'
         ? 'ASC'
         : 'DESC';
-    const allowedSortFields = [
-      'id',
-      'createdAt',
-      'first_name',
-      'last_name',
-      'mobile',
-      'email',
-    ];
-    const sortBy = allowedSortFields.includes(query.sortBy)
-      ? query.sortBy
+    const rawSortBy = query.sortBy || query.sort || 'id';
+    const sortBy = (USER_SORTABLE_FIELDS as readonly string[]).includes(
+      rawSortBy,
+    )
+      ? rawSortBy
       : 'id';
 
-    const searchableFields = ['first_name', 'last_name', 'email', 'mobile'];
-    const where = search
-      ? buildSearchWhereClause(search, searchableFields)
-      : {};
+    const qb = this.userRepository
+      .createQueryBuilder('u')
+      .select([
+        'u.id',
+        'u.first_name',
+        'u.last_name',
+        'u.mobile',
+        'u.verify_mobile',
+        'u.email',
+        'u.verify_email',
+        'u.identity_card',
+        'u.role',
+        'u.createdAt',
+        'u.updatedAt',
+      ]);
 
-    const [data, total] = await this.userRepository.findAndCount({
-      where,
-      take: limit,
-      skip: (page - 1) * limit,
-      order: { [sortBy]: sortOrder },
-      select: USER_PUBLIC_SELECT,
-      loadEagerRelations: false,
-    });
+    if (search) {
+      const numericId = Number(search);
+      qb.andWhere(
+        new Brackets((sub) => {
+          sub
+            .where('u.first_name ILIKE :q', { q: `%${search}%` })
+            .orWhere('u.last_name ILIKE :q', { q: `%${search}%` })
+            .orWhere(
+              `CONCAT(COALESCE(u.first_name, ''), ' ', COALESCE(u.last_name, '')) ILIKE :q`,
+              { q: `%${search}%` },
+            )
+            .orWhere('u.mobile ILIKE :q', { q: `%${search}%` })
+            .orWhere('u.email ILIKE :q', { q: `%${search}%` })
+            .orWhere('u.identity_card ILIKE :q', { q: `%${search}%` });
+          if (Number.isInteger(numericId) && numericId > 0) {
+            sub.orWhere('u.id = :numericId', { numericId });
+          }
+        }),
+      );
+    }
+
+    if (query.role) {
+      qb.andWhere('u.role = :role', { role: query.role });
+    }
+    if (query.verify_mobile !== undefined) {
+      qb.andWhere('u.verify_mobile = :verifyMobile', {
+        verifyMobile: query.verify_mobile,
+      });
+    }
+    if (query.verify_email !== undefined) {
+      qb.andWhere('u.verify_email = :verifyEmail', {
+        verifyEmail: query.verify_email,
+      });
+    }
+
+    qb.orderBy(`u.${sortBy}`, sortOrder)
+      .addOrderBy('u.id', 'DESC')
+      .skip((page - 1) * limit)
+      .take(limit);
+
+    const [[data, total], summaryRow] = await Promise.all([
+      qb.getManyAndCount(),
+      this.userRepository
+        .createQueryBuilder('u')
+        .select('COUNT(u.id)', 'total')
+        .addSelect(`COUNT(u.id) FILTER (WHERE u.role = :userRole)`, 'users')
+        .addSelect(`COUNT(u.id) FILTER (WHERE u.role = :adminRole)`, 'admins')
+        .addSelect(`COUNT(u.id) FILTER (WHERE u.role = :ownerRole)`, 'owners')
+        .addSelect(
+          `COUNT(u.id) FILTER (WHERE u.verify_mobile = true)`,
+          'verifiedMobile',
+        )
+        .addSelect(
+          `COUNT(u.id) FILTER (WHERE u.verify_email = true)`,
+          'verifiedEmail',
+        )
+        .setParameters({
+          userRole: UserRole.USER,
+          adminRole: UserRole.ADMIN,
+          ownerRole: UserRole.OWNER,
+        })
+        .getRawOne<Record<string, string>>(),
+    ]);
+
+    const userIds = data.map((u) => u.id);
+    const [orderCounts, addressCounts] = userIds.length
+      ? await Promise.all([
+          this.userRepository.manager
+            .createQueryBuilder(Orders, 'o')
+            .select('o.userId', 'userId')
+            .addSelect('COUNT(o.id)', 'count')
+            .where('o.userId IN (:...userIds)', { userIds })
+            .groupBy('o.userId')
+            .getRawMany<{ userId: number; count: string }>(),
+          this.userRepository.manager
+            .createQueryBuilder(Addresses, 'a')
+            .select('a.userId', 'userId')
+            .addSelect('COUNT(a.id)', 'count')
+            .where('a.userId IN (:...userIds)', { userIds })
+            .groupBy('a.userId')
+            .getRawMany<{ userId: number; count: string }>(),
+        ])
+      : [[], []];
+
+    const ordersByUser = new Map(
+      orderCounts.map((r) => [Number(r.userId), Number(r.count)]),
+    );
+    const addressesByUser = new Map(
+      addressCounts.map((r) => [Number(r.userId), Number(r.count)]),
+    );
+
+    const enriched = data.map((u) => ({
+      ...u,
+      ordersCount: ordersByUser.get(u.id) ?? 0,
+      addressesCount: addressesByUser.get(u.id) ?? 0,
+    }));
 
     const totalPages = Math.ceil(total / limit);
     return {
-      items: data,
-      users: data,
+      items: enriched,
+      users: enriched,
       total,
       page,
       limit,
@@ -279,6 +384,14 @@ export class UsersService {
         page,
         limit,
         totalPages,
+      },
+      summary: {
+        total: Number(summaryRow?.total ?? 0),
+        users: Number(summaryRow?.users ?? 0),
+        admins: Number(summaryRow?.admins ?? 0),
+        owners: Number(summaryRow?.owners ?? 0),
+        verifiedMobile: Number(summaryRow?.verifiedMobile ?? 0),
+        verifiedEmail: Number(summaryRow?.verifiedEmail ?? 0),
       },
     };
   }
@@ -310,6 +423,19 @@ export class UsersService {
     };
   }
 
+  async getUserStats(id: number) {
+    const exists = await this.userRepository.existsBy({ id });
+    if (!exists) throw new NotFoundException('کاربر مورد نظر یافت نشد.');
+
+    const [ordersCount, addressesCount, commentsCount] = await Promise.all([
+      this.userRepository.manager.count(Orders, { where: { user: { id } } }),
+      this.userRepository.manager.count(Addresses, { where: { userId: id } }),
+      this.userRepository.manager.count(Comments, { where: { user: { id } } }),
+    ]);
+
+    return { ordersCount, addressesCount, commentsCount };
+  }
+
   async updateUser(id: number, dto: UpdateUserDto) {
     const user = await this.userRepository.findOne({
       where: { id },
@@ -323,68 +449,192 @@ export class UsersService {
         role: true,
         first_name: true,
         last_name: true,
+        createdAt: true,
+        updatedAt: true,
       },
       loadEagerRelations: false,
     });
     if (!user) throw new NotFoundException('کاربر یافت نشد.');
 
     // بررسی یکتایی ایمیل
-    if (dto.email && dto.email !== user.email) {
-      const emailExists = await this.userRepository.findOne({
-        where: { email: dto.email },
-        select: { id: true },
-        loadEagerRelations: false,
-      });
-      if (emailExists) throw new ConflictException('ایمیل تکراری است.');
-      user.email = dto.email;
-      user.verify_email = false;
+    if (dto.email !== undefined) {
+      if (dto.email !== null && dto.email !== user.email) {
+        const emailExists = await this.userRepository.findOne({
+          where: { email: dto.email },
+          select: { id: true },
+          withDeleted: true,
+          loadEagerRelations: false,
+        });
+        if (emailExists && emailExists.id !== user.id) {
+          throw new ConflictException('ایمیل تکراری است.');
+        }
+        if (dto.verify_email === undefined) {
+          user.verify_email = false;
+        }
+      }
+      if (dto.email === null) {
+        user.verify_email = false;
+      }
+      user.email = dto.email as unknown as string;
     }
 
     // بررسی یکتایی موبایل
-    if (dto.mobile && dto.mobile !== user.mobile) {
+    if (dto.mobile !== undefined && dto.mobile !== user.mobile) {
       const mobileExists = await this.userRepository.findOne({
         where: { mobile: dto.mobile },
         select: { id: true },
+        withDeleted: true,
         loadEagerRelations: false,
       });
-      if (mobileExists) throw new ConflictException('شماره موبایل تکراری است.');
+      if (mobileExists && mobileExists.id !== user.id) {
+        throw new ConflictException('شماره موبایل تکراری است.');
+      }
       user.mobile = dto.mobile;
-      user.verify_mobile = false;
+      if (dto.verify_mobile === undefined) {
+        user.verify_mobile = false;
+      }
     }
 
     // بررسی یکتایی کدملی
-    if (
-      dto.identity_card !== undefined &&
-      dto.identity_card !== user.identity_card
-    ) {
-      const idExists = await this.userRepository.findOne({
-        where: { identity_card: dto.identity_card },
-        select: { id: true },
-        loadEagerRelations: false,
-      });
-      if (idExists && idExists.id !== user.id) {
-        throw new ConflictException('کد ملی تکراری است.');
+    if (dto.identity_card !== undefined) {
+      if (
+        dto.identity_card !== null &&
+        dto.identity_card !== user.identity_card
+      ) {
+        const idExists = await this.userRepository.findOne({
+          where: { identity_card: dto.identity_card },
+          select: { id: true },
+          withDeleted: true,
+          loadEagerRelations: false,
+        });
+        if (idExists && idExists.id !== user.id) {
+          throw new ConflictException('کد ملی تکراری است.');
+        }
       }
-      user.identity_card = dto.identity_card;
+      user.identity_card = dto.identity_card as unknown as string;
+    }
+
+    if (dto.verify_mobile !== undefined) {
+      user.verify_mobile = dto.verify_mobile;
+    }
+    if (dto.verify_email !== undefined) {
+      user.verify_email = user.email ? dto.verify_email : false;
     }
 
     if (dto.password) {
       user.password = await bcrypt.hash(dto.password, 10);
     }
 
-    if (dto.role) user.role = dto.role;
-    if (dto.first_name !== undefined) user.first_name = dto.first_name;
-    if (dto.last_name !== undefined) user.last_name = dto.last_name;
+    if (dto.role !== undefined && dto.role !== user.role) {
+      if (user.role === UserRole.OWNER) {
+        const ownerCount = await this.userRepository.countBy({
+          role: UserRole.OWNER,
+        });
+        if (ownerCount <= 1) {
+          throw new BadRequestException(
+            'حداقل یک مالک فروشگاه باید در سیستم باقی بماند.',
+          );
+        }
+      }
+      user.role = dto.role;
+    }
 
-    await this.userRepository.save(user);
-    return { message: 'کاربر با موفقیت بروزرسانی شد.' };
+    if (dto.first_name !== undefined) {
+      user.first_name = dto.first_name as unknown as string;
+    }
+    if (dto.last_name !== undefined) {
+      user.last_name = dto.last_name as unknown as string;
+    }
+
+    const saved = await this.userRepository.save(user);
+    return {
+      message: 'کاربر با موفقیت بروزرسانی شد.',
+      user: {
+        id: saved.id,
+        first_name: saved.first_name,
+        last_name: saved.last_name,
+        mobile: saved.mobile,
+        verify_mobile: saved.verify_mobile,
+        email: saved.email,
+        verify_email: saved.verify_email,
+        identity_card: saved.identity_card,
+        role: saved.role,
+        createdAt: saved.createdAt,
+        updatedAt: saved.updatedAt,
+      },
+    };
   }
 
-  async deleteUser(id: number) {
-    const result = await this.userRepository.delete(id);
-    if (result.affected === 0) {
+  async deleteUser(id: number, currentUserId?: number) {
+    if (currentUserId && id === currentUserId) {
+      throw new BadRequestException(
+        'امکان حذف حساب کاربری که با آن وارد شده‌اید وجود ندارد.',
+      );
+    }
+
+    const user = await this.userRepository.findOne({
+      where: { id },
+      select: { id: true, role: true },
+      loadEagerRelations: false,
+    });
+    if (!user) {
       throw new NotFoundException('کاربر مورد نظر یافت نشد.');
     }
-    return { message: 'کاربر با موفقیت حذف شد.' };
+
+    if (user.role === UserRole.OWNER) {
+      const ownerCount = await this.userRepository.countBy({
+        role: UserRole.OWNER,
+      });
+      if (ownerCount <= 1) {
+        throw new BadRequestException('تنها مالک فروشگاه قابل حذف نیست.');
+      }
+    }
+
+    try {
+      const result = await this.userRepository.delete(id);
+      if (result.affected === 0) {
+        throw new NotFoundException('کاربر مورد نظر یافت نشد.');
+      }
+      return { message: 'کاربر با موفقیت حذف شد.', archived: false };
+    } catch (error: any) {
+      // If orders or promotion usages reference this user, soft-delete so history stays intact.
+      if (error?.code === '23503') {
+        await this.userRepository.softDelete(id);
+        return {
+          message:
+            'کاربر دارای سوابق سفارش است و به‌صورت امن بایگانی (حذف نرم) شد.',
+          archived: true,
+        };
+      }
+      throw error;
+    }
+  }
+
+  async bulkDeleteUsers(ids: number[], currentUserId?: number) {
+    const uniqueIds = [...new Set(ids)];
+    let deleted = 0;
+    let archived = 0;
+    const errors: Array<{ id: number; message: string }> = [];
+
+    for (const id of uniqueIds) {
+      try {
+        const res = await this.deleteUser(id, currentUserId);
+        if (res.archived) archived++;
+        else deleted++;
+      } catch (err: any) {
+        errors.push({
+          id,
+          message: err?.message || 'خطا در حذف کاربر',
+        });
+      }
+    }
+
+    return {
+      deleted,
+      archived,
+      failed: errors.length,
+      errors,
+      message: `${deleted + archived} کاربر با موفقیت پردازش شد.`,
+    };
   }
 }

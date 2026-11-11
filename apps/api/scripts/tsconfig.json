@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.typeorm.json",
+  "compilerOptions": {
+    "baseUrl": "..",
+    "paths": {
+      "src/*": ["src/*"]
+    },
+    "rootDir": "..",
+    "noEmit": true
+  },
+  "include": ["./**/*.ts", "../src/**/*.ts"]
+}

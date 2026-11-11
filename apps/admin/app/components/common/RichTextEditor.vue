@@ -3,7 +3,7 @@
     <!-- Header / Label -->
     <div
       v-if="label"
-      class="px-4 py-2.5 bg-gray-50/80 border-b border-gray-200 flex items-center justify-between"
+      class="px-4 py-2.5 bg-gray-50/80 border-b bg-white border-gray-200 flex items-center justify-between"
     >
       <label class="text-sm font-bold text-gray-700">
         {{ label }}
@@ -15,7 +15,7 @@
     <ClientOnly>
       <div
         v-if="editor"
-        class="flex flex-wrap items-center gap-1 p-2 bg-gray-50/60 border-b border-gray-200 select-none"
+        class="flex flex-wrap items-center gap-1 p-2 bg-gray-50/60 border-b bg-white border-gray-200 select-none"
       >
         <!-- فرمت متن: بولد، ایتالیک، زیرخط، خط‌خورده -->
         <div class="flex items-center gap-0.5">

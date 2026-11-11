@@ -49,6 +49,7 @@ function transformMultipartBody<T>(rawBody: any): T {
     'specifications',
     'variants',
     'tags',
+    'tagIds',
     'imagesToDelete',
     'attributes',
     'bundleItems',
@@ -97,6 +98,8 @@ function transformMultipartBody<T>(rawBody: any): T {
   if (payload.brandId !== undefined) payload.brandId = Number(payload.brandId);
   if (payload.subBrandId !== undefined)
     payload.subBrandId = Number(payload.subBrandId);
+  if (payload.lowStockThreshold !== undefined)
+    payload.lowStockThreshold = Number(payload.lowStockThreshold);
 
   return payload as T;
 }

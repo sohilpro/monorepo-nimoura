@@ -6,3 +6,4 @@ export * from './pagination.js';
 export * from './banners.js';
 export * from './api.js';
 export * from './tags.js';
+export * from './dashboard.js';

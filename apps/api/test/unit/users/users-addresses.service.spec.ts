@@ -169,4 +169,51 @@ describe('UsersService & AddressesService Projections', () => {
     });
     expect(res.data[0].user).not.toHaveProperty('password');
   });
+
+  it('UsersService.deleteUser should refuse self-deletion and fall back to softDelete on FK conflict', async () => {
+    const mockUserRepo = {
+      findOne: vi.fn().mockResolvedValue({ id: 5, role: UserRole.USER }),
+      delete: vi.fn().mockRejectedValue({ code: '23503' }),
+      softDelete: vi.fn().mockResolvedValue({ affected: 1 }),
+    } as any;
+
+    const service = new UsersService(mockUserRepo);
+
+    await expect(service.deleteUser(5, 5)).rejects.toThrow();
+    const res = await service.deleteUser(5, 1);
+    expect(mockUserRepo.softDelete).toHaveBeenCalledWith(5);
+    expect(res.archived).toBe(true);
+  });
+
+  it('UsersService.updateUser should support clearing nullable fields and updating verification flags', async () => {
+    const existing = {
+      id: 12,
+      first_name: 'نگار',
+      last_name: 'راد',
+      mobile: '09121112233',
+      verify_mobile: false,
+      email: 'n@example.com',
+      verify_email: true,
+      identity_card: '1234567890',
+      role: UserRole.USER,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    const mockUserRepo = {
+      findOne: vi.fn().mockResolvedValue(existing),
+      save: vi.fn((u) => Promise.resolve(u)),
+    } as any;
+
+    const service = new UsersService(mockUserRepo);
+    const res = await service.updateUser(12, {
+      email: null,
+      identity_card: null,
+      verify_mobile: true,
+    });
+
+    expect(res.user.email).toBeNull();
+    expect(res.user.verify_email).toBe(false);
+    expect(res.user.identity_card).toBeNull();
+    expect(res.user.verify_mobile).toBe(true);
+  });
 });

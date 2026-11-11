@@ -994,6 +994,15 @@ export class ProductsService {
         category: { id: true, name: true, slug: true },
         brand: { id: true, name: true, slug: true },
         subBrand: { id: true, name: true, slug: true, brandId: true },
+        tags: {
+          id: true,
+          name: true,
+          slug: true,
+          color: true,
+          isActive: true,
+          group: { id: true, name: true, slug: true, isActive: true },
+        },
+        images: { id: true, url: true },
         priceTiers: { id: true, minQuantity: true, price: true },
         variants: {
           id: true,
@@ -1019,6 +1028,8 @@ export class ProductsService {
         category: true,
         brand: true,
         subBrand: true,
+        tags: { group: true },
+        images: true,
         variants: {
           attributeValues: { attribute: true },
           priceTiers: true, // لود پله‌های هر واریانت

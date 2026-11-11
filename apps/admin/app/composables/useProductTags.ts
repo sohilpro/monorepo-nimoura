@@ -43,37 +43,49 @@ export function useProductTags() {
     run(async () => unwrap<TagGroup[]>(await $fetch<any>('/api/product-tags/options')));
 
   const createGroup = (payload: CreateTagGroupPayload) =>
-    run(() => $fetch<TagGroup>('/api/product-tags/groups', { method: 'POST', body: payload }), 'گروه ایجاد شد.');
+    run(
+      async () => unwrap<TagGroup>(await $fetch<any>('/api/product-tags/groups', { method: 'POST', body: payload })),
+      'گروه ایجاد شد.',
+    );
 
   const updateGroup = (id: number, payload: UpdateTagGroupPayload) =>
-    run(() => $fetch<TagGroup>(`/api/product-tags/groups/${id}`, { method: 'PATCH', body: payload }), 'گروه ذخیره شد.');
+    run(
+      async () => unwrap<TagGroup>(await $fetch<any>(`/api/product-tags/groups/${id}`, { method: 'PATCH', body: payload })),
+      'گروه ذخیره شد.',
+    );
 
   const deleteGroup = (id: number) =>
-    run(() => $fetch<any>(`/api/product-tags/groups/${id}`, { method: 'DELETE' }), 'گروه حذف شد.');
+    run(async () => unwrap<any>(await $fetch<any>(`/api/product-tags/groups/${id}`, { method: 'DELETE' })), 'گروه حذف شد.');
 
   const reorderGroups = (ids: number[]) =>
-    run(() => $fetch<any>('/api/product-tags/groups/reorder', { method: 'PUT', body: { ids } }));
+    run(async () => unwrap<any>(await $fetch<any>('/api/product-tags/groups/reorder', { method: 'PUT', body: { ids } })));
 
   const listTags = (query: { groupId?: number; q?: string; page?: number; limit?: number }) =>
     run(async () => unwrap<TagListResult>(await $fetch<any>('/api/product-tags', { query })));
 
   const addTag = (payload: CreateTagPayload) =>
-    run(() => $fetch<Tag>('/api/product-tags', { method: 'POST', body: payload }), 'تگ ایجاد شد.');
+    run(
+      async () => unwrap<Tag>(await $fetch<any>('/api/product-tags', { method: 'POST', body: payload })),
+      'تگ ایجاد شد.',
+    );
 
   const addTagsBulk = (groupId: number, names: string[]) =>
-    run(() => $fetch<Tag[]>('/api/product-tags/bulk', { method: 'POST', body: { groupId, names } }));
+    run(async () => unwrap<Tag[]>(await $fetch<any>('/api/product-tags/bulk', { method: 'POST', body: { groupId, names } })));
 
   const editTag = (id: number, payload: UpdateTagPayload) =>
-    run(() => $fetch<Tag>(`/api/product-tags/${id}`, { method: 'PATCH', body: payload }));
+    run(async () => unwrap<Tag>(await $fetch<any>(`/api/product-tags/${id}`, { method: 'PATCH', body: payload })));
 
   const removeTag = (id: number) =>
-    run(() => $fetch<any>(`/api/product-tags/${id}`, { method: 'DELETE' }), 'تگ حذف شد.');
+    run(async () => unwrap<any>(await $fetch<any>(`/api/product-tags/${id}`, { method: 'DELETE' })), 'تگ حذف شد.');
 
   const mergeTags = (sourceId: number, targetId: number) =>
-    run(() => $fetch<Tag>('/api/product-tags/merge', { method: 'POST', body: { sourceId, targetId } }), 'تگ‌ها ادغام شدند.');
+    run(
+      async () => unwrap<Tag>(await $fetch<any>('/api/product-tags/merge', { method: 'POST', body: { sourceId, targetId } })),
+      'تگ‌ها ادغام شدند.',
+    );
 
   const reorderTags = (ids: number[]) =>
-    run(() => $fetch<any>('/api/product-tags/reorder', { method: 'PUT', body: { ids } }));
+    run(async () => unwrap<any>(await $fetch<any>('/api/product-tags/reorder', { method: 'PUT', body: { ids } })));
 
   return {
     listGroups,

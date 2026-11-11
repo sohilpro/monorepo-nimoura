@@ -16,6 +16,8 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "seed": "npm run seed --workspace=@nimoura/api",
+    "seed:products": "npm run seed:products --workspace=@nimoura/api",
     "clean": "turbo run clean"
   },
   "devDependencies": {

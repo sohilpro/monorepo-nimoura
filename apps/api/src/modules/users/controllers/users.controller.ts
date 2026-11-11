@@ -16,7 +16,7 @@ import {
 import { CurrentUser } from 'src/common/auth/auth.decorators';
 import { UsersService } from '../user.service';
 import { Consumes } from 'src/common/auth/enums/consumes.enum';
-import { UpdateUserDto } from '../dtos/update-user.dto';
+import { UpdateProfileDto } from '../dtos/update-profile.dto';
 
 @ApiTags('Store - User Profile')
 @ApiBearerAuth()
@@ -65,7 +65,7 @@ export class UsersController {
   })
   updateProfile(
     @CurrentUser('id') userId: number,
-    @Body() updateProfileDto: UpdateUserDto,
+    @Body() updateProfileDto: UpdateProfileDto,
   ) {
     return this.userService.updateProfile(userId, updateProfileDto);
   }

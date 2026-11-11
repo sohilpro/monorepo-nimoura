@@ -41,6 +41,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TorobModule } from './modules/torob/torob.module';
 import { validateEnv } from './config/env.validation';
 import { HealthModule } from './modules/health/health.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -103,6 +104,7 @@ import { HealthModule } from './modules/health/health.module';
     PriceListModule,
     TorobModule,
     HealthModule,
+    DashboardModule,
   ],
   providers: [
     {

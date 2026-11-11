@@ -16,14 +16,16 @@
       <div
         class="w-full gap-y-3 mt-3 lg:mt-0 md:w-3/4 flex flex-col lg:gap-y-7"
       >
-        <div class="flex items-center gap-2">
+        <div v-if="product.brand || product.subBrand" class="flex items-center gap-2">
           <NuxtLink
+            v-if="product.brand"
             :to="`/brand/${createSlug(product.brand.name)}?id=${product.brand.id}`"
             class="font-vazir font-medium text-nimoura-text-400"
             >{{ product.brand.name }}
           </NuxtLink>
-          /
+          <span v-if="product.brand && product.subBrand">/</span>
           <NuxtLink
+            v-if="product.brand && product.subBrand"
             :to="`/brand/${createSlug(product.brand.name)}/${createSlug(product.subBrand.name)}?id=${product.brand.id}&subBrandId=${product.subBrand.id}`"
             class="font-vazir font-medium text-nimoura-text-400"
             >{{ product.subBrand.name }}</NuxtLink

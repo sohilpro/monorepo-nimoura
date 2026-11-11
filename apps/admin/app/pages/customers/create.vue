@@ -1,3 +1,5 @@
 <template>
-    sdsad
+  <div>
+    <UserCreate />
+  </div>
 </template>

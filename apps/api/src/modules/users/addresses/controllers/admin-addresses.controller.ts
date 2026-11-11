@@ -1,6 +1,7 @@
 // src/modules/addresses/controllers/admin-addresses.controller.ts
 import {
   Get,
+  Post,
   Param,
   Query,
   Delete,
@@ -10,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { AddressesService } from '../address.service';
+import { CreateAddressDto } from '../dtos/create-address.dto';
 import { UpdateAddressDto } from '../dtos/update-address.dto';
 import { PaginationQueryDto } from 'src/modules/products/dtos/product-query.dto';
 import { AdminController } from 'src/common/auth/decorators/admin-controller.decorator';
@@ -35,6 +37,16 @@ export class AdminAddressesController {
     @Query() query: PaginationQueryDto,
   ) {
     return await this.addressService.findMyAddresses(userId, query);
+  }
+
+  @Post('user/:userId')
+  @ApiOperation({ summary: 'افزودن آدرس جدید برای کاربر توسط ادمین' })
+  @ApiParam({ name: 'userId', type: Number, description: 'شناسه کاربر' })
+  async createForUser(
+    @Param('userId', ParseIntPipe) userId: number,
+    @Body() dto: CreateAddressDto,
+  ) {
+    return await this.addressService.create(dto, userId);
   }
 
   @Patch(':id')

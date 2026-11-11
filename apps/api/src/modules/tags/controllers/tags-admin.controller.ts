@@ -39,9 +39,27 @@ export class TagsAdminController {
   /* ------------------------------- groups -------------------------------- */
 
   @Get('groups')
-  @ApiOperation({ summary: 'لیست گروه‌های تگ (با تعداد تگ هر گروه)' })
-  listGroups() {
+  @ApiOperation({ summary: 'لیست گروه‌های تگ (با تعداد تگ یا تگ‌های هر گروه)' })
+  listGroups(
+    @Query('includeTags') includeTags?: string,
+    @Query('includeEmpty') includeEmpty?: string,
+  ) {
+    const isTrue = (v?: string) => v === 'true' || v === '1';
+    if (isTrue(includeTags) || isTrue(includeEmpty)) {
+      return this.groups.listPublic({
+        includeEmpty: isTrue(includeEmpty),
+      });
+    }
     return this.groups.listForAdmin();
+  }
+
+  @Get('groups/options')
+  @ApiOperation({
+    summary:
+      'همه گروه‌های فعال همراه با تگ‌های فعال (برای انتخابگر تگ فرم محصول)',
+  })
+  listGroupOptions() {
+    return this.groups.listPublic({ includeEmpty: true });
   }
 
   @Post('groups')

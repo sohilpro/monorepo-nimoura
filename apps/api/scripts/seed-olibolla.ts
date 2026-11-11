@@ -8,15 +8,30 @@
  *   npx ts-node -P tsconfig.typeorm.json -r tsconfig-paths/register scripts/seed-olibolla.ts
  */
 import { DataSource, EntityManager } from 'typeorm';
-import dataSource from '../src/common/database/data-source';
 import { Attributes } from '../src/modules/products/entities/attributes.entity';
 import { AttributeValues } from '../src/modules/products/entities/attribute-values.entity';
 import { Brands } from '../src/modules/brands/entities/brands.entity';
+import { SubBrands } from '../src/modules/brands/entities/sub-brands.entity';
 import { Categories } from '../src/modules/categories/entities/categories.entity';
 import { ProductVariants } from '../src/modules/products/entities/product-variants.entity';
 import { Products } from '../src/modules/products/entities/products.entity';
-import { TagGroups } from '../src/modules/tags/entities/tag-groups.entity';
 import { Tags } from '../src/modules/tags/entities/tags.entity';
+import type {
+  BrandSeedInput,
+  SubBrandSeedInput,
+  TagSeedSpec,
+} from './lib/product-seed.helper';
+import {
+  ensureAttribute,
+  ensureAttributeValue,
+  ensureBrand,
+  ensureCategoryPath,
+  ensureSubBrand,
+  ensureTags,
+  formatRichTextHtml,
+  percent,
+  runStandaloneSeed,
+} from './lib/product-seed.helper';
 
 /* ------------------------------------------------------------------ */
 /* Colour palette sampled from the product sheet                       */
@@ -139,14 +154,19 @@ const PRODUCT = {
 
 const CATEGORY_PATH = ['لوازم آرایشی', 'آرایش لب', 'لیپ گلاس'];
 
-const BRAND = {
+const BRAND: BrandSeedInput = {
   name: 'اولیبولا',
   slug: 'olibolla',
   description:
     'اولیبولا (Olibolla) برندی فعال در حوزه‌ی محصولات آرایش لب است که بر بافت‌های سبک، رنگدانه‌های شفاف و فرمول‌های مرطوب‌کننده تمرکز دارد.',
 };
 
-const TAGS: Array<{ groupSlug: string; name: string; color?: string }> = [
+const SUB_BRAND: SubBrandSeedInput = {
+  name: 'لیپ گلاس اولیبولا',
+  slug: 'olibolla-lip-glass',
+};
+
+const TAGS: TagSeedSpec[] = [
   { groupSlug: 'nature', name: 'لیپ گلاس' },
   { groupSlug: 'nature', name: 'براق‌کننده لب' },
   { groupSlug: 'feature', name: 'بافت سبک' },
@@ -162,174 +182,6 @@ const TAGS: Array<{ groupSlug: string; name: string; color?: string }> = [
 ];
 
 /* ------------------------------------------------------------------ */
-/* Helpers                                                            */
-/* ------------------------------------------------------------------ */
-
-function slugify(value: string): string {
-  return value
-    .trim()
-    .replace(/[\s_]+/g, '-')
-    .replace(/[^\p{L}\p{N}-]+/gu, '')
-    .toLowerCase();
-}
-
-async function ensureCategoryPath(
-  manager: EntityManager,
-  path: string[],
-): Promise<Categories> {
-  let parent: Categories | null = null;
-
-  for (const name of path) {
-    const slug = slugify(name);
-    let category = await manager.findOne(Categories, {
-      where: { slug },
-      relations: { parent: true },
-      loadEagerRelations: false,
-    });
-
-    if (!category) {
-      category = manager.create(Categories, {
-        name,
-        slug,
-        parent: parent ?? undefined,
-      });
-      category = await manager.save(Categories, category);
-      console.log(`  + دسته‌بندی: ${name}`);
-    } else {
-      console.log(`  = دسته‌بندی موجود: ${name}`);
-    }
-
-    parent = category;
-  }
-
-  return parent!;
-}
-
-async function ensureBrand(manager: EntityManager): Promise<Brands> {
-  let brand = await manager.findOne(Brands, {
-    where: { slug: BRAND.slug },
-    loadEagerRelations: false,
-  });
-
-  if (!brand) {
-    brand = await manager.save(
-      Brands,
-      manager.create(Brands, {
-        name: BRAND.name,
-        slug: BRAND.slug,
-        description: BRAND.description,
-      }),
-    );
-    console.log(`  + برند: ${BRAND.name}`);
-  } else {
-    brand.description = BRAND.description;
-    brand.name = BRAND.name;
-    brand = await manager.save(Brands, brand);
-    console.log(`  = برند موجود: ${BRAND.name}`);
-  }
-
-  return brand;
-}
-
-async function ensureTags(manager: EntityManager): Promise<Tags[]> {
-  const groups = await manager.find(TagGroups, { loadEagerRelations: false });
-  const bySlug = new Map(groups.map((g) => [g.slug, g]));
-  const result: Tags[] = [];
-
-  for (const [index, spec] of TAGS.entries()) {
-    const group = bySlug.get(spec.groupSlug);
-    if (!group) {
-      console.warn(`  ! گروه تگ «${spec.groupSlug}» پیدا نشد، رد شد.`);
-      continue;
-    }
-
-    let tag = await manager.findOne(Tags, {
-      where: { groupId: group.id, name: spec.name },
-      loadEagerRelations: false,
-    });
-
-    if (!tag) {
-      tag = await manager.save(
-        Tags,
-        manager.create(Tags, {
-          groupId: group.id,
-          name: spec.name,
-          slug: slugify(spec.name),
-          color: spec.color ?? null,
-          sortOrder: (index + 1) * 10,
-          isActive: true,
-        }),
-      );
-      console.log(`  + تگ: ${spec.name} (${group.name})`);
-    } else {
-      console.log(`  = تگ موجود: ${spec.name}`);
-    }
-
-    result.push(tag);
-  }
-
-  return result;
-}
-
-async function ensureColourAttribute(
-  manager: EntityManager,
-): Promise<Attributes> {
-  let attribute = await manager.findOne(Attributes, {
-    where: { name: 'رنگ' },
-    loadEagerRelations: false,
-  });
-
-  if (!attribute) {
-    attribute = await manager.save(
-      Attributes,
-      manager.create(Attributes, { name: 'رنگ', label: 'رنگ', kind: 'color' }),
-    );
-    console.log('  + ویژگی: رنگ (color)');
-  } else if (attribute.kind !== 'color') {
-    attribute.kind = 'color';
-    attribute = await manager.save(Attributes, attribute);
-    console.log('  ~ ویژگی رنگ به kind=color به‌روزرسانی شد');
-  }
-
-  return attribute;
-}
-
-async function ensureColourValue(
-  manager: EntityManager,
-  attribute: Attributes,
-  colour: ColourVariant,
-): Promise<AttributeValues> {
-  let value = await manager.findOne(AttributeValues, {
-    where: { attribute: { id: attribute.id }, value: colour.name },
-    relations: { attribute: true },
-    loadEagerRelations: false,
-  });
-
-  if (!value) {
-    value = await manager.save(
-      AttributeValues,
-      manager.create(AttributeValues, {
-        attribute,
-        value: colour.name,
-        colorHex: colour.hex.toUpperCase(),
-      }),
-    );
-    console.log(`  + مقدار رنگ: ${colour.name} ${colour.hex}`);
-  } else {
-    value.colorHex = colour.hex.toUpperCase();
-    value = await manager.save(AttributeValues, value);
-    console.log(`  = مقدار رنگ موجود: ${colour.name} ${colour.hex}`);
-  }
-
-  return value;
-}
-
-function percent(price: number, discount: number): number {
-  if (!discount || discount <= 0 || discount >= price) return 0;
-  return Math.round(((price - discount) / price) * 100 * 100) / 100;
-}
-
-/* ------------------------------------------------------------------ */
 /* Main                                                               */
 /* ------------------------------------------------------------------ */
 
@@ -338,17 +190,26 @@ async function upsertProduct(
   input: {
     category: Categories;
     brand: Brands;
+    subBrand: SubBrands;
     tags: Tags[];
     colourAttribute: Attributes;
     colourValues: AttributeValues[];
   },
 ): Promise<Products> {
-  const { category, brand, tags, colourAttribute, colourValues } = input;
+  const { category, brand, subBrand, tags, colourAttribute, colourValues } =
+    input;
 
   let product = await manager.findOne(Products, {
-    where: { sku: PRODUCT.sku },
+    where: [{ sku: PRODUCT.sku }, { slug: PRODUCT.slug }],
+    relations: { tags: true },
+    withDeleted: true,
     loadEagerRelations: false,
   });
+
+  if (product?.deletedAt) {
+    await manager.restore(Products, product.id);
+    product.deletedAt = undefined;
+  }
 
   const base: Partial<Products> = {
     title: PRODUCT.title,
@@ -358,16 +219,17 @@ async function upsertProduct(
     type: 'variant',
     category,
     brand,
+    subBrand,
     price: PRODUCT.price,
     priceDiscount: PRODUCT.priceDiscount,
     percentageDiscount: percent(PRODUCT.price, PRODUCT.priceDiscount),
     stock: COLOURS.length * PRODUCT.stockPerVariant,
     isAvailable: true,
     isAmazingOffer: false,
-    thumbnail: '',
+    thumbnail: product?.thumbnail || '',
     shortDescription: PRODUCT.shortDescription,
-    introduce: PRODUCT.introduce,
-    howToUse: PRODUCT.howToUse,
+    introduce: formatRichTextHtml(PRODUCT.introduce),
+    howToUse: formatRichTextHtml(PRODUCT.howToUse),
     specifications: PRODUCT.specifications,
     lowStockThreshold: PRODUCT.lowStockThreshold,
     tags,
@@ -387,6 +249,7 @@ async function upsertProduct(
   const existing = await manager.find(ProductVariants, {
     where: { product: { id: product.id } },
     relations: { attributeValues: { attribute: true } },
+    withDeleted: true,
     loadEagerRelations: false,
   });
   const existingByValue = new Map<string, ProductVariants>();
@@ -403,19 +266,32 @@ async function upsertProduct(
     let variant = existingByValue.get(colour.name);
 
     if (!variant) {
+      variant = await manager.findOne(ProductVariants, {
+        where: { sku },
+        relations: { attributeValues: { attribute: true } },
+        withDeleted: true,
+        loadEagerRelations: false,
+      }) ?? undefined;
+    }
+
+    if (!variant) {
       variant = manager.create(ProductVariants, {
         product,
         sku,
       });
+    } else if (variant.deletedAt) {
+      await manager.restore(ProductVariants, variant.id);
+      variant.deletedAt = undefined;
     }
 
+    variant.product = product;
     variant.sku = sku;
     variant.price = PRODUCT.price;
     variant.priceDiscount = PRODUCT.priceDiscount;
     variant.percentageDiscount = percent(PRODUCT.price, PRODUCT.priceDiscount);
     variant.stock = PRODUCT.stockPerVariant;
     variant.isAvailable = true;
-    variant.images = [];
+    variant.images = variant.images?.length ? variant.images : [];
 
     variant = await manager.save(ProductVariants, variant);
 
@@ -428,7 +304,7 @@ async function upsertProduct(
 
   // remove colour variants that are no longer part of the palette
   const keepSkus = new Set(COLOURS.map((c) => `${PRODUCT.sku}-${c.code}`));
-  const stale = existing.filter((v) => !keepSkus.has(v.sku));
+  const stale = existing.filter((v) => !keepSkus.has(v.sku) && !v.deletedAt);
   if (stale.length) {
     await manager.remove(ProductVariants, stale);
     console.log(`  - ${stale.length} تنوع قدیمی حذف شد`);
@@ -437,59 +313,48 @@ async function upsertProduct(
   return product;
 }
 
-async function main(): Promise<void> {
-  const ds: DataSource = await dataSource.initialize();
-  console.log(`\n=== Seed: ${PRODUCT.title} ===`);
-  console.log(`  db=${(ds.options as any).database} host=${(ds.options as any).host}\n`);
+export async function seed(ds: DataSource): Promise<void> {
+  await ds.transaction(async (manager) => {
+    console.log('[1/5] دسته‌بندی');
+    const category = await ensureCategoryPath(manager, CATEGORY_PATH);
 
-  try {
-    await ds.transaction(async (manager) => {
-      console.log('[1/5] دسته‌بندی');
-      const category = await ensureCategoryPath(manager, CATEGORY_PATH);
+    console.log('\n[2/5] برند و زیربرند');
+    const brand = await ensureBrand(manager, BRAND);
+    const subBrand = await ensureSubBrand(manager, brand, SUB_BRAND);
 
-      console.log('\n[2/5] برند');
-      const brand = await ensureBrand(manager);
+    console.log('\n[3/5] تگ‌ها');
+    const tags = await ensureTags(manager, TAGS);
 
-      console.log('\n[3/5] تگ‌ها');
-      const tags = await ensureTags(manager);
+    console.log('\n[4/5] ویژگی رنگ');
+    const colourAttribute = await ensureAttribute(manager, {
+      name: 'رنگ',
+      label: 'رنگ',
+      kind: 'color',
+    });
+    const colourValues: AttributeValues[] = [];
+    for (const colour of COLOURS) {
+      colourValues.push(
+        await ensureAttributeValue(manager, colourAttribute, {
+          value: colour.name,
+          colorHex: colour.hex,
+        }),
+      );
+    }
 
-      console.log('\n[4/5] ویژگی رنگ');
-      const colourAttribute = await ensureColourAttribute(manager);
-      const colourValues: AttributeValues[] = [];
-      for (const colour of COLOURS) {
-        colourValues.push(
-          await ensureColourValue(manager, colourAttribute, colour),
-        );
-      }
-
-      console.log('\n[5/5] محصول و تنوع‌ها');
-      const product = await upsertProduct(manager, {
-        category,
-        brand,
-        tags,
-        colourAttribute,
-        colourValues,
-      });
-
-      console.log(`\n✓ محصول نهایی: id=${product.id} slug=${product.slug}`);
+    console.log('\n[5/5] محصول و تنوع‌ها');
+    const product = await upsertProduct(manager, {
+      category,
+      brand,
+      subBrand,
+      tags,
+      colourAttribute,
+      colourValues,
     });
 
-    const counts = await ds.query(
-      `SELECT (SELECT COUNT(*) FROM products) AS products,
-              (SELECT COUNT(*) FROM product_variants) AS variants,
-              (SELECT COUNT(*) FROM categories) AS categories,
-              (SELECT COUNT(*) FROM brands) AS brands,
-              (SELECT COUNT(*) FROM tags) AS tags,
-              (SELECT COUNT(*) FROM attribute_values) AS attribute_values`,
-    );
-    console.log('\n=== شمارش نهایی ===');
-    console.table(counts[0]);
-  } finally {
-    await ds.destroy();
-  }
+    console.log(`\n✓ محصول نهایی: id=${product.id} slug=${product.slug}`);
+  });
 }
 
-main().catch((error) => {
-  console.error('\n✗ Seed failed:', error);
-  process.exit(1);
-});
+if (require.main === module) {
+  runStandaloneSeed(PRODUCT.title, seed);
+}

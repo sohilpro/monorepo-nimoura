@@ -1,6 +1,5 @@
 import {
   Body,
-  Controller,
   Delete,
   Get,
   HttpCode,
@@ -8,23 +7,24 @@ import {
   Param,
   ParseIntPipe,
   Patch,
+  Post,
   Query,
 } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiConsumes,
   ApiOperation,
   ApiParam,
   ApiResponse,
-  ApiTags,
 } from '@nestjs/swagger';
 import { AdminController } from 'src/common/auth/decorators/admin-controller.decorator';
-import { UsersService } from '../user.service';
-import { PaginationQueryDto } from 'src/modules/products/dtos/product-query.dto';
+import { CurrentUser } from 'src/common/auth/auth.decorators';
+import type { AuthenticatedUser } from 'src/common/auth/jwt.types';
 import { Consumes } from 'src/common/auth/enums/consumes.enum';
+import { UsersService } from '../user.service';
 import { UpdateUserDto } from '../dtos/update-user.dto';
 import { CreateUserDto } from '../dtos/create-user.dto';
-import { Post } from '@nestjs/common';
+import { AdminUsersQueryDto } from '../dtos/admin-users-query.dto';
+import { BulkDeleteUsersDto } from '../dtos/bulk-delete-users.dto';
 
 @AdminController('users')
 export class UsersAdminController {
@@ -48,7 +48,7 @@ export class UsersAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'دریافت لیست کاربران (ادمین)',
-    description: 'امکان جستجو، فیلتر و صفحه‌بندی کاربران سیستم.',
+    description: 'امکان جستجو، فیلتر نقش/تأیید و صفحه‌بندی کاربران سیستم.',
   })
   @ApiResponse({
     status: 200,
@@ -58,8 +58,26 @@ export class UsersAdminController {
     status: 403,
     description: 'عدم دسترسی (فقط ادمین و مالک).',
   })
-  getUsers(@Query() query: PaginationQueryDto) {
+  getUsers(@Query() query: AdminUsersQueryDto) {
     return this.userService.getUsers(query);
+  }
+
+  @Post('bulk-delete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'حذف گروهی کاربران انتخاب‌شده (ادمین)' })
+  bulkDeleteUsers(
+    @Body() dto: BulkDeleteUsersDto,
+    @CurrentUser() actor?: AuthenticatedUser,
+  ) {
+    return this.userService.bulkDeleteUsers(dto.ids, actor?.id);
+  }
+
+  @Get(':id/stats')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'دریافت آمار سفارش، آدرس و دیدگاه یک کاربر' })
+  @ApiParam({ name: 'id', type: Number })
+  getUserStats(@Param('id', ParseIntPipe) id: number) {
+    return this.userService.getUserStats(id);
   }
 
   @Get(':id')
@@ -120,7 +138,7 @@ export class UsersAdminController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'حذف کاربر',
-    description: 'حذف نرم (Soft Delete) یا فیزیکی کاربر از سیستم.',
+    description: 'حذف یا بایگانی امن کاربر از سیستم.',
   })
   @ApiParam({
     name: 'id',
@@ -136,7 +154,10 @@ export class UsersAdminController {
     status: 404,
     description: 'کاربر پیدا نشد.',
   })
-  deleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.deleteUser(id);
+  deleteUser(
+    @Param('id', ParseIntPipe) id: number,
+    @CurrentUser() actor?: AuthenticatedUser,
+  ) {
+    return this.userService.deleteUser(id, actor?.id);
   }
 }

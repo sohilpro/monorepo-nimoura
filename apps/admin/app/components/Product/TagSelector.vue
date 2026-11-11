@@ -113,6 +113,7 @@ const creating = ref<number | null>(null);
 const drafts = reactive<Record<number, string>>({});
 const filters = reactive<Record<number, string>>({});
 const open = ref<Set<number>>(new Set());
+let initializedOpen = false;
 
 const selectedTags = computed(() =>
   groups.value.flatMap((g) =>
@@ -131,6 +132,7 @@ const visibleTags = (group: TagGroup) => {
 
 const isOpen = (id: number) => open.value.has(id);
 function toggleGroup(id: number) {
+  initializedOpen = true;
   const next = new Set(open.value);
   next.has(id) ? next.delete(id) : next.add(id);
   open.value = next;
@@ -142,14 +144,30 @@ function toggle(id: number) {
     : [...modelValue.value, id];
 }
 
+function syncInitialOpen() {
+  if (!groups.value.length) return;
+  const selectedIds = groups.value.filter((g) => selectedCount(g) > 0).map((g) => g.id);
+  if (selectedIds.length) {
+    open.value = new Set(selectedIds);
+    initializedOpen = true;
+  } else if (!initializedOpen && groups.value[0]) {
+    open.value = new Set([groups.value[0].id]);
+  }
+}
+
+watch(
+  () => modelValue.value,
+  () => {
+    if (!initializedOpen) syncInitialOpen();
+  },
+  { deep: true },
+);
+
 async function load() {
   loading.value = true;
   groups.value = (await api.getOptions()) ?? [];
   loading.value = false;
-  // open groups that already have a selection, or the first group when nothing is selected yet
-  open.value = new Set(
-    groups.value.filter((g) => selectedCount(g) > 0).map((g) => g.id).concat(groups.value[0] ? [groups.value[0].id] : []),
-  );
+  syncInitialOpen();
 }
 
 async function createInGroup(group: TagGroup) {

@@ -10,7 +10,11 @@ async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const allowedOrigins = process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim())
-    : ['http://localhost:3000', 'http://localhost:3001', 'https://nimoura.shop'];
+    : [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://nimoura.shop',
+      ];
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     cors: {

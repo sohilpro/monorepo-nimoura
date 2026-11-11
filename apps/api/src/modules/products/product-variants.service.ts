@@ -8,10 +8,7 @@ import {
   CreateVariantDto,
   VariantAttributeValueDto,
 } from './dtos/create-variant.dto';
-import {
-  AttributeKind,
-  inferAttributeKind,
-} from './constants/attribute-kind';
+import { AttributeKind, inferAttributeKind } from './constants/attribute-kind';
 import { MediaStaticService } from '../media/media-static.service';
 import { MediaOwnerType } from '../media/enums/media-owner-type.enum';
 
@@ -72,7 +69,9 @@ export class ProductVariantsService {
         kind,
         value,
         colorHex:
-          kind === 'color' && item.colorHex ? item.colorHex.toUpperCase() : null,
+          kind === 'color' && item.colorHex
+            ? item.colorHex.toUpperCase()
+            : null,
       };
     });
   }
@@ -191,7 +190,9 @@ export class ProductVariantsService {
     variants: CreateVariantDto[],
     ownIds: number[],
   ): Promise<void> {
-    const skus = variants.map((v) => v.sku?.trim()).filter((s): s is string => !!s);
+    const skus = variants
+      .map((v) => v.sku?.trim())
+      .filter((s): s is string => !!s);
     if (!skus.length) return;
 
     const [variantClash, productClash] = await Promise.all([
@@ -268,8 +269,8 @@ export class ProductVariantsService {
       entity.stock = v.stock;
       entity.isAvailable = v.isAvailable ?? true;
       entity.images = v.images ?? [];
-      entity.attributeValues = normalized[idx].map(
-        (a) => attrMap.get(attrKey(a))!,
+      entity.attributeValues = normalized[idx].map((a) =>
+        attrMap.get(attrKey(a))!,
       );
 
       saved.push(await manager.save(ProductVariants, entity));
@@ -330,7 +331,9 @@ export class ProductVariantsService {
       v.priceDiscount > 0 ? v.priceDiscount : v.price;
     const active = variants.filter((v) => v.isAvailable && v.stock > 0);
     const pool = active.length ? active : variants;
-    const cheapest = pool.reduce((a, b) => (effective(a) <= effective(b) ? a : b));
+    const cheapest = pool.reduce((a, b) =>
+      effective(a) <= effective(b) ? a : b,
+    );
 
     return {
       price: cheapest.price,

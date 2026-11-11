@@ -13,6 +13,7 @@ import {
   EntityManager,
   EntityTarget,
   FindOptionsRelations,
+  FindOptionsSelect,
   FindOptionsWhere,
   In,
   ObjectLiteral,
@@ -57,7 +58,7 @@ export interface ResolveLinesOptions {
 }
 
 const ORDER_RELATIONS: FindOptionsRelations<Orders> = {
-  items: { product: true, variant: true },
+  items: { product: true, variant: { attributeValues: { attribute: true } } },
   shippingInfo: { address: true },
   paymentInfo: true,
 };
@@ -66,6 +67,102 @@ const ORDER_RELATIONS_WITH_OWNER: FindOptionsRelations<Orders> = {
   ...ORDER_RELATIONS,
   user: true,
   promotion: true,
+};
+
+const ORDER_DISPLAY_SELECT: FindOptionsSelect<Orders> = {
+  id: true,
+  orderCode: true,
+  status: true,
+  paymentRefId: true,
+  shippingCost: true,
+  subtotal: true,
+  discount: true,
+  finalTotal: true,
+  shippedAt: true,
+  postalBarcode: true,
+  createdAt: true,
+  updatedAt: true,
+  items: {
+    id: true,
+    quantity: true,
+    unitPrice: true,
+    product: {
+      id: true,
+      title: true,
+      slug: true,
+      thumbnail: true,
+      sku: true,
+    },
+    variant: {
+      id: true,
+      sku: true,
+      attributeValues: {
+        id: true,
+        value: true,
+        colorHex: true,
+        attribute: {
+          id: true,
+          name: true,
+          kind: true,
+        },
+      },
+    },
+  },
+  shippingInfo: {
+    id: true,
+    first_name: true,
+    last_name: true,
+    phone: true,
+    note: true,
+    address: {
+      id: true,
+      title: true,
+      state: true,
+      city: true,
+      address: true,
+      postal_code: true,
+    },
+  },
+  paymentInfo: {
+    id: true,
+    method: true,
+    trackingCode: true,
+    isPaid: true,
+    paidAt: true,
+  },
+};
+
+const ORDER_INTERNAL_LINES_SELECT: FindOptionsSelect<Orders> = {
+  id: true,
+  orderCode: true,
+  status: true,
+  shippingCost: true,
+  subtotal: true,
+  discount: true,
+  finalTotal: true,
+  torobClid: true,
+  items: {
+    id: true,
+    quantity: true,
+    unitPrice: true,
+    product: { id: true, title: true },
+    variant: { id: true },
+  },
+  shippingInfo: {
+    id: true,
+    first_name: true,
+    last_name: true,
+    phone: true,
+    note: true,
+    address: { id: true },
+  },
+  paymentInfo: {
+    id: true,
+    method: true,
+    isPaid: true,
+    paidAt: true,
+    trackingCode: true,
+  },
 };
 
 @Injectable()
@@ -174,11 +271,17 @@ export class OrderService {
     const limit = Math.max(1, Number(query?.limit) || 12);
     const [orders, total] = await this.orderRepo.findAndCount({
       where: { user: { id: userId } },
+      select: ORDER_DISPLAY_SELECT,
       relations: ORDER_RELATIONS,
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
+      loadEagerRelations: false,
     });
+
+    for (const o of orders) {
+      this.decorateVariantSnapshots(o);
+    }
 
     return {
       orders,
@@ -194,9 +297,28 @@ export class OrderService {
   async getUserOrderById(id: number, userId: number): Promise<Orders> {
     const order = await this.orderRepo.findOne({
       where: { id, user: { id: userId } },
+      select: {
+        ...ORDER_DISPLAY_SELECT,
+        user: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          mobile: true,
+          email: true,
+        },
+        promotion: {
+          id: true,
+          title: true,
+          promoCode: true,
+          type: true,
+          amount: true,
+        },
+      },
       relations: ORDER_RELATIONS_WITH_OWNER,
+      loadEagerRelations: false,
     });
     if (!order) throw new NotFoundException('سفارش یافت نشد');
+    this.decorateVariantSnapshots(order);
     return order;
   }
 
@@ -227,7 +349,30 @@ export class OrderService {
   async getOrderForPayment(orderId: number): Promise<Orders> {
     const order = await this.orderRepo.findOne({
       where: { id: orderId },
-      relations: { paymentInfo: true, user: true },
+      select: {
+        id: true,
+        orderCode: true,
+        status: true,
+        finalTotal: true,
+        paymentInfo: {
+          id: true,
+          method: true,
+          isPaid: true,
+          paidAt: true,
+          trackingCode: true,
+        },
+        shippingInfo: {
+          id: true,
+          phone: true,
+        },
+        user: {
+          id: true,
+          email: true,
+          mobile: true,
+        },
+      },
+      relations: { paymentInfo: true, shippingInfo: true, user: true },
+      loadEagerRelations: false,
     });
     if (!order) throw new NotFoundException('سفارش یافت نشد');
     return order;
@@ -237,7 +382,29 @@ export class OrderService {
     return await this.dataSource.transaction(async (em) => {
       const order = await em.findOne(Orders, {
         where: { id: orderId },
+        select: {
+          id: true,
+          status: true,
+          purchasedAt: true,
+          paymentRefId: true,
+          shippingCost: true,
+          discount: true,
+          subtotal: true,
+          finalTotal: true,
+          shippedAt: true,
+          postalBarcode: true,
+          paymentInfo: {
+            id: true,
+            method: true,
+            isPaid: true,
+            paidAt: true,
+            trackingCode: true,
+          },
+          user: { id: true },
+          promotion: { id: true },
+        },
         relations: { paymentInfo: true, user: true, promotion: true },
+        loadEagerRelations: false,
       });
       if (!order) throw new NotFoundException('سفارش یافت نشد');
 
@@ -265,7 +432,12 @@ export class OrderService {
 
       const order = await em.findOne(Orders, {
         where,
-        relations: ORDER_RELATIONS,
+        select: ORDER_INTERNAL_LINES_SELECT,
+        relations: {
+          items: { product: true, variant: true },
+          paymentInfo: true,
+        },
+        loadEagerRelations: false,
       });
       if (!order) throw new NotFoundException('سفارش یافت نشد');
 
@@ -337,7 +509,9 @@ export class OrderService {
   buildOrderItem(em: EntityManager, line: OrderLine): OrderItems {
     return em.create(OrderItems, {
       product: { id: line.productId } as Products,
-      variant: line.variantId ? ({ id: line.variantId } as ProductVariants) : null,
+      variant: line.variantId
+        ? ({ id: line.variantId } as ProductVariants)
+        : null,
       quantity: line.quantity,
       unitPrice: line.unitPrice,
     });
@@ -367,7 +541,24 @@ export class OrderService {
     );
     const products = await em.find(Products, {
       where: { id: In([...new Set(items.map((i) => i.productId))]) },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        price: true,
+        priceDiscount: true,
+        isAvailable: true,
+        priceTiers: { id: true, minQuantity: true, price: true },
+        variants: {
+          id: true,
+          price: true,
+          priceDiscount: true,
+          isAvailable: true,
+          priceTiers: { id: true, minQuantity: true, price: true },
+        },
+      },
       relations: { priceTiers: true, variants: { priceTiers: true } },
+      loadEagerRelations: false,
     });
     const productMap = new Map(products.map((p) => [p.id, p]));
 
@@ -418,11 +609,7 @@ export class OrderService {
     });
   }
 
-  async adjustStock(
-    em: EntityManager,
-    lines: OrderLine[],
-    mode: StockMode,
-  ) {
+  async adjustStock(em: EntityManager, lines: OrderLine[], mode: StockMode) {
     const sorted = [...lines].sort((a, b) =>
       lineKey(a).localeCompare(lineKey(b)),
     );
@@ -438,7 +625,7 @@ export class OrderService {
         .update(target)
         .set({
           [STOCK_FIELD]: () => `"${STOCK_FIELD}" ${op} :qty`,
-        } as QueryDeepPartialEntity<ObjectLiteral>)
+        })
         .setParameter('qty', line.quantity)
         .where('id = :id', { id: line.variantId ?? line.productId });
       if (mode === 'reserve') qb.andWhere(`"${STOCK_FIELD}" >= :qty`);
@@ -454,11 +641,7 @@ export class OrderService {
     }
   }
 
-  async syncOrderItems(
-    em: EntityManager,
-    order: Orders,
-    next: OrderLine[],
-  ) {
+  async syncOrderItems(em: EntityManager, order: Orders, next: OrderLine[]) {
     const keyOf = (i: OrderItems) =>
       lineKey({ productId: i.product.id, variantId: i.variant?.id ?? null });
 
@@ -494,9 +677,34 @@ export class OrderService {
   private async findPendingOrder(em: EntityManager, userId: number) {
     return await em.findOne(Orders, {
       where: { user: { id: userId }, status: OrderStatus.PENDING },
-      relations: ORDER_RELATIONS,
+      select: ORDER_INTERNAL_LINES_SELECT,
+      relations: {
+        items: { product: true, variant: true },
+        shippingInfo: { address: true },
+        paymentInfo: true,
+      },
       order: { createdAt: 'DESC' },
+      loadEagerRelations: false,
     });
+  }
+
+  decorateVariantSnapshots(order: Orders) {
+    for (const item of order.items ?? []) {
+      const v: any = item.variant;
+      if (!v) continue;
+      const attrs: any[] = v.attributeValues ?? [];
+      if (attrs.length) {
+        const primary =
+          attrs.find((a) => a?.attribute?.kind === 'color') ?? attrs[0];
+        v.alt ??= attrs
+          .map((a) => a.value)
+          .filter(Boolean)
+          .join(' / ');
+        v.colorHex ??= primary?.colorHex ?? null;
+        v.kind ??= primary?.attribute?.kind ?? null;
+        v.value ??= primary?.colorHex ?? primary?.value ?? null;
+      }
+    }
   }
 
   private async persistOrderState(em: EntityManager, order: Orders) {
@@ -541,11 +749,13 @@ export class OrderService {
 
   private async recordPromotionUsage(em: EntityManager, order: Orders) {
     if (!order.promotion || !order.user) return;
-    await em.getRepository(PromotionUsages).increment(
-      { user: { id: order.user.id }, promotion: { id: order.promotion.id } },
-      'usedCount',
-      1,
-    );
+    await em
+      .getRepository(PromotionUsages)
+      .increment(
+        { user: { id: order.user.id }, promotion: { id: order.promotion.id } },
+        'usedCount',
+        1,
+      );
     await em
       .getRepository(Promotions)
       .increment({ id: order.promotion.id }, 'totalUsed', 1);
@@ -565,7 +775,10 @@ export class OrderService {
     }
     if (info.address) {
       return await em.save(
-        em.create(Addresses, { ...info.address, userId } as DeepPartial<Addresses>),
+        em.create(Addresses, {
+          ...info.address,
+          userId,
+        } as DeepPartial<Addresses>),
       );
     }
     throw new BadRequestException(

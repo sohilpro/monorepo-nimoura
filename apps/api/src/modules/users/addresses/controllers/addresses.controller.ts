@@ -53,7 +53,10 @@ export class AddressesController {
   @ApiOperation({ summary: 'دریافت جزئیات یک آدرس خاص متعلق به کاربر' })
   @ApiParam({ name: 'id', type: Number, description: 'شناسه آدرس' })
   @ApiResponse({ status: 200, description: 'اطلاعات آدرس' })
-  @ApiResponse({ status: 404, description: 'آدرس یافت نشد یا متعلق به شما نیست' })
+  @ApiResponse({
+    status: 404,
+    description: 'آدرس یافت نشد یا متعلق به شما نیست',
+  })
   async findOne(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('id') userId: number,

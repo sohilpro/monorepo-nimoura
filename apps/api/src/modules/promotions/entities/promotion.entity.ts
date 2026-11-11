@@ -3,7 +3,7 @@ import { Brands } from 'src/modules/brands/entities/brands.entity';
 import { Categories } from 'src/modules/categories/entities/categories.entity';
 import { Products } from 'src/modules/products/entities/products.entity';
 import { Users } from 'src/modules/users/entities/users.entity';
-import { Entity, Column, ManyToMany, JoinTable } from 'typeorm';
+import { Entity, Column, ManyToMany, JoinTable, Index } from 'typeorm';
 
 export enum PromotionType {
   PERCENTAGE = 'PERCENTAGE',
@@ -11,6 +11,8 @@ export enum PromotionType {
 }
 
 @Entity('promotions')
+@Index('idx_promotions_code_active', ['promoCode', 'isActive'])
+@Index('idx_promotions_active_dates', ['isActive', 'startDate', 'endDate'])
 export class Promotions extends CustomBaseEntity {
   @Column()
   title!: string;

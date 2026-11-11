@@ -42,7 +42,9 @@ export class EnablePgTrgmAndIndexes1710000000000 implements MigrationInterface {
     await queryRunner.query(`DROP INDEX IF EXISTS idx_brands_slug_trgm;`);
     await queryRunner.query(`DROP INDEX IF EXISTS idx_brands_name_trgm;`);
     await queryRunner.query(`DROP INDEX IF EXISTS idx_categories_name_trgm;`);
-    await queryRunner.query(`DROP INDEX IF EXISTS idx_products_eng_title_trgm;`);
+    await queryRunner.query(
+      `DROP INDEX IF EXISTS idx_products_eng_title_trgm;`,
+    );
     await queryRunner.query(`DROP INDEX IF EXISTS idx_products_title_trgm;`);
   }
 }

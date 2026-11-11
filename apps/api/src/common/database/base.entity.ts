@@ -17,6 +17,10 @@ export abstract class CustomBaseEntity extends BaseEntity {
   @UpdateDateColumn({ type: 'timestamp with time zone', name: 'updated_at' })
   updatedAt!: Date;
 
-  @DeleteDateColumn({ type: 'timestamp with time zone', name: 'deleted_at', nullable: true })
+  @DeleteDateColumn({
+    type: 'timestamp with time zone',
+    name: 'deleted_at',
+    nullable: true,
+  })
   deletedAt?: Date;
 }

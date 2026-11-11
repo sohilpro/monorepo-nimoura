@@ -6,7 +6,8 @@ export type ProductBadgeType =
   | 'amazing_offer'
   | 'new'
   | 'bundle';
-export type ProductBadgeTone = 'danger' | 'warning' | 'success' | 'info' | 'neutral';
+export type ProductBadgeTone =
+  'danger' | 'warning' | 'success' | 'info' | 'neutral';
 
 export interface ProductBadge {
   type: ProductBadgeType;
@@ -30,7 +31,8 @@ export interface BadgeSource {
   createdAt?: Date | string | null;
 }
 
-const toFa = (n: number) => String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+const toFa = (n: number) =>
+  String(n).replace(/\d/g, (d) => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
 
 export function getDiscountPercent(p: BadgeSource): number {
   const price = Number(p.price) || 0;
@@ -52,7 +54,10 @@ export function getStockStatus(p: BadgeSource): StockStatus {
  * Automatic storefront badges, derived from product data (nothing is stored).
  * Ordered by importance so the UI can simply show the first one or two.
  */
-export function buildProductBadges(p: BadgeSource, now: Date = new Date()): ProductBadge[] {
+export function buildProductBadges(
+  p: BadgeSource,
+  now: Date = new Date(),
+): ProductBadge[] {
   const badges: ProductBadge[] = [];
   const status = getStockStatus(p);
 
@@ -70,15 +75,25 @@ export function buildProductBadges(p: BadgeSource, now: Date = new Date()): Prod
 
   const percent = getDiscountPercent(p);
   if (percent > 0) {
-    badges.push({ type: 'discount', label: `${toFa(percent)}٪ تخفیف`, tone: 'danger', value: percent });
+    badges.push({
+      type: 'discount',
+      label: `${toFa(percent)}٪ تخفیف`,
+      tone: 'danger',
+      value: percent,
+    });
   }
 
   if (p.isAmazingOffer) {
-    badges.push({ type: 'amazing_offer', label: 'پیشنهاد شگفت‌انگیز', tone: 'warning' });
+    badges.push({
+      type: 'amazing_offer',
+      label: 'پیشنهاد شگفت‌انگیز',
+      tone: 'warning',
+    });
   }
 
   if (p.createdAt) {
-    const ageDays = (now.getTime() - new Date(p.createdAt).getTime()) / 86_400_000;
+    const ageDays =
+      (now.getTime() - new Date(p.createdAt).getTime()) / 86_400_000;
     if (ageDays >= 0 && ageDays <= NEW_PRODUCT_DAYS) {
       badges.push({ type: 'new', label: 'جدید', tone: 'success' });
     }

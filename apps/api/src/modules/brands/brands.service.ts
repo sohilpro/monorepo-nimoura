@@ -11,10 +11,7 @@ import { UpdateBrandDto } from './dtos/update-brand.dto';
 import { generateSlug } from 'src/common/utils/slug.helper';
 
 import { Products } from '../products/entities/products.entity';
-import {
-  buildPagination,
-  buildSearchWhereClause,
-} from 'src/common/utils/pagination.helper';
+import { buildSearchWhereClause } from 'src/common/utils/pagination.helper';
 import { Brands } from './entities/brands.entity';
 import { SubBrands } from './entities/sub-brands.entity';
 import { MediaOwnerType } from '../media/enums/media-owner-type.enum';
@@ -42,6 +39,8 @@ export class BrandsService {
 
     const existing = await this.brandRepo.findOne({
       where: { slug: finalSlug },
+      select: { id: true },
+      loadEagerRelations: false,
     });
     if (existing) {
       throw new ConflictException(
@@ -96,14 +95,28 @@ export class BrandsService {
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
     const search = (query.search || '').trim();
     const sortOrder =
-      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC'
+        ? 'ASC'
+        : 'DESC';
     const allowedSortFields = ['id', 'name', 'createdAt', 'updatedAt'];
-    const sortBy = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'id';
+    const sortBy = allowedSortFields.includes(query.sortBy)
+      ? query.sortBy
+      : 'id';
 
     const searchableFields = ['name'];
-    const where = search ? buildSearchWhereClause(search, searchableFields) : {};
+    const where = search
+      ? buildSearchWhereClause(search, searchableFields)
+      : {};
 
     const [data, total] = await this.brandRepo.findAndCount({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+        createdAt: true,
+        subBrands: { id: true, name: true, slug: true, brandId: true },
+      },
       relations: {
         subBrands: true,
       },
@@ -111,6 +124,7 @@ export class BrandsService {
       take: limit,
       skip: (page - 1) * limit,
       order: { [sortBy]: sortOrder },
+      loadEagerRelations: false,
     });
 
     const totalPages = Math.ceil(total / limit);
@@ -135,10 +149,20 @@ export class BrandsService {
   findOne(id: number) {
     return this.brandRepo.findOne({
       where: { id },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+        description: true,
+        createdAt: true,
+        updatedAt: true,
+        subBrands: { id: true, name: true, slug: true, brandId: true },
+      },
       relations: {
-        // products: true,
         subBrands: true,
       },
+      loadEagerRelations: false,
     });
   }
 
@@ -161,7 +185,10 @@ export class BrandsService {
   }
 
   async update(id: number, dto: UpdateBrandDto) {
-    const brand = await this.brandRepo.findOne({ where: { id } });
+    const brand = await this.brandRepo.findOne({
+      where: { id },
+      loadEagerRelations: false,
+    });
     if (!brand) throw new NotFoundException('برند مورد نظر یافت نشد');
 
     let finalSlug = brand.slug;
@@ -169,6 +196,8 @@ export class BrandsService {
       finalSlug = generateSlug(dto.slug);
       const existingSlug = await this.brandRepo.findOne({
         where: { slug: finalSlug },
+        select: { id: true },
+        loadEagerRelations: false,
       });
       if (existingSlug) {
         throw new ConflictException('اسلاگ وارد شده تکراری است.');
@@ -179,21 +208,19 @@ export class BrandsService {
     const newLogo = dto.logo !== undefined ? dto.logo : brand.logo;
 
     // ۱. مدیریت فایل‌های لوگو در صورت تغییر یا حذف لوگو
-if (dto.logo !== undefined && dto.logo !== oldLogo) {
-  // فقط و فقط آدرس عکس قبلی را پاک کن، نه کل رکوردهای برند را!
-  if (oldLogo) {
-    await this.mediaService.deleteByUrls([oldLogo]).catch(() => {});
-  }
+    if (dto.logo !== undefined && dto.logo !== oldLogo) {
+      // فقط و فقط آدرس عکس قبلی را پاک کن، نه کل رکوردهای برند را!
+      if (oldLogo) {
+        await this.mediaService.deleteByUrls([oldLogo]).catch(() => {});
+      }
 
-  // انتساب مالکیت برای لوگوی جدید
-  if (newLogo) {
-    await this.mediaService.reassignOwner(
-      [newLogo],
-      MediaOwnerType.BRAND_LOGO,
-      String(brand.id),
-    ).catch(() => {});
-  }
-}
+      // انتساب مالکیت برای لوگوی جدید
+      if (newLogo) {
+        await this.mediaService
+          .reassignOwner([newLogo], MediaOwnerType.BRAND_LOGO, String(brand.id))
+          .catch(() => {});
+      }
+    }
 
     // ۲. آپدیت انتیتی برند
     Object.assign(brand, {

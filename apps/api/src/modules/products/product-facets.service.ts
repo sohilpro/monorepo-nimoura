@@ -41,7 +41,8 @@ export interface ProductFacets {
 @Injectable()
 export class ProductFacetsService {
   constructor(
-    @InjectRepository(Products) private readonly productRepo: Repository<Products>,
+    @InjectRepository(Products)
+    private readonly productRepo: Repository<Products>,
     private readonly tagGroups: TagGroupsService,
     private readonly filters: ProductListingFilters,
     private readonly categoryTree: CategoryTreeService,
@@ -53,7 +54,9 @@ export class ProductFacetsService {
     const { categoryId, ...rest } = input;
     const filters: ListingFilters = {
       ...rest,
-      categoryIds: categoryId ? await this.categoryTree.getTreeIds(categoryId) : undefined,
+      categoryIds: categoryId
+        ? await this.categoryTree.getTreeIds(categoryId)
+        : undefined,
     };
     const selected = new Set(filters.tagIds ?? []);
 
@@ -63,21 +66,58 @@ export class ProductFacetsService {
       this.totals(filters),
     ]);
 
-    const facetGroups = await Promise.all(
-      groups.map(async (group): Promise<FacetGroup> => {
-        const tagIds = (group.tags ?? []).map((t) => t.id);
+    let sharedCounts: Map<number, number> | null = null;
+    if (selected.size === 0 && groups.length > 0) {
+      const allTagIds = groups.flatMap((g) => (g.tags ?? []).map((t) => t.id));
+      if (allTagIds.length) {
         const qb = this.productRepo
           .createQueryBuilder('p')
           .select('pt.tag_id', 'tagId')
           .addSelect('COUNT(DISTINCT p.id)', 'count')
           .innerJoin('product_tag', 'pt', 'pt.product_id = p.id')
           .where('p.isAvailable = true')
-          .andWhere('pt.tag_id IN (:...tagIds)', { tagIds })
+          .andWhere('pt.tag_id IN (:...tagIds)', { tagIds: allTagIds })
           .groupBy('pt.tag_id');
-        await this.filters.apply(qb, filters, { excludeTagGroupId: group.id });
-
+        await this.filters.apply(qb, filters);
         const rows = await qb.getRawMany<{ tagId: number; count: string }>();
-        const counts = new Map(rows.map((r) => [Number(r.tagId), Number(r.count)]));
+        sharedCounts = new Map(
+          rows.map((r) => [Number(r.tagId), Number(r.count)]),
+        );
+      } else {
+        sharedCounts = new Map();
+      }
+    }
+
+    const facetGroups = await Promise.all(
+      groups.map(async (group): Promise<FacetGroup> => {
+        const tagIds = (group.tags ?? []).map((t) => t.id);
+        let groupCounts = sharedCounts;
+
+        if (!groupCounts) {
+          if (!tagIds.length) {
+            groupCounts = new Map();
+          } else {
+            const qb = this.productRepo
+              .createQueryBuilder('p')
+              .select('pt.tag_id', 'tagId')
+              .addSelect('COUNT(DISTINCT p.id)', 'count')
+              .innerJoin('product_tag', 'pt', 'pt.product_id = p.id')
+              .where('p.isAvailable = true')
+              .andWhere('pt.tag_id IN (:...tagIds)', { tagIds })
+              .groupBy('pt.tag_id');
+            await this.filters.apply(qb, filters, {
+              excludeTagGroupId: group.id,
+            });
+
+            const rows = await qb.getRawMany<{
+              tagId: number;
+              count: string;
+            }>();
+            groupCounts = new Map(
+              rows.map((r) => [Number(r.tagId), Number(r.count)]),
+            );
+          }
+        }
 
         return {
           id: group.id,
@@ -90,7 +130,7 @@ export class ProductFacetsService {
               name: t.name,
               slug: t.slug,
               color: t.color ?? null,
-              count: counts.get(t.id) ?? 0,
+              count: groupCounts.get(t.id) ?? 0,
               selected: selected.has(t.id),
             }))
             .filter((t) => t.count > 0 || t.selected),
@@ -118,20 +158,36 @@ export class ProductFacetsService {
   }
 
   private async totals(filters: ListingFilters) {
-    const base = async (extra: Partial<ListingFilters>) => {
-      const qb = this.productRepo
-        .createQueryBuilder('p')
-        .select('COUNT(p.id)', 'count')
-        .where('p.isAvailable = true');
-      await this.filters.apply(qb, { ...filters, ...extra });
-      return Number((await qb.getRawOne<{ count: string }>())?.count ?? 0);
-    };
+    const inStockCond = filters.onSale
+      ? 'p."stock" > 0 AND p."priceDiscount" > 0 AND p."priceDiscount" < p."price"'
+      : 'p."stock" > 0';
+    const onSaleCond = filters.inStock
+      ? 'p."priceDiscount" > 0 AND p."priceDiscount" < p."price" AND p."stock" > 0'
+      : 'p."priceDiscount" > 0 AND p."priceDiscount" < p."price"';
 
-    const [total, inStock, onSale] = await Promise.all([
-      base({ inStock: false, onSale: false }),
-      base({ inStock: true }),
-      base({ onSale: true }),
-    ]);
-    return { total, inStock, onSale };
+    const qb = this.productRepo
+      .createQueryBuilder('p')
+      .select('COUNT(p.id)', 'total')
+      .addSelect(`COUNT(p.id) FILTER (WHERE ${inStockCond})`, 'inStock')
+      .addSelect(`COUNT(p.id) FILTER (WHERE ${onSaleCond})`, 'onSale')
+      .where('p.isAvailable = true');
+
+    await this.filters.apply(qb, {
+      ...filters,
+      inStock: false,
+      onSale: false,
+    });
+
+    const row = await qb.getRawOne<{
+      total: string;
+      inStock: string;
+      onSale: string;
+    }>();
+
+    return {
+      total: Number(row?.total ?? 0),
+      inStock: Number(row?.inStock ?? 0),
+      onSale: Number(row?.onSale ?? 0),
+    };
   }
 }

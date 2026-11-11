@@ -51,7 +51,7 @@ import { PaymentMethod } from './enums/payment-method.enum';
 import { OrderService } from './order.service';
 
 const ORDER_RELATIONS_WITH_OWNER: FindOptionsRelations<Orders> = {
-  items: { product: true, variant: true },
+  items: { product: true, variant: { attributeValues: { attribute: true } } },
   shippingInfo: { address: true },
   paymentInfo: true,
   user: true,
@@ -81,7 +81,10 @@ export class OrdersAdminService {
     if (userId) base.user = { id: userId };
 
     if (dateFrom && dateTo) {
-      base.createdAt = Between(new Date(dateFrom), this.endOfDayIfDateOnly(dateTo));
+      base.createdAt = Between(
+        new Date(dateFrom),
+        this.endOfDayIfDateOnly(dateTo),
+      );
     } else if (dateFrom) {
       base.createdAt = MoreThanOrEqual(new Date(dateFrom));
     } else if (dateTo) {
@@ -102,10 +105,58 @@ export class OrdersAdminService {
 
     const [items, total] = await this.orderRepo.findAndCount({
       where,
-      relations: { shippingInfo: true, paymentInfo: true, items: { product: true, variant: true } },
+      select: {
+        id: true,
+        orderCode: true,
+        status: true,
+        paymentRefId: true,
+        shippingCost: true,
+        subtotal: true,
+        discount: true,
+        finalTotal: true,
+        postalBarcode: true,
+        shippedAt: true,
+        createdAt: true,
+        updatedAt: true,
+        shippingInfo: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          phone: true,
+        },
+        paymentInfo: {
+          id: true,
+          method: true,
+          trackingCode: true,
+          isPaid: true,
+          paidAt: true,
+        },
+        items: {
+          id: true,
+          quantity: true,
+          unitPrice: true,
+          product: {
+            id: true,
+            title: true,
+            slug: true,
+            thumbnail: true,
+            sku: true,
+          },
+          variant: {
+            id: true,
+            sku: true,
+          },
+        },
+      },
+      relations: {
+        shippingInfo: true,
+        paymentInfo: true,
+        items: { product: true, variant: true },
+      },
       order: { createdAt: 'DESC' },
       skip: (page - 1) * limit,
       take: limit,
+      loadEagerRelations: false,
     });
 
     const totalPages = Math.ceil(total / limit);
@@ -129,7 +180,81 @@ export class OrdersAdminService {
   async getOrderById(id: number): Promise<Orders> {
     const order = await this.orderRepo.findOne({
       where: { id },
+      select: {
+        id: true,
+        orderCode: true,
+        status: true,
+        paymentRefId: true,
+        shippingCost: true,
+        subtotal: true,
+        discount: true,
+        finalTotal: true,
+        shippedAt: true,
+        purchasedAt: true,
+        postalBarcode: true,
+        createdAt: true,
+        updatedAt: true,
+        user: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          mobile: true,
+          email: true,
+        },
+        promotion: {
+          id: true,
+          title: true,
+          promoCode: true,
+          type: true,
+          amount: true,
+        },
+        shippingInfo: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          phone: true,
+          note: true,
+          address: {
+            id: true,
+            title: true,
+            state: true,
+            city: true,
+            address: true,
+            postal_code: true,
+          },
+        },
+        paymentInfo: {
+          id: true,
+          method: true,
+          trackingCode: true,
+          isPaid: true,
+          paidAt: true,
+        },
+        items: {
+          id: true,
+          quantity: true,
+          unitPrice: true,
+          product: {
+            id: true,
+            title: true,
+            slug: true,
+            thumbnail: true,
+            sku: true,
+          },
+          variant: {
+            id: true,
+            sku: true,
+            attributeValues: {
+              id: true,
+              value: true,
+              colorHex: true,
+              attribute: { id: true, name: true, kind: true },
+            },
+          },
+        },
+      },
       relations: ORDER_RELATIONS_WITH_OWNER,
+      loadEagerRelations: false,
     });
     if (!order) throw new NotFoundException('سفارش یافت نشد');
 
@@ -141,6 +266,7 @@ export class OrdersAdminService {
       }
       order.user = visible as unknown as Users;
     }
+    this.orderService.decorateVariantSnapshots(order);
     return order;
   }
 
@@ -217,7 +343,11 @@ export class OrdersAdminService {
 
     const orderId = await this.dataSource.transaction(async (em) => {
       const user = dto.userId
-        ? await em.findOne(Users, { where: { id: dto.userId } })
+        ? await em.findOne(Users, {
+            where: { id: dto.userId },
+            select: { id: true },
+            loadEagerRelations: false,
+          })
         : null;
       if (dto.userId && !user) throw new NotFoundException('کاربر یافت نشد');
 
@@ -228,7 +358,11 @@ export class OrdersAdminService {
       const discount = dto.discount ?? 0;
       const totals = calcTotals(lines, shippingCost, discount);
 
-      const shippingInfo = await this.buildShippingInfo(em, dto.shippingInfo, user);
+      const shippingInfo = await this.buildShippingInfo(
+        em,
+        dto.shippingInfo,
+        user,
+      );
 
       const isPaid = PAID_STATUSES.has(status);
       const paymentInfo = em.create(PaymentInfo, {
@@ -291,7 +425,15 @@ export class OrdersAdminService {
           await this.orderService.syncOrderItems(em, order, next);
           order.items = await em.find(OrderItems, {
             where: { order: { id: order.id } },
+            select: {
+              id: true,
+              quantity: true,
+              unitPrice: true,
+              product: { id: true, title: true },
+              variant: { id: true },
+            },
             relations: { product: true, variant: true },
+            loadEagerRelations: false,
           });
           lines = next;
         }
@@ -328,7 +470,10 @@ export class OrdersAdminService {
 
       // ۵) وضعیت
       let nextStatus = dto.status ?? prevStatus;
-      if (dto.paymentInfo?.isPaid === true && nextStatus === OrderStatus.PENDING) {
+      if (
+        dto.paymentInfo?.isPaid === true &&
+        nextStatus === OrderStatus.PENDING
+      ) {
         nextStatus = OrderStatus.PAID;
       }
       if (
@@ -406,7 +551,11 @@ export class OrdersAdminService {
         }
 
         if (order.status !== OrderStatus.CANCELLED) {
-          await this.orderService.adjustStock(em, toLines(order.items), 'release');
+          await this.orderService.adjustStock(
+            em,
+            toLines(order.items),
+            'release',
+          );
         }
 
         const shippingId = order.shippingInfo?.id;
@@ -417,7 +566,8 @@ export class OrdersAdminService {
         if (paymentId) await em.delete(PaymentInfo, paymentId);
       });
     } catch (e) {
-      const pgCode = (e as { driverError?: { code?: string } })?.driverError?.code;
+      const pgCode = (e as { driverError?: { code?: string } })?.driverError
+        ?.code;
       if (pgCode === '23503') {
         throw new ConflictException(
           'این سفارش به رکوردهای دیگری وابسته است؛ به‌جای حذف، آن را لغو کنید',
@@ -486,6 +636,7 @@ export class OrdersAdminService {
   private async lockOrder(em: EntityManager, id: number) {
     const row = await em
       .createQueryBuilder(Orders, 'o')
+      .select(['o.id'])
       .setLock('pessimistic_write')
       .where('o.id = :id', { id })
       .getOne();
@@ -495,7 +646,43 @@ export class OrdersAdminService {
   private async loadOrderForUpdate(em: EntityManager, id: number) {
     const order = await em.findOne(Orders, {
       where: { id },
-      relations: ORDER_RELATIONS_WITH_OWNER,
+      select: {
+        id: true,
+        orderCode: true,
+        status: true,
+        shippingCost: true,
+        discount: true,
+        subtotal: true,
+        finalTotal: true,
+        shippedAt: true,
+        purchasedAt: true,
+        postalBarcode: true,
+        paymentRefId: true,
+        items: {
+          id: true,
+          quantity: true,
+          unitPrice: true,
+          product: { id: true, title: true },
+          variant: { id: true },
+        },
+        shippingInfo: {
+          id: true,
+          address: { id: true },
+        },
+        paymentInfo: {
+          id: true,
+          method: true,
+          trackingCode: true,
+          isPaid: true,
+          paidAt: true,
+        },
+      },
+      relations: {
+        items: { product: true, variant: true },
+        shippingInfo: { address: true },
+        paymentInfo: true,
+      },
+      loadEagerRelations: false,
     });
     if (!order) throw new NotFoundException('سفارش یافت نشد');
     return order;
@@ -622,7 +809,8 @@ export class OrdersAdminService {
       payment.isPaid = dto.isPaid;
       if (!dto.isPaid) payment.paidAt = null;
     }
-    if (payment.isPaid) payment.paidAt = dto.paidAt ?? payment.paidAt ?? new Date();
+    if (payment.isPaid)
+      payment.paidAt = dto.paidAt ?? payment.paidAt ?? new Date();
   }
 
   private endOfDayIfDateOnly(value: string): Date {

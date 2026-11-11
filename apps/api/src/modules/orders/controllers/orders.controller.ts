@@ -34,10 +34,14 @@ export class OrdersController {
   @Post()
   @ApiOperation({
     summary: 'ایجاد سفارش جدید',
-    description: 'ثبت سفارش بر اساس اقلام انتخاب‌شده؛ قیمت‌ها سمت سرور محاسبه می‌شوند.',
+    description:
+      'ثبت سفارش بر اساس اقلام انتخاب‌شده؛ قیمت‌ها سمت سرور محاسبه می‌شوند.',
   })
   @ApiResponse({ status: 201, description: 'سفارش با موفقیت ثبت شد.' })
-  @ApiResponse({ status: 400, description: 'اطلاعات سفارش یا آدرس نامعتبر است.' })
+  @ApiResponse({
+    status: 400,
+    description: 'اطلاعات سفارش یا آدرس نامعتبر است.',
+  })
   async create(@CurrentUser('id') userId: number, @Body() dto: CreateOrderDto) {
     return await this.orderService.createOrder(dto, userId);
   }
@@ -53,9 +57,17 @@ export class OrdersController {
 
   @Get(':id/invoice')
   @ApiOperation({ summary: 'دریافت فاکتور PDF سفارش کاربر' })
-  @ApiParam({ name: 'id', type: Number, description: 'شناسه سفارش', example: 123 })
+  @ApiParam({
+    name: 'id',
+    type: Number,
+    description: 'شناسه سفارش',
+    example: 123,
+  })
   @ApiResponse({ status: 200, description: 'فایل فاکتور' })
-  @ApiResponse({ status: 404, description: 'سفارش یافت نشد یا متعلق به شما نیست.' })
+  @ApiResponse({
+    status: 404,
+    description: 'سفارش یافت نشد یا متعلق به شما نیست.',
+  })
   async getInvoice(
     @Param('id', ParseIntPipe) id: number,
     @CurrentUser('id') userId: number,
@@ -85,7 +97,9 @@ export class OrdersController {
    * verify با درگاه، با OrderService.markAsPaid انجام شود.
    */
   @Post(':id/payment/failure')
-  @ApiOperation({ summary: 'ثبت شکست/انصراف پرداخت (لغو سفارش در انتظار خود کاربر)' })
+  @ApiOperation({
+    summary: 'ثبت شکست/انصراف پرداخت (لغو سفارش در انتظار خود کاربر)',
+  })
   @ApiParam({ name: 'id', type: Number, description: 'شناسه سفارش' })
   async paymentFailure(
     @Param('id', ParseIntPipe) orderId: number,

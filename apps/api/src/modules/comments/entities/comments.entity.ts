@@ -1,11 +1,17 @@
 // backend/src/comments/entities/comment.entity.ts
-import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, Column, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { ApiProperty } from '@nestjs/swagger';
 import { CustomBaseEntity } from 'src/common/database/base.entity';
 import { Products } from 'src/modules/products/entities/products.entity';
 import { Users } from 'src/modules/users/entities/users.entity';
 
 @Entity('comments')
+@Index('idx_comments_product_public', [
+  'product',
+  'isApproved',
+  'isRejected',
+  'createdAt',
+])
 export class Comments extends CustomBaseEntity {
   @ApiProperty({ example: 'خیلی خوب بود' })
   @Column()
@@ -29,14 +35,15 @@ export class Comments extends CustomBaseEntity {
   @Column({ type: 'simple-array', nullable: true, default: null })
   images!: string[] | null;
 
+  @Index('idx_comments_user')
   @ManyToOne(() => Users, (user) => user.comments, {
     nullable: false,
     onDelete: 'CASCADE',
-    eager: true,
   })
   @JoinColumn()
   user!: Users;
 
+  @Index('idx_comments_product')
   @ManyToOne(() => Products, (product) => product.comments, {
     onDelete: 'CASCADE',
   })

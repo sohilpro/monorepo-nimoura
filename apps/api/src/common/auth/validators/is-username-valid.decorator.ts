@@ -7,7 +7,7 @@ import { isEmail, isMobilePhone } from 'validator';
 import { AuthMessage } from '../enums/auth-message.enum';
 
 export function IsValidUsername(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       name: 'IsValidUsername',
       target: object.constructor,

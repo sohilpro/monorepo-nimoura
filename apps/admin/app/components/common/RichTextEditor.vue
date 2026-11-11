@@ -1,21 +1,21 @@
 <template>
-  <div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-hidden shadow-xs transition-all">
+  <div class="rounded-xl border border-gray-200 bg-white overflow-hidden shadow-theme-xs transition-all">
     <!-- Header / Label -->
     <div
       v-if="label"
-      class="px-4 py-2.5 bg-slate-50/80 dark:bg-slate-800/80 border-b border-slate-200 dark:border-slate-700 flex items-center justify-between"
+      class="px-4 py-2.5 bg-gray-50/80 border-b border-gray-200 flex items-center justify-between"
     >
-      <label class="text-sm font-bold text-slate-700 dark:text-slate-200">
+      <label class="text-sm font-bold text-gray-700">
         {{ label }}
       </label>
-      <span class="text-[11px] text-slate-400 font-medium">ویرایشگر متن پیشرفته</span>
+      <span class="text-[11px] text-gray-400 font-medium">ویرایشگر متن پیشرفته</span>
     </div>
 
     <!-- Toolbar -->
     <ClientOnly>
       <div
         v-if="editor"
-        class="flex flex-wrap items-center gap-1 p-2 bg-slate-50/60 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 select-none"
+        class="flex flex-wrap items-center gap-1 p-2 bg-gray-50/60 border-b border-gray-200 select-none"
       >
         <!-- فرمت متن: بولد، ایتالیک، زیرخط، خط‌خورده -->
         <div class="flex items-center gap-0.5">
@@ -211,7 +211,7 @@
           <button
             type="button"
             title="پاکسازی تمام فرمت‌ها"
-            class="toolbar-btn text-slate-500 hover:text-slate-800"
+            class="toolbar-btn text-gray-500 hover:text-gray-800"
             @click="editor.chain().focus().unsetAllMarks().clearNodes().run()"
           >
             <i class="pi pi-filter-slash text-xs" />
@@ -240,14 +240,14 @@
 
     <!-- Editor Body Area -->
     <div
-      class="editor-container p-4 text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900"
+      class="editor-container p-4 text-gray-800 bg-white"
       :style="{ minHeight: minHeight || '260px' }"
       dir="rtl"
     >
       <ClientOnly>
         <EditorContent v-if="editor" :editor="editor" />
         <template #fallback>
-          <div class="flex items-center justify-center p-8 text-slate-400 text-xs">
+          <div class="flex items-center justify-center p-8 text-gray-400 text-xs">
             در حال بارگذاری ویرایشگر...
           </div>
         </template>
@@ -311,7 +311,7 @@ const editor = useEditor({
     Image.configure({
       inline: false,
       HTMLAttributes: {
-        class: 'rounded-xl max-w-full my-4 border border-slate-200 shadow-xs mx-auto',
+        class: 'rounded-xl max-w-full my-4 border border-gray-200 shadow-xs mx-auto',
       },
     }),
     TextAlign.configure({
@@ -324,7 +324,7 @@ const editor = useEditor({
   ],
   editorProps: {
     attributes: {
-      class: 'tiptap-content outline-none text-sm leading-relaxed text-slate-800 dark:text-slate-100',
+      class: 'tiptap-content outline-none text-sm leading-relaxed text-gray-800',
       dir: 'rtl',
     },
   },
@@ -415,23 +415,16 @@ function setLink() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #475569;
+  color: var(--color-gray-600, #665d5d);
   background-color: transparent;
   border: none;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
-:is(.dark *) .toolbar-btn {
-  color: #cbd5e1;
-}
-
 .toolbar-btn:hover:not(:disabled) {
-  background-color: rgba(226, 232, 240, 0.7);
-}
-
-:is(.dark *) .toolbar-btn:hover:not(:disabled) {
-  background-color: #334155;
+  background-color: var(--color-gray-100, #f7eeec);
+  color: var(--color-gray-800, #3a3131);
 }
 
 .toolbar-btn:disabled {
@@ -440,27 +433,18 @@ function setLink() {
 }
 
 .toolbar-btn.is-active {
-  background-color: var(--color-brand-100, #dde9ff);
-  color: var(--color-brand-700, #2a31d8);
+  background-color: var(--color-brand-100, #f5e4e6);
+  color: var(--color-brand-700, #87444f);
   font-weight: 600;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-:is(.dark *) .toolbar-btn.is-active {
-  background-color: rgba(70, 95, 255, 0.25);
-  color: var(--color-brand-300, #9cb9ff);
+  box-shadow: 0 1px 2px 0 rgba(46, 38, 54, 0.06);
 }
 
 .toolbar-divider {
   height: 1rem;
   width: 1px;
-  background-color: #cbd5e1;
+  background-color: var(--color-gray-200, #ebe0df);
   margin-left: 0.25rem;
   margin-right: 0.25rem;
-}
-
-:is(.dark *) .toolbar-divider {
-  background-color: #475569;
 }
 
 :deep(.tiptap) {
@@ -468,7 +452,7 @@ function setLink() {
 }
 
 :deep(.tiptap p.is-editor-empty:first-child::before) {
-  color: #94a3b8;
+  color: var(--color-gray-400, #9b9191);
   content: attr(data-placeholder);
   float: right;
   height: 0;
@@ -480,10 +464,7 @@ function setLink() {
   font-weight: 700;
   margin-top: 1rem;
   margin-bottom: 0.5rem;
-  color: #0f172a;
-}
-:is(.dark *) :deep(.tiptap h2) {
-  color: #ffffff;
+  color: var(--color-gray-900, #2e2636);
 }
 
 :deep(.tiptap h3) {
@@ -491,10 +472,7 @@ function setLink() {
   font-weight: 700;
   margin-top: 0.75rem;
   margin-bottom: 0.375rem;
-  color: #1e293b;
-}
-:is(.dark *) :deep(.tiptap h3) {
-  color: #f1f5f9;
+  color: var(--color-gray-800, #3a3131);
 }
 
 :deep(.tiptap h4) {
@@ -502,10 +480,7 @@ function setLink() {
   font-weight: 600;
   margin-top: 0.625rem;
   margin-bottom: 0.25rem;
-  color: #1e293b;
-}
-:is(.dark *) :deep(.tiptap h4) {
-  color: #e2e8f0;
+  color: var(--color-gray-800, #3a3131);
 }
 
 :deep(.tiptap ul) {
@@ -526,28 +501,21 @@ function setLink() {
 
 :deep(.tiptap blockquote) {
   border-right-width: 4px;
-  border-color: var(--color-brand-500, #465fff);
-  background-color: rgba(236, 243, 255, 0.4);
+  border-color: var(--color-brand-500, #b76e79);
+  background-color: rgba(251, 244, 245, 0.7);
   padding: 0.5rem 0.75rem;
   margin-top: 0.75rem;
   margin-bottom: 0.75rem;
   border-top-left-radius: 0.5rem;
   border-bottom-left-radius: 0.5rem;
   font-style: italic;
-  color: #334155;
-}
-:is(.dark *) :deep(.tiptap blockquote) {
-  background-color: rgba(22, 25, 80, 0.2);
-  color: #cbd5e1;
+  color: var(--color-gray-700, #4e4545);
 }
 
 :deep(.tiptap hr) {
   border: none;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid var(--color-gray-200, #ebe0df);
   margin-top: 1rem;
   margin-bottom: 1rem;
-}
-:is(.dark *) :deep(.tiptap hr) {
-  border-top-color: #334155;
 }
 </style>

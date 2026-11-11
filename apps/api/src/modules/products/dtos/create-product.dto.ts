@@ -237,7 +237,8 @@ export class CreateProductDto {
 
   @ApiPropertyOptional({
     default: 5,
-    description: 'وقتی موجودی به این عدد یا کمتر برسد، برچسب «تنها N عدد باقی مانده» نمایش داده می‌شود (۰ = غیرفعال)',
+    description:
+      'وقتی موجودی به این عدد یا کمتر برسد، برچسب «تنها N عدد باقی مانده» نمایش داده می‌شود (۰ = غیرفعال)',
   })
   @IsOptional()
   @Type(() => Number)
@@ -251,7 +252,10 @@ export class CreateProductDto {
   @IsBoolean()
   isAmazingOffer?: boolean;
 
-  @ApiPropertyOptional({ default: true, description: 'وضعیت موجودی و فعال بودن کالا' })
+  @ApiPropertyOptional({
+    default: true,
+    description: 'وضعیت موجودی و فعال بودن کالا',
+  })
   @IsOptional()
   @Transform(toBoolean)
   @IsBoolean()

@@ -5,6 +5,7 @@ import { CustomBaseEntity } from 'src/common/database/base.entity';
 
 @Entity('banners')
 @Index(['positionId', 'status', 'sortOrder'])
+@Index('idx_banners_status_end_at', ['status', 'endAt'])
 export class Banner extends CustomBaseEntity {
   @Column({ length: 200 })
   title: string;

@@ -13,7 +13,6 @@ export class Tags extends CustomBaseEntity {
   @ManyToOne(() => TagGroups, (group) => group.tags, {
     nullable: false,
     onDelete: 'RESTRICT',
-    eager: true,
   })
   @JoinColumn({ name: 'groupId' })
   group!: TagGroups;

@@ -13,7 +13,9 @@ export class PendingOrdersExpiryTask {
   async handle() {
     const cancelled = await this.orderService.cancelExpiredPendingOrders();
     if (cancelled) {
-      this.logger.log(`${cancelled} سفارش پرداخت‌نشده لغو و موجودی آن‌ها آزاد شد`);
+      this.logger.log(
+        `${cancelled} سفارش پرداخت‌نشده لغو و موجودی آن‌ها آزاد شد`,
+      );
     }
   }
 }

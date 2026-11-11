@@ -53,7 +53,10 @@ export class InvoiceService {
 
   private render(doc: PDFKit.PDFDocument, order: Orders) {
     const money = (n: number) => `${Number(n).toLocaleString('fa-IR')} تومان`;
-    const right = { width: COL.title.width + COL.quantity.width, align: 'right' } as const;
+    const right = {
+      width: COL.title.width + COL.quantity.width,
+      align: 'right',
+    } as const;
     const fullWidth = doc.page.width - PAGE_MARGIN * 2;
 
     // ── سرتیتر
@@ -73,16 +76,23 @@ export class InvoiceService {
     const shipping = order.shippingInfo;
     if (shipping) {
       doc.fontSize(11);
-      doc.text(`گیرنده: ${shipping.first_name} ${shipping.last_name}`, { width: fullWidth, align: 'right' });
+      doc.text(`گیرنده: ${shipping.first_name} ${shipping.last_name}`, {
+        width: fullWidth,
+        align: 'right',
+      });
       doc.text(`تلفن: ${shipping.phone}`, { width: fullWidth, align: 'right' });
       const address = this.formatAddress(shipping.address);
-      if (address) doc.text(`آدرس: ${address}`, { width: fullWidth, align: 'right' });
+      if (address)
+        doc.text(`آدرس: ${address}`, { width: fullWidth, align: 'right' });
       doc.moveDown();
     }
 
     // ── جدول اقلام
     this.row(doc, ['مبلغ کل', 'قیمت واحد', 'تعداد', 'محصول'], true);
-    doc.moveTo(PAGE_MARGIN, doc.y).lineTo(doc.page.width - PAGE_MARGIN, doc.y).stroke();
+    doc
+      .moveTo(PAGE_MARGIN, doc.y)
+      .lineTo(doc.page.width - PAGE_MARGIN, doc.y)
+      .stroke();
     doc.moveDown(0.3);
 
     for (const item of order.items) {
@@ -112,7 +122,11 @@ export class InvoiceService {
   }
 
   /** یک سطر جدول؛ ارتفاع بر اساس بلندترین سلول (عنوان طولانی) محاسبه می‌شود */
-  private row(doc: PDFKit.PDFDocument, cells: [string, string, string, string], header = false) {
+  private row(
+    doc: PDFKit.PDFDocument,
+    cells: [string, string, string, string],
+    header = false,
+  ) {
     const columns = [COL.total, COL.unitPrice, COL.quantity, COL.title];
     doc.fontSize(header ? 11 : 10);
     const y = doc.y;

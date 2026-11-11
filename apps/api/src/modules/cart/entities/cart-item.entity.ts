@@ -1,5 +1,5 @@
 // cart-item.entity.ts
-import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, Index, ManyToOne, JoinColumn } from 'typeorm';
 import { Cart } from './cart.entity';
 import { CustomBaseEntity } from 'src/common/database/base.entity';
 import { Products } from 'src/modules/products/entities/products.entity';
@@ -7,6 +7,7 @@ import { ProductVariants } from 'src/modules/products/entities/product-variants.
 
 @Entity('cart_item')
 export class CartItem extends CustomBaseEntity {
+  @Index('idx_cart_item_cart')
   @ManyToOne(() => Cart, (cart) => cart.items, {
     onDelete: 'CASCADE',
     nullable: false,
@@ -14,16 +15,16 @@ export class CartItem extends CustomBaseEntity {
   @JoinColumn({ name: 'cartId' })
   cart!: Cart;
 
+  @Index('idx_cart_item_product')
   @ManyToOne(() => Products, {
-    eager: true,
     nullable: false,
     onDelete: 'RESTRICT',
   })
   @JoinColumn({ name: 'productId' })
   product!: Products;
 
+  @Index('idx_cart_item_variant')
   @ManyToOne(() => ProductVariants, {
-    eager: true,
     nullable: true,
     onDelete: 'SET NULL',
   })

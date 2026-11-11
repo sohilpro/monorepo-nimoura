@@ -50,10 +50,18 @@ export class TagGroupsAndProductTags1791900000000 implements MigrationInterface 
 
     // --- tags: add new columns --------------------------------------------
     await q.query(`ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "groupId" int`);
-    await q.query(`ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "slug" varchar(160)`);
-    await q.query(`ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "color" varchar(7)`);
-    await q.query(`ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "sortOrder" int NOT NULL DEFAULT 0`);
-    await q.query(`ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "isActive" boolean NOT NULL DEFAULT true`);
+    await q.query(
+      `ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "slug" varchar(160)`,
+    );
+    await q.query(
+      `ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "color" varchar(7)`,
+    );
+    await q.query(
+      `ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "sortOrder" int NOT NULL DEFAULT 0`,
+    );
+    await q.query(
+      `ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "isActive" boolean NOT NULL DEFAULT true`,
+    );
 
     const hasType = await q.query(
       `SELECT 1 FROM information_schema.columns WHERE table_name='tags' AND column_name='type'`,
@@ -79,27 +87,35 @@ export class TagGroupsAndProductTags1791900000000 implements MigrationInterface 
     }
 
     // --- slugs (unique per group) ------------------------------------------
-    const rows: Array<{ id: number; groupId: number; name: string }> = await q.query(
-      `SELECT "id","groupId","name" FROM "tags" WHERE "slug" IS NULL ORDER BY "id"`,
-    );
+    const rows: Array<{ id: number; groupId: number; name: string }> =
+      await q.query(
+        `SELECT "id","groupId","name" FROM "tags" WHERE "slug" IS NULL ORDER BY "id"`,
+      );
     const taken = new Map<number, Set<string>>();
     for (const row of rows) {
       const used = taken.get(row.groupId) ?? new Set<string>();
       taken.set(row.groupId, used);
       const base =
-        row.name.trim().replace(/\s+/g, '-').replace(/[^\p{L}\p{N}-]+/gu, '').toLowerCase() ||
-        `tag-${row.id}`;
+        row.name
+          .trim()
+          .replace(/\s+/g, '-')
+          .replace(/[^\p{L}\p{N}-]+/gu, '')
+          .toLowerCase() || `tag-${row.id}`;
       let slug = base;
       let i = 2;
       while (used.has(slug)) slug = `${base}-${i++}`;
       used.add(slug);
-      await q.query(`UPDATE "tags" SET "slug" = $1 WHERE "id" = $2`, [slug, row.id]);
+      await q.query(`UPDATE "tags" SET "slug" = $1 WHERE "id" = $2`, [
+        slug,
+        row.id,
+      ]);
     }
 
     // --- constraints ---------------------------------------------------------
     await q.query(`ALTER TABLE "tags" ALTER COLUMN "groupId" SET NOT NULL`);
     await q.query(`ALTER TABLE "tags" ALTER COLUMN "slug" SET NOT NULL`);
-    if (hasType.length) await q.query(`ALTER TABLE "tags" DROP COLUMN "type" CASCADE`);
+    if (hasType.length)
+      await q.query(`ALTER TABLE "tags" DROP COLUMN "type" CASCADE`);
 
     await q.query(`
       DO $$ BEGIN
@@ -114,7 +130,9 @@ export class TagGroupsAndProductTags1791900000000 implements MigrationInterface 
           ALTER TABLE "tags" ADD CONSTRAINT "UQ_tags_group_name" UNIQUE ("groupId","name");
         END IF;
       END $$;`);
-    await q.query(`CREATE INDEX IF NOT EXISTS "IDX_tags_group" ON "tags" ("groupId")`);
+    await q.query(
+      `CREATE INDEX IF NOT EXISTS "IDX_tags_group" ON "tags" ("groupId")`,
+    );
 
     // --- products ------------------------------------------------------------
     await q.query(
@@ -123,17 +141,31 @@ export class TagGroupsAndProductTags1791900000000 implements MigrationInterface 
   }
 
   async down(q: QueryRunner): Promise<void> {
-    await q.query(`ALTER TABLE "products" DROP COLUMN IF EXISTS "lowStockThreshold"`);
+    await q.query(
+      `ALTER TABLE "products" DROP COLUMN IF EXISTS "lowStockThreshold"`,
+    );
 
-    await q.query(`ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "type" varchar(64)`);
-    await q.query(`UPDATE "tags" t SET "type" = g."slug" FROM "tag_groups" g WHERE g."id" = t."groupId"`);
+    await q.query(
+      `ALTER TABLE "tags" ADD COLUMN IF NOT EXISTS "type" varchar(64)`,
+    );
+    await q.query(
+      `UPDATE "tags" t SET "type" = g."slug" FROM "tag_groups" g WHERE g."id" = t."groupId"`,
+    );
     await q.query(`ALTER TABLE "tags" ALTER COLUMN "type" SET NOT NULL`);
     await q.query(`ALTER TABLE "tags" RENAME COLUMN "name" TO "value"`);
-    await q.query(`ALTER TABLE "tags" DROP CONSTRAINT IF EXISTS "UQ_tags_group_slug"`);
-    await q.query(`ALTER TABLE "tags" DROP CONSTRAINT IF EXISTS "UQ_tags_group_name"`);
-    await q.query(`ALTER TABLE "tags" DROP CONSTRAINT IF EXISTS "FK_tags_group"`);
+    await q.query(
+      `ALTER TABLE "tags" DROP CONSTRAINT IF EXISTS "UQ_tags_group_slug"`,
+    );
+    await q.query(
+      `ALTER TABLE "tags" DROP CONSTRAINT IF EXISTS "UQ_tags_group_name"`,
+    );
+    await q.query(
+      `ALTER TABLE "tags" DROP CONSTRAINT IF EXISTS "FK_tags_group"`,
+    );
     await q.query(`DROP INDEX IF EXISTS "IDX_tags_group"`);
-    await q.query(`ALTER TABLE "tags" ADD CONSTRAINT "UQ_tags_type_value" UNIQUE ("type","value")`);
+    await q.query(
+      `ALTER TABLE "tags" ADD CONSTRAINT "UQ_tags_type_value" UNIQUE ("type","value")`,
+    );
     for (const col of ['groupId', 'slug', 'color', 'sortOrder', 'isActive']) {
       await q.query(`ALTER TABLE "tags" DROP COLUMN IF EXISTS "${col}"`);
     }

@@ -1,4 +1,11 @@
-import { IsOptional, IsEnum, IsInt, Min, IsString, IsIn } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsInt,
+  Min,
+  IsString,
+  IsIn,
+} from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { BannerStatus, BannerDevice } from '../enums';

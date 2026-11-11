@@ -19,25 +19,30 @@ import { ShippingInfo } from './shipping-info.entity';
 export { OrderStatus };
 
 @Entity('orders')
+@Index('idx_orders_user_created', ['user', 'createdAt'])
+@Index('idx_orders_status_created', ['status', 'createdAt'])
+@Index('idx_orders_created_at', ['createdAt'])
 export class Orders extends CustomBaseEntity {
   @Index()
   @Column({ nullable: true })
   orderCode!: string;
 
   /** برای سفارش تلفنیِ ثبت‌شده توسط ادمین ممکن است خالی باشد */
+  @Index('idx_orders_user')
   @ManyToOne(() => Users, { nullable: true })
   user?: Users | null;
 
   @OneToMany(() => OrderItems, (item) => item.order, {
     cascade: true,
-    eager: true,
   })
   items!: OrderItems[];
 
+  @Index('idx_orders_shipping_info')
   @OneToOne(() => ShippingInfo, { cascade: true, nullable: true })
   @JoinColumn({ name: 'shippingInfoId' })
   shippingInfo?: ShippingInfo;
 
+  @Index('idx_orders_payment_info')
   @OneToOne(() => PaymentInfo, { cascade: true, nullable: true })
   @JoinColumn({ name: 'paymentInfoId' })
   paymentInfo?: PaymentInfo;
@@ -58,6 +63,7 @@ export class Orders extends CustomBaseEntity {
   @Column('int', { default: 0 })
   discount!: number;
 
+  @Index('idx_orders_promotion')
   @ManyToOne(() => Promotions, { nullable: true })
   promotion?: Promotions;
 

@@ -41,22 +41,30 @@ export class ProductListingFilters {
       );
     }
     if (f.brandId) qb.andWhere('p.brandId = :brandId', { brandId: f.brandId });
-    if (f.subBrandId) qb.andWhere('p.subBrandId = :subBrandId', { subBrandId: f.subBrandId });
+    if (f.subBrandId)
+      qb.andWhere('p.subBrandId = :subBrandId', { subBrandId: f.subBrandId });
     if (f.categoryIds?.length) {
-      qb.andWhere('p.categoryId IN (:...categoryIds)', { categoryIds: f.categoryIds });
+      qb.andWhere('p.categoryId IN (:...categoryIds)', {
+        categoryIds: f.categoryIds,
+      });
     }
 
     if (!options.skipPrice) {
       if (f.minPrice !== undefined && f.minPrice !== null) {
-        qb.andWhere(`${EFFECTIVE_PRICE_SQL} >= :minPrice`, { minPrice: Number(f.minPrice) });
+        qb.andWhere(`${EFFECTIVE_PRICE_SQL} >= :minPrice`, {
+          minPrice: Number(f.minPrice),
+        });
       }
       if (f.maxPrice !== undefined && f.maxPrice !== null) {
-        qb.andWhere(`${EFFECTIVE_PRICE_SQL} <= :maxPrice`, { maxPrice: Number(f.maxPrice) });
+        qb.andWhere(`${EFFECTIVE_PRICE_SQL} <= :maxPrice`, {
+          maxPrice: Number(f.maxPrice),
+        });
       }
     }
 
     if (f.inStock) qb.andWhere('p.stock > 0');
-    if (f.onSale) qb.andWhere('p.priceDiscount > 0 AND p.priceDiscount < p.price');
+    if (f.onSale)
+      qb.andWhere('p.priceDiscount > 0 AND p.priceDiscount < p.price');
 
     await this.tagFilter.apply(qb, 'p', f.tagIds ?? [], {
       excludeGroupId: options.excludeTagGroupId,

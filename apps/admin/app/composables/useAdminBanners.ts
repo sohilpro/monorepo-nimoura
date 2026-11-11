@@ -172,7 +172,7 @@ export function useAdminBanners() {
       case BannerStatus.DRAFT:
         return 'bg-gray-100 text-gray-700 border-gray-300';
       case BannerStatus.SCHEDULED:
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-nimoura-accent/40 text-nimoura-velvet border-nimoura-accent';
       default:
         return 'bg-gray-50 text-gray-700 border-gray-200';
     }

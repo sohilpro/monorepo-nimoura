@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   ConflictException,
   Injectable,
   NotFoundException,
@@ -11,12 +10,24 @@ import * as bcrypt from 'bcrypt';
 import { CreateUserDto } from './dtos/create-user.dto';
 import { UpdateUserDto } from './dtos/update-user.dto';
 import { UpdateProfileDto } from './dtos/update-profile.dto';
-import {
-  buildPagination,
-  buildSearchWhereClause,
-} from 'src/common/utils/pagination.helper'; // مسیر هلپر پجینیشن
+import { buildSearchWhereClause } from 'src/common/utils/pagination.helper';
 import { WishlistService } from 'src/modules/wishlist/wishlist.service'; // مسیر سرویس ویش‌لیست
+import { Addresses } from './addresses/entities/addresses.entity';
+import { Orders } from 'src/modules/orders/entities/orders.entity';
 import { Users } from './entities/users.entity';
+
+const USER_PUBLIC_SELECT = {
+  id: true,
+  first_name: true,
+  last_name: true,
+  mobile: true,
+  verify_mobile: true,
+  email: true,
+  verify_email: true,
+  identity_card: true,
+  role: true,
+  createdAt: true,
+} as const;
 
 @Injectable()
 export class UsersService {
@@ -33,30 +44,42 @@ export class UsersService {
   // ==========================================
 
   async getProfile(userId: number) {
-    const user = await this.userRepository.findOne({
-      where: { id: userId },
-      relations: {
-        addresses: true,
-        orders: true,
-      },
-    });
+    const [user, addressesCount, ordersCount, wishlistCount] =
+      await Promise.all([
+        this.userRepository.findOne({
+          where: { id: userId },
+          select: USER_PUBLIC_SELECT,
+          loadEagerRelations: false,
+        }),
+        this.userRepository.manager.count(Addresses, { where: { userId } }),
+        this.userRepository.manager.count(Orders, {
+          where: { user: { id: userId } },
+        }),
+        this.wishlistService
+          ? this.wishlistService.count(userId)
+          : Promise.resolve(0),
+      ]);
 
     if (!user) {
       throw new NotFoundException('کاربر یافت نشد.');
     }
 
-    const { password, addresses, orders, ...safeUser } = user;
-    
-    // دریافت تعداد آیتم‌های علاقه‌مندی در صورت وجود ماژول
-    const wishlistCount = this.wishlistService
-      ? await this.wishlistService.count(userId)
-      : 0;
-
     return {
-      profile: safeUser,
+      profile: {
+        id: user.id,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        mobile: user.mobile,
+        verify_mobile: user.verify_mobile,
+        email: user.email,
+        verify_email: user.verify_email,
+        identity_card: user.identity_card,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
       stats: {
-        ordersCount: orders?.length ?? 0,
-        addressesCount: addresses?.length ?? 0,
+        ordersCount,
+        addressesCount,
         wishlistCount,
       },
     };
@@ -65,6 +88,18 @@ export class UsersService {
   async updateProfile(userId: number, dto: UpdateProfileDto) {
     const user = await this.userRepository.findOne({
       where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        verify_email: true,
+        identity_card: true,
+        first_name: true,
+        last_name: true,
+        role: true,
+        mobile: true,
+        verify_mobile: true,
+      },
+      loadEagerRelations: false,
     });
     if (!user) throw new NotFoundException('کاربر یافت نشد.');
 
@@ -72,6 +107,8 @@ export class UsersService {
     if (dto.email && dto.email !== user.email) {
       const existing = await this.userRepository.findOne({
         where: { email: dto.email },
+        select: { id: true },
+        loadEagerRelations: false,
       });
       if (existing) throw new ConflictException('این ایمیل قبلاً ثبت شده است.');
       user.email = dto.email;
@@ -84,9 +121,14 @@ export class UsersService {
     }
 
     // بررسی یکتایی کدملی
-    if (dto.identity_card !== undefined && dto.identity_card !== user.identity_card) {
+    if (
+      dto.identity_card !== undefined &&
+      dto.identity_card !== user.identity_card
+    ) {
       const existingUser = await this.userRepository.findOne({
         where: { identity_card: dto.identity_card },
+        select: { id: true },
+        loadEagerRelations: false,
       });
       if (existingUser && existingUser.id !== user.id) {
         throw new ConflictException('این کد ملی قبلاً ثبت شده است.');
@@ -122,14 +164,20 @@ export class UsersService {
   async createUser(dto: CreateUserDto) {
     const existingMobile = await this.userRepository.findOne({
       where: { mobile: dto.mobile },
+      select: { id: true },
+      loadEagerRelations: false,
     });
     if (existingMobile) {
-      throw new ConflictException('کاربری با این شماره موبایل قبلاً ثبت‌نام کرده است.');
+      throw new ConflictException(
+        'کاربری با این شماره موبایل قبلاً ثبت‌نام کرده است.',
+      );
     }
 
     if (dto.email) {
       const existingEmail = await this.userRepository.findOne({
         where: { email: dto.email },
+        select: { id: true },
+        loadEagerRelations: false,
       });
       if (existingEmail) {
         throw new ConflictException('این ایمیل قبلاً ثبت شده است.');
@@ -139,6 +187,8 @@ export class UsersService {
     if (dto.identity_card) {
       const existingId = await this.userRepository.findOne({
         where: { identity_card: dto.identity_card },
+        select: { id: true },
+        loadEagerRelations: false,
       });
       if (existingId) {
         throw new ConflictException('این کد ملی قبلاً ثبت شده است.');
@@ -162,11 +212,21 @@ export class UsersService {
     });
 
     const saved = await this.userRepository.save(user);
-    const { password, ...safeUser } = saved;
 
     return {
       message: 'کاربر با موفقیت ایجاد شد.',
-      user: safeUser,
+      user: {
+        id: saved.id,
+        first_name: saved.first_name,
+        last_name: saved.last_name,
+        mobile: saved.mobile,
+        email: saved.email,
+        role: saved.role,
+        identity_card: saved.identity_card,
+        verify_mobile: saved.verify_mobile,
+        verify_email: saved.verify_email,
+        createdAt: saved.createdAt,
+      },
     };
   }
 
@@ -175,30 +235,33 @@ export class UsersService {
     const limit = Math.min(100, Math.max(1, Number(query.limit) || 10));
     const search = (query.search || '').trim();
     const sortOrder =
-      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
-    const allowedSortFields = ['id', 'createdAt', 'first_name', 'last_name', 'mobile', 'email'];
-    const sortBy = allowedSortFields.includes(query.sortBy) ? query.sortBy : 'id';
+      String(query.sortOrder || 'DESC').toUpperCase() === 'ASC'
+        ? 'ASC'
+        : 'DESC';
+    const allowedSortFields = [
+      'id',
+      'createdAt',
+      'first_name',
+      'last_name',
+      'mobile',
+      'email',
+    ];
+    const sortBy = allowedSortFields.includes(query.sortBy)
+      ? query.sortBy
+      : 'id';
 
     const searchableFields = ['first_name', 'last_name', 'email', 'mobile'];
-    const where = search ? buildSearchWhereClause(search, searchableFields) : {};
+    const where = search
+      ? buildSearchWhereClause(search, searchableFields)
+      : {};
 
     const [data, total] = await this.userRepository.findAndCount({
       where,
       take: limit,
       skip: (page - 1) * limit,
       order: { [sortBy]: sortOrder },
-      select: {
-        id: true,
-        first_name: true,
-        last_name: true,
-        email: true,
-        mobile: true,
-        role: true,
-        verify_email: true,
-        verify_mobile: true,
-        identity_card: true,
-        createdAt: true,
-      },
+      select: USER_PUBLIC_SELECT,
+      loadEagerRelations: false,
     });
 
     const totalPages = Math.ceil(total / limit);
@@ -223,27 +286,54 @@ export class UsersService {
   async getUser(id: number) {
     const user = await this.userRepository.findOne({
       where: { id },
-      relations: {
-        addresses: true,
-        comments: true,
-        orders: true,
+      select: {
+        ...USER_PUBLIC_SELECT,
+        updatedAt: true,
       },
+      loadEagerRelations: false,
     });
 
     if (!user) throw new NotFoundException('کاربر مورد نظر یافت نشد.');
-    
-    const { password, ...safeUser } = user;
-    return safeUser;
+
+    return {
+      id: user.id,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      mobile: user.mobile,
+      verify_mobile: user.verify_mobile,
+      email: user.email,
+      verify_email: user.verify_email,
+      identity_card: user.identity_card,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 
   async updateUser(id: number, dto: UpdateUserDto) {
-    const user = await this.userRepository.findOne({ where: { id } });
+    const user = await this.userRepository.findOne({
+      where: { id },
+      select: {
+        id: true,
+        email: true,
+        mobile: true,
+        identity_card: true,
+        verify_email: true,
+        verify_mobile: true,
+        role: true,
+        first_name: true,
+        last_name: true,
+      },
+      loadEagerRelations: false,
+    });
     if (!user) throw new NotFoundException('کاربر یافت نشد.');
 
     // بررسی یکتایی ایمیل
     if (dto.email && dto.email !== user.email) {
       const emailExists = await this.userRepository.findOne({
         where: { email: dto.email },
+        select: { id: true },
+        loadEagerRelations: false,
       });
       if (emailExists) throw new ConflictException('ایمیل تکراری است.');
       user.email = dto.email;
@@ -254,6 +344,8 @@ export class UsersService {
     if (dto.mobile && dto.mobile !== user.mobile) {
       const mobileExists = await this.userRepository.findOne({
         where: { mobile: dto.mobile },
+        select: { id: true },
+        loadEagerRelations: false,
       });
       if (mobileExists) throw new ConflictException('شماره موبایل تکراری است.');
       user.mobile = dto.mobile;
@@ -261,9 +353,14 @@ export class UsersService {
     }
 
     // بررسی یکتایی کدملی
-    if (dto.identity_card !== undefined && dto.identity_card !== user.identity_card) {
+    if (
+      dto.identity_card !== undefined &&
+      dto.identity_card !== user.identity_card
+    ) {
       const idExists = await this.userRepository.findOne({
         where: { identity_card: dto.identity_card },
+        select: { id: true },
+        loadEagerRelations: false,
       });
       if (idExists && idExists.id !== user.id) {
         throw new ConflictException('کد ملی تکراری است.');

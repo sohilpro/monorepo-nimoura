@@ -9,14 +9,19 @@ import { PriceListResponse, PriceListRow } from './price-list.types';
 
 // یکسان‌سازی حروف عربی/فارسی برای جستجو
 const normalizeFa = (s: string) =>
-  s.replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\u200c/g, ' ').trim();
+  s
+    .replace(/ي/g, 'ی')
+    .replace(/ك/g, 'ک')
+    .replace(/\u200c/g, ' ')
+    .trim();
 
 @Injectable()
 export class PriceListService {
   constructor(
     @InjectRepository(Products) private readonly products: Repository<Products>,
     @InjectRepository(Brands) private readonly brands: Repository<Brands>,
-    @InjectRepository(Categories) private readonly categories: Repository<Categories>,
+    @InjectRepository(Categories)
+    private readonly categories: Repository<Categories>,
   ) {}
 
   async getList(q: PriceListQueryDto): Promise<PriceListResponse> {
@@ -24,17 +29,37 @@ export class PriceListService {
       .createQueryBuilder('p')
       // فقط ستون‌های لازم؛ introduce و howToUse که سنگین‌اند لود نمی‌شوند
       .select([
-        'p.id', 'p.title', 'p.slug', 'p.sku', 'p.type', 'p.price',
-        'p.priceDiscount', 'p.isAvailable', 'p.stock', 'p.updatedAt',
+        'p.id',
+        'p.title',
+        'p.slug',
+        'p.sku',
+        'p.type',
+        'p.price',
+        'p.priceDiscount',
+        'p.isAvailable',
+        'p.stock',
+        'p.updatedAt',
       ])
-      .leftJoin('p.brand', 'b').addSelect(['b.id', 'b.name'])
-      .leftJoin('p.category', 'c').addSelect(['c.id', 'c.name'])
-      .leftJoin('p.priceTiers', 'pt').addSelect(['pt.id', 'pt.minQuantity', 'pt.price'])
-      .leftJoin('p.variants', 'v').addSelect([
-        'v.id', 'v.sku', 'v.price', 'v.priceDiscount', 'v.isAvailable', 'v.stock', 'v.updatedAt',
+      .leftJoin('p.brand', 'b')
+      .addSelect(['b.id', 'b.name'])
+      .leftJoin('p.category', 'c')
+      .addSelect(['c.id', 'c.name'])
+      .leftJoin('p.priceTiers', 'pt')
+      .addSelect(['pt.id', 'pt.minQuantity', 'pt.price'])
+      .leftJoin('p.variants', 'v')
+      .addSelect([
+        'v.id',
+        'v.sku',
+        'v.price',
+        'v.priceDiscount',
+        'v.isAvailable',
+        'v.stock',
+        'v.updatedAt',
       ])
-      .leftJoin('v.attributeValues', 'av').addSelect(['av.id', 'av.value'])
-      .leftJoin('v.priceTiers', 'vt').addSelect(['vt.id', 'vt.minQuantity', 'vt.price'])
+      .leftJoin('v.attributeValues', 'av')
+      .addSelect(['av.id', 'av.value'])
+      .leftJoin('v.priceTiers', 'vt')
+      .addSelect(['vt.id', 'vt.minQuantity', 'vt.price'])
       .orderBy('c.name', 'ASC')
       .addOrderBy('p.title', 'ASC');
 
@@ -57,7 +82,8 @@ export class PriceListService {
       const s = `%${normalizeFa(q.search)}%`;
       qb.andWhere(
         new Brackets((w) =>
-          w.where('p.title ILIKE :s', { s })
+          w
+            .where('p.title ILIKE :s', { s })
             .orWhere('p.englishTitle ILIKE :s', { s })
             .orWhere('p.sku ILIKE :s', { s })
             .orWhere('v.sku ILIKE :s', { s }),
@@ -76,9 +102,13 @@ export class PriceListService {
     for (const p of list) {
       touch(p.updatedAt);
       const base = {
-        productId: p.id, slug: p.slug, title: p.title,
-        brandId: p.brand?.id ?? null, brand: p.brand?.name ?? '—',
-        categoryId: p.category?.id ?? null, category: p.category?.name ?? 'سایر',
+        productId: p.id,
+        slug: p.slug,
+        title: p.title,
+        brandId: p.brand?.id ?? null,
+        brand: p.brand?.name ?? '—',
+        categoryId: p.category?.id ?? null,
+        category: p.category?.name ?? 'سایر',
       };
 
       if (p.type === 'variant' && p.variants?.length) {
@@ -88,7 +118,8 @@ export class PriceListService {
           rows.push({
             ...base,
             key: `v-${v.id}`,
-            variantLabel: v.attributeValues?.map((a) => a.value).join(' / ') || null,
+            variantLabel:
+              v.attributeValues?.map((a) => a.value).join(' / ') || null,
             sku: v.sku,
             ...this.prices(v.price, v.priceDiscount),
             inStock: v.isAvailable && v.stock > 0,
@@ -116,12 +147,25 @@ export class PriceListService {
 
   async getFilters() {
     const [brands, cats] = await Promise.all([
-      this.brands.find({ select: { id: true, name: true }, order: { name: 'ASC' } }),
-      this.categories.find({ relations: { parent: true }, order: { name: 'ASC' } }),
+      this.brands.find({
+        select: { id: true, name: true },
+        order: { name: 'ASC' },
+        loadEagerRelations: false,
+      }),
+      this.categories.find({
+        select: { id: true, name: true, parent: { id: true } },
+        relations: { parent: true },
+        order: { name: 'ASC' },
+        loadEagerRelations: false,
+      }),
     ]);
     return {
       brands,
-      categories: cats.map((c) => ({ id: c.id, name: c.name, parentId: c.parent?.id ?? null })),
+      categories: cats.map((c) => ({
+        id: c.id,
+        name: c.name,
+        parentId: c.parent?.id ?? null,
+      })),
     };
   }
 
@@ -130,7 +174,9 @@ export class PriceListService {
     return {
       price,
       finalPrice: hasDiscount ? priceDiscount : price,
-      discountPercent: hasDiscount ? Math.round((1 - priceDiscount / price) * 100) : 0,
+      discountPercent: hasDiscount
+        ? Math.round((1 - priceDiscount / price) * 100)
+        : 0,
     };
   }
 

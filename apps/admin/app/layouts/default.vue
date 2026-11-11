@@ -1,9 +1,7 @@
 <template>
-  <LayoutThemeProvider>
-    <LayoutSidebarProvider>
-      <LayoutAdminLayout>
-        <slot />
-      </LayoutAdminLayout>
-    </LayoutSidebarProvider>
-  </LayoutThemeProvider>
+  <LayoutSidebarProvider>
+    <LayoutAdminLayout>
+      <slot />
+    </LayoutAdminLayout>
+  </LayoutSidebarProvider>
 </template>

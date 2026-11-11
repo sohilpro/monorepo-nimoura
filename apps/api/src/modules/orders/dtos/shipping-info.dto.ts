@@ -12,12 +12,22 @@ import {
 import { CreateAddressDto } from 'src/modules/users/addresses/dtos/create-address.dto';
 
 export class ShippingInfoDto {
-  @ApiProperty({ description: 'نام گیرنده', minLength: 2, maxLength: 100, example: 'علی' })
+  @ApiProperty({
+    description: 'نام گیرنده',
+    minLength: 2,
+    maxLength: 100,
+    example: 'علی',
+  })
   @IsString()
   @Length(2, 100)
   first_name!: string;
 
-  @ApiProperty({ description: 'نام خانوادگی گیرنده', minLength: 2, maxLength: 100, example: 'رضایی' })
+  @ApiProperty({
+    description: 'نام خانوادگی گیرنده',
+    minLength: 2,
+    maxLength: 100,
+    example: 'رضایی',
+  })
   @IsString()
   @Length(2, 100)
   last_name!: string;
@@ -34,7 +44,8 @@ export class ShippingInfoDto {
 
   @ApiPropertyOptional({
     type: Number,
-    description: 'شناسه‌ی آدرس ذخیره‌شده‌ی کاربر. اگر ارسال نشود، «address» الزامی است',
+    description:
+      'شناسه‌ی آدرس ذخیره‌شده‌ی کاربر. اگر ارسال نشود، «address» الزامی است',
     example: 12,
   })
   @IsOptional()

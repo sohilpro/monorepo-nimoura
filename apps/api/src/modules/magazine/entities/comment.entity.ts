@@ -16,6 +16,13 @@ export enum CommentStatus {
 }
 
 @Entity('magazine_comments')
+@Index('idx_mag_comments_article_status_parent', [
+  'article',
+  'status',
+  'parent',
+  'createdAt',
+])
+@Index('idx_mag_comments_status_created', ['status', 'createdAt'])
 export class Comment extends CustomBaseEntity {
   @Column({ type: 'varchar', length: 120 })
   name: string;

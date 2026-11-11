@@ -43,7 +43,8 @@ export class ProductsController {
 
   @Get('catalog/facets')
   @ApiOperation({
-    summary: 'داده‌های فیلتر سایدبار: گروه‌های تگ با تعداد محصول، بازه قیمت و شمارنده‌ها',
+    summary:
+      'داده‌های فیلتر سایدبار: گروه‌های تگ با تعداد محصول، بازه قیمت و شمارنده‌ها',
   })
   async getFacets(@Query() query: ProductFilterQueryDto) {
     return this.facetsService.getFacets({

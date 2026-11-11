@@ -8,12 +8,7 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiParam,
-  ApiResponse,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { BrandsService } from '../brands.service';
 import { Public } from 'src/common/auth/auth.decorators';
 import { PaginationQueryDto } from 'src/modules/products/dtos/product-query.dto';

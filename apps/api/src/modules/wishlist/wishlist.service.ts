@@ -7,6 +7,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Wishlist } from './entities/wishlist.entity';
 import { Products } from '../products/entities/products.entity';
+import {
+  buildProductBadges,
+  getDiscountPercent,
+  getStockStatus,
+} from '../products/utils/product-badges';
 
 @Injectable()
 export class WishlistService {
@@ -20,12 +25,38 @@ export class WishlistService {
   async getUserWishlist(userId: number) {
     const items = await this.wishlistRepo.find({
       where: { user: { id: userId } },
+      select: {
+        id: true,
+        product: {
+          id: true,
+          title: true,
+          slug: true,
+          thumbnail: true,
+          price: true,
+          priceDiscount: true,
+          percentageDiscount: true,
+          stock: true,
+          isAvailable: true,
+          isAmazingOffer: true,
+          lowStockThreshold: true,
+          type: true,
+          averageRating: true,
+          ratingsCount: true,
+          createdAt: true,
+        },
+      },
       relations: { product: true },
       order: { createdAt: 'DESC' },
+      loadEagerRelations: false,
     });
 
     return {
-      items: items.map((i) => i.product),
+      items: items.map((i) => ({
+        ...i.product,
+        discountPercent: getDiscountPercent(i.product),
+        stockStatus: getStockStatus(i.product),
+        badges: buildProductBadges(i.product),
+      })),
       total: items.length,
     };
   }
@@ -35,13 +66,13 @@ export class WishlistService {
   }
 
   async add(userId: number, productId: number) {
-    const product = await this.productRepo.findOne({
-      where: { id: productId },
-    });
-    if (!product) throw new NotFoundException('محصول یافت نشد.');
+    const productExists = await this.productRepo.existsBy({ id: productId });
+    if (!productExists) throw new NotFoundException('محصول یافت نشد.');
 
     const existing = await this.wishlistRepo.findOne({
       where: { user: { id: userId }, product: { id: productId } },
+      select: { id: true },
+      loadEagerRelations: false,
     });
     if (existing) {
       throw new ConflictException(
@@ -50,8 +81,8 @@ export class WishlistService {
     }
 
     const wishlistItem = this.wishlistRepo.create({
-      user: { id: userId } as any,
-      product: { id: productId } as any,
+      user: { id: userId },
+      product: { id: productId },
     });
 
     await this.wishlistRepo.save(wishlistItem);
@@ -84,6 +115,8 @@ export class WishlistService {
   async toggle(userId: number, productId: number) {
     const existing = await this.wishlistRepo.findOne({
       where: { user: { id: userId }, product: { id: productId } },
+      select: { id: true },
+      loadEagerRelations: false,
     });
 
     if (existing) {
@@ -91,14 +124,12 @@ export class WishlistService {
       return { message: 'محصول از علاقه‌مندی‌ها حذف شد.', inWishlist: false };
     }
 
-    const product = await this.productRepo.findOne({
-      where: { id: productId },
-    });
-    if (!product) throw new NotFoundException('محصول یافت نشد.');
+    const productExists = await this.productRepo.existsBy({ id: productId });
+    if (!productExists) throw new NotFoundException('محصول یافت نشد.');
 
     const wishlistItem = this.wishlistRepo.create({
-      user: { id: userId } as any,
-      product: { id: productId } as any,
+      user: { id: userId },
+      product: { id: productId },
     });
     await this.wishlistRepo.save(wishlistItem);
 

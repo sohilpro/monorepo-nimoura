@@ -103,8 +103,8 @@ function onFormSaved() {
   <div class="p-4 md:p-6 max-w-7xl mx-auto" dir="rtl">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
       <div>
-        <h1 class="text-2xl font-bold text-slate-800">کدهای تخفیف</h1>
-        <p class="text-sm text-slate-500 mt-1">مدیریت کدهای تخفیف و پروموشن‌های فروشگاه</p>
+        <h1 class="text-2xl font-bold text-gray-800">کدهای تخفیف</h1>
+        <p class="text-sm text-gray-500 mt-1">مدیریت کدهای تخفیف و پروموشن‌های فروشگاه</p>
       </div>
       <Button label="کد تخفیف جدید" icon="pi pi-plus" @click="openCreate" />
     </div>
@@ -127,7 +127,7 @@ function onFormSaved() {
       />
     </div>
 
-    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-theme-xs overflow-hidden">
       <DataTable
         :value="items"
         :loading="loading"
@@ -141,12 +141,12 @@ function onFormSaved() {
         removable-sort
       >
         <template #empty>
-          <div class="text-center py-10 text-slate-400">هیچ کد تخفیفی یافت نشد</div>
+          <div class="text-center py-10 text-gray-400">هیچ کد تخفیفی یافت نشد</div>
         </template>
 
         <Column field="code" header="کد">
           <template #body="{ data }">
-            <span class="font-mono font-semibold text-slate-800">{{ data.code }}</span>
+            <span class="font-mono font-semibold text-gray-800">{{ data.code }}</span>
           </template>
         </Column>
 

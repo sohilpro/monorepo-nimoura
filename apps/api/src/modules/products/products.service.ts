@@ -31,14 +31,9 @@ import {
   getDiscountPercent,
   getStockStatus,
 } from './utils/product-badges';
-// import { getSafeExtension } from 'src/common/utils/extention';
 import { buildPagination } from 'src/common/utils/pagination.helper';
-// import { MediaService } from '../media/media.service';
 import { MediaOwnerType } from '../media/enums/media-owner-type.enum';
-import { AttributeValues } from './entities/attribute-values.entity';
-import { BundleItems } from './entities/bundle-items.entity';
 import { MediaStaticService } from '../media/media-static.service';
-import { Attributes } from './entities/attributes.entity';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { ProductVariantsService } from './product-variants.service';
 import { ProductBundlesService } from './product-bundles.service';
@@ -46,6 +41,33 @@ import { ProductPriceTiers } from './entities/product-price-tiers.entity';
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 12;
+
+const PRODUCT_CARD_SELECT = [
+  'p.id',
+  'p.title',
+  'p.englishTitle',
+  'p.slug',
+  'p.sku',
+  'p.type',
+  'p.price',
+  'p.priceDiscount',
+  'p.percentageDiscount',
+  'p.stock',
+  'p.isAvailable',
+  'p.isAmazingOffer',
+  'p.lowStockThreshold',
+  'p.thumbnail',
+  'p.averageRating',
+  'p.ratingsCount',
+  'p.createdAt',
+  'p.updatedAt',
+  'c.id',
+  'c.name',
+  'c.slug',
+  'b.id',
+  'b.name',
+  'b.slug',
+];
 
 @Injectable()
 export class ProductsService {
@@ -126,9 +148,28 @@ export class ProductsService {
     // واکشی مستقیم با relationId بدون درگیر شدن با اسامی ستون‌های دیتابیس
     const variants = await this.variantRepo
       .createQueryBuilder('pv')
-      .leftJoinAndSelect('pv.product', 'prod') // الزامی برای دریافت شناسه محصول
-      .leftJoinAndSelect('pv.attributeValues', 'av')
-      .leftJoinAndSelect('av.attribute', 'attr')
+      .select([
+        'pv.id',
+        'pv.sku',
+        'pv.price',
+        'pv.priceDiscount',
+        'pv.percentageDiscount',
+        'pv.stock',
+        'pv.isAvailable',
+        'pv.images',
+        'pv.createdAt',
+        'pv.updatedAt',
+        'prod.id',
+        'av.id',
+        'av.value',
+        'av.colorHex',
+        'attr.id',
+        'attr.name',
+        'attr.kind',
+      ])
+      .leftJoin('pv.product', 'prod') // الزامی برای دریافت شناسه محصول
+      .leftJoin('pv.attributeValues', 'av')
+      .leftJoin('av.attribute', 'attr')
       .where('prod.id IN (:...productIds)', { productIds })
       .orderBy('pv.id', 'ASC')
       .getMany();
@@ -169,10 +210,9 @@ export class ProductsService {
 
     const rows = await this.tierRepo
       .createQueryBuilder('t')
+      .select(['t.id', 't.minQuantity', 't.price', 'tp.id', 'tv.id'])
       .leftJoin('t.product', 'tp')
-      .addSelect('tp.id')
       .leftJoin('t.variant', 'tv')
-      .addSelect('tv.id')
       .where(conds.join(' OR '), { pids, vids })
       .orderBy('t.minQuantity', 'ASC')
       .getMany();
@@ -218,8 +258,9 @@ export class ProductsService {
 
     const qb = this.productRepo
       .createQueryBuilder('p')
-      .leftJoinAndSelect('p.category', 'c')
-      .leftJoinAndSelect('p.brand', 'b')
+      .select(PRODUCT_CARD_SELECT)
+      .leftJoin('p.category', 'c')
+      .leftJoin('p.brand', 'b')
       .where('p.isAvailable = :isAvailable', { isAvailable: true });
 
     await this.listingFilters.apply(qb, {
@@ -275,9 +316,16 @@ export class ProductsService {
 
     const qb = this.productRepo
       .createQueryBuilder('p')
-      .leftJoinAndSelect('p.category', 'c')
-      .leftJoinAndSelect('p.brand', 'b')
-      .leftJoinAndSelect('p.subBrand', 'sb');
+      .select([
+        ...PRODUCT_CARD_SELECT,
+        'sb.id',
+        'sb.name',
+        'sb.slug',
+        'sb.brandId',
+      ])
+      .leftJoin('p.category', 'c')
+      .leftJoin('p.brand', 'b')
+      .leftJoin('p.subBrand', 'sb');
 
     if (isAvailable !== undefined && isAvailable !== '') {
       const boolVal =
@@ -431,8 +479,9 @@ export class ProductsService {
     // ۲. خود محصولات
     const [items, total] = await this.productRepo
       .createQueryBuilder('p')
-      .leftJoinAndSelect('p.category', 'c')
-      .leftJoinAndSelect('p.brand', 'b')
+      .select(PRODUCT_CARD_SELECT)
+      .leftJoin('p.category', 'c')
+      .leftJoin('p.brand', 'b')
       .where('p.id IN (:...ids)', { ids })
       .andWhere('p.isAvailable = :a', { a: true })
       .orderBy('p.createdAt', 'DESC')
@@ -462,16 +511,15 @@ export class ProductsService {
 
     const qb = this.productRepo
       .createQueryBuilder('p')
-      .leftJoinAndSelect('p.category', 'c')
-      .leftJoinAndSelect('p.brand', 'b')
-      .leftJoinAndSelect('p.variants', 'v')
-      .leftJoinAndSelect('p.images', 'img')
+      .select(PRODUCT_CARD_SELECT)
+      .leftJoin('p.category', 'c')
+      .leftJoin('p.brand', 'b')
       // ۱. اضافه کردن فرمول شافل به عنوان فیلد محاسباتی
       .addSelect(`md5(concat(p.id, '${todaySeed}'))`, 'daily_shuffle')
       .where('p.isAmazingOffer = :amazing', { amazing: true })
       .andWhere('p.isAvailable = :available', { available: true })
       .andWhere(
-        '( (p.type = :simple AND p.stock > 0) OR (p.type = :variant AND v.stock > 0) OR (p.type = :bundle) )',
+        '( (p.type = :simple AND p.stock > 0) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v WHERE v."productId" = p.id AND v.deleted_at IS NULL AND v.stock > 0)) OR (p.type = :bundle) )',
         {
           simple: 'simple',
           variant: 'variant',
@@ -482,7 +530,7 @@ export class ProductsService {
     // ۲. فیلتر حداقل قیمت (هم برای محصول ساده هم واریانت‌ها)
     if (minPrice !== undefined && minPrice !== null && minPrice !== '') {
       qb.andWhere(
-        '( (p.type = :simple AND p.price >= :minPrice) OR (p.type = :variant AND v.price >= :minPrice) )',
+        '( (p.type = :simple AND p.price >= :minPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_min WHERE v_min."productId" = p.id AND v_min.deleted_at IS NULL AND v_min.price >= :minPrice)) )',
         { minPrice: Number(minPrice) },
       );
     }
@@ -490,7 +538,7 @@ export class ProductsService {
     // ۳. فیلتر حداکثر قیمت (هم برای محصول ساده هم واریانت‌ها)
     if (maxPrice !== undefined && maxPrice !== null && maxPrice !== '') {
       qb.andWhere(
-        '( (p.type = :simple AND p.price <= :maxPrice) OR (p.type = :variant AND v.price <= :maxPrice) )',
+        '( (p.type = :simple AND p.price <= :maxPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_max WHERE v_max."productId" = p.id AND v_max.deleted_at IS NULL AND v_max.price <= :maxPrice)) )',
         { maxPrice: Number(maxPrice) },
       );
     }
@@ -501,6 +549,7 @@ export class ProductsService {
       .take(limit);
 
     const [items, total] = await qb.getManyAndCount();
+    await Promise.all([this.attachImages(items), this.attachVariants(items)]);
 
     // ۵. اعمال تخفیف‌ها قبل از ارسال به صفحه‌بندی
     const productsWithDiscounts = this.calculateDiscounts(items);
@@ -542,6 +591,14 @@ export class ProductsService {
       where: isNumericBrand
         ? { id: Number(brandIdentifier) }
         : { slug: String(brandIdentifier).trim() },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+        description: true,
+      },
+      loadEagerRelations: false,
     });
 
     if (!brand) {
@@ -553,16 +610,24 @@ export class ProductsService {
     if (subBrandId) {
       activeSubBrand = await subBrandRepo.findOne({
         where: { id: Number(subBrandId), brandId: brand.id },
+        select: { id: true, name: true, slug: true },
+        loadEagerRelations: false,
       });
     }
 
     // ۳. ساخت QueryBuilder برای محصولات
     const qb = this.productRepo
       .createQueryBuilder('p')
-      .leftJoinAndSelect('p.brand', 'b')
-      .leftJoinAndSelect('p.subBrand', 'sb')
-      .leftJoinAndSelect('p.category', 'c')
-      .leftJoinAndSelect('p.variants', 'v');
+      .select([
+        ...PRODUCT_CARD_SELECT,
+        'sb.id',
+        'sb.name',
+        'sb.slug',
+        'sb.brandId',
+      ])
+      .leftJoin('p.brand', 'b')
+      .leftJoin('p.subBrand', 'sb')
+      .leftJoin('p.category', 'c');
 
     // فیلتر بر اساس برند اصلی پیدا شده
     qb.where('p.brandId = :brandId', { brandId: brand.id });
@@ -582,7 +647,7 @@ export class ProductsService {
     // فیلتر حداقل قیمت
     if (minPrice !== undefined && minPrice !== null && !isNaN(minPrice)) {
       qb.andWhere(
-        '( (p.type = :simple AND p.price >= :minPrice) OR (p.type = :variant AND v.price >= :minPrice) )',
+        '( (p.type = :simple AND p.price >= :minPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_min WHERE v_min."productId" = p.id AND v_min.deleted_at IS NULL AND v_min.price >= :minPrice)) )',
         { minPrice: Number(minPrice), simple: 'simple', variant: 'variant' },
       );
     }
@@ -590,7 +655,7 @@ export class ProductsService {
     // فیلتر حداکثر قیمت
     if (maxPrice !== undefined && maxPrice !== null && !isNaN(maxPrice)) {
       qb.andWhere(
-        '( (p.type = :simple AND p.price <= :maxPrice) OR (p.type = :variant AND v.price <= :maxPrice) )',
+        '( (p.type = :simple AND p.price <= :maxPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_max WHERE v_max."productId" = p.id AND v_max.deleted_at IS NULL AND v_max.price <= :maxPrice)) )',
         { maxPrice: Number(maxPrice), simple: 'simple', variant: 'variant' },
       );
     }
@@ -615,7 +680,7 @@ export class ProductsService {
 
     const [items, total] = await qb.getManyAndCount();
 
-    await this.attachImages(items);
+    await Promise.all([this.attachImages(items), this.attachVariants(items)]);
 
     const productsWithDiscounts = this.calculateDiscounts(items);
 
@@ -664,11 +729,28 @@ export class ProductsService {
     const categoryRepo = this.productRepo.manager.getRepository(Categories);
     const currentCategory = await categoryRepo.findOne({
       where: { id: categoryId },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        seoText: true,
+        parent: {
+          id: true,
+          name: true,
+          slug: true,
+          parent: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
       relations: {
         parent: {
           parent: true, // لایه دوم والد
         },
       },
+      loadEagerRelations: false,
     });
 
     if (!currentCategory) {
@@ -688,8 +770,9 @@ export class ProductsService {
 
     const qb = this.productRepo
       .createQueryBuilder('p')
-      .leftJoinAndSelect('p.category', 'c')
-      .leftJoinAndSelect('p.brand', 'b')
+      .select(PRODUCT_CARD_SELECT)
+      .leftJoin('p.category', 'c')
+      .leftJoin('p.brand', 'b')
       .where('p.isAvailable = :active', { active: true });
 
     await this.listingFilters.apply(qb, {
@@ -760,6 +843,94 @@ export class ProductsService {
   async findById(id: number): Promise<Products> {
     const product = await this.productRepo.findOne({
       where: { id },
+      select: {
+        id: true,
+        title: true,
+        englishTitle: true,
+        slug: true,
+        sku: true,
+        type: true,
+        price: true,
+        priceDiscount: true,
+        percentageDiscount: true,
+        stock: true,
+        lowStockThreshold: true,
+        isAvailable: true,
+        isAmazingOffer: true,
+        thumbnail: true,
+        shortDescription: true,
+        introduce: true,
+        howToUse: true,
+        specifications: true,
+        averageRating: true,
+        ratingsCount: true,
+        createdAt: true,
+        updatedAt: true,
+        category: {
+          id: true,
+          name: true,
+          slug: true,
+          parent: {
+            id: true,
+            name: true,
+            slug: true,
+            parent: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
+        },
+        brand: { id: true, name: true, slug: true },
+        subBrand: { id: true, name: true, slug: true, brandId: true },
+        tags: {
+          id: true,
+          name: true,
+          slug: true,
+          color: true,
+          isActive: true,
+          group: { id: true, name: true, slug: true, isActive: true },
+        },
+        images: { id: true, url: true },
+        variants: {
+          id: true,
+          sku: true,
+          price: true,
+          priceDiscount: true,
+          percentageDiscount: true,
+          stock: true,
+          isAvailable: true,
+          images: true,
+          createdAt: true,
+          updatedAt: true,
+          attributeValues: {
+            id: true,
+            value: true,
+            colorHex: true,
+            attribute: { id: true, name: true, kind: true },
+          },
+        },
+        bundleItems: {
+          id: true,
+          quantity: true,
+          product: {
+            id: true,
+            title: true,
+            thumbnail: true,
+            sku: true,
+            type: true,
+            price: true,
+            priceDiscount: true,
+          },
+          variant: {
+            id: true,
+            sku: true,
+            price: true,
+            priceDiscount: true,
+            attributeValues: { id: true, value: true, colorHex: true },
+          },
+        },
+      },
       relations: {
         category: {
           parent: {
@@ -768,7 +939,7 @@ export class ProductsService {
         },
         brand: true,
         subBrand: true,
-        tags: true,
+        tags: { group: true },
         images: true,
         variants: {
           attributeValues: {
@@ -777,30 +948,15 @@ export class ProductsService {
         },
         bundleItems: {
           product: true,
-          variant: true,
+          variant: { attributeValues: true },
         },
       },
+      loadEagerRelations: false,
       order: { variants: { id: 'ASC' } },
     });
 
     if (!product) {
       throw new NotFoundException('محصول یافت نشد');
-    }
-
-    // ۱. حذف چرخه product از داخل عکس‌های گالری
-    if (Array.isArray(product.images)) {
-      product.images = product.images.map((img) => {
-        const { product: _, ...cleanImg } = img;
-        return cleanImg as any;
-      });
-    }
-
-    // ۲. حذف چرخه product از داخل واریانت‌ها
-    if (Array.isArray(product.variants)) {
-      product.variants = product.variants.map((variant) => {
-        const { product: _, ...cleanVariant } = variant;
-        return cleanVariant as any;
-      });
     }
 
     return product;
@@ -812,15 +968,64 @@ export class ProductsService {
   async findBySlug(slug: string): Promise<Products> {
     const product = await this.productRepo.findOne({
       where: { slug },
+      select: {
+        id: true,
+        title: true,
+        englishTitle: true,
+        slug: true,
+        sku: true,
+        type: true,
+        price: true,
+        priceDiscount: true,
+        percentageDiscount: true,
+        stock: true,
+        lowStockThreshold: true,
+        isAvailable: true,
+        isAmazingOffer: true,
+        thumbnail: true,
+        shortDescription: true,
+        introduce: true,
+        howToUse: true,
+        specifications: true,
+        averageRating: true,
+        ratingsCount: true,
+        createdAt: true,
+        updatedAt: true,
+        category: { id: true, name: true, slug: true },
+        brand: { id: true, name: true, slug: true },
+        subBrand: { id: true, name: true, slug: true, brandId: true },
+        priceTiers: { id: true, minQuantity: true, price: true },
+        variants: {
+          id: true,
+          sku: true,
+          price: true,
+          priceDiscount: true,
+          percentageDiscount: true,
+          stock: true,
+          isAvailable: true,
+          images: true,
+          createdAt: true,
+          updatedAt: true,
+          attributeValues: {
+            id: true,
+            value: true,
+            colorHex: true,
+            attribute: { id: true, name: true, kind: true },
+          },
+          priceTiers: { id: true, minQuantity: true, price: true },
+        },
+      },
       relations: {
         category: true,
         brand: true,
+        subBrand: true,
         variants: {
           attributeValues: { attribute: true },
           priceTiers: true, // لود پله‌های هر واریانت
         },
         priceTiers: true, // لود پله‌های محصول ساده
       },
+      loadEagerRelations: false,
       order: {
         priceTiers: {
           minQuantity: 'ASC', // سورت صعودی برای سهولت کار کلاینت و فرمول محاسبه
@@ -850,6 +1055,9 @@ export class ProductsService {
   ): Promise<Products[]> {
     const current = await this.productRepo.findOne({
       where: { id: productId },
+      select: { id: true, category: { id: true } },
+      relations: { category: true },
+      loadEagerRelations: false,
     });
 
     if (!current?.category?.id) {
@@ -859,8 +1067,10 @@ export class ProductsService {
     const products = await this.randomSample(
       this.productRepo
         .createQueryBuilder('p')
-        .innerJoin('p.category', 'category')
-        .where('category.id = :categoryId', {
+        .select(PRODUCT_CARD_SELECT)
+        .innerJoin('p.category', 'c')
+        .leftJoin('p.brand', 'b')
+        .where('c.id = :categoryId', {
           categoryId: current.category.id,
         })
         .andWhere('p.id != :id', {
@@ -887,6 +1097,9 @@ export class ProductsService {
   ): Promise<Products[]> {
     const current = await this.productRepo.findOne({
       where: { id: productId },
+      select: { id: true, brand: { id: true } },
+      relations: { brand: true },
+      loadEagerRelations: false,
     });
 
     if (!current?.brand?.id) {
@@ -898,8 +1111,10 @@ export class ProductsService {
     const products = await this.randomSample(
       this.productRepo
         .createQueryBuilder('p')
-        .innerJoin('p.brand', 'brand')
-        .where('brand.id = :brandId', { brandId })
+        .select(PRODUCT_CARD_SELECT)
+        .leftJoin('p.category', 'c')
+        .innerJoin('p.brand', 'b')
+        .where('b.id = :brandId', { brandId })
         .andWhere('p.id != :id', { id: productId })
         .andWhere('p.isAvailable = :available', { available: true }),
       limit,
@@ -933,9 +1148,27 @@ export class ProductsService {
 
     // ۱. بررسی صحت روابط پایه (دسته‌بندی، برند و زیربرند)
     const [category, brand, subBrand] = await Promise.all([
-      categoryId ? this.categoryRepo.findOneBy({ id: categoryId }) : null,
-      brandId ? this.brandRepo.findOneBy({ id: brandId }) : null,
-      subBrandId ? this.subBrandRepo.findOneBy({ id: subBrandId }) : null,
+      categoryId
+        ? this.categoryRepo.findOne({
+            where: { id: categoryId },
+            select: { id: true, name: true, slug: true },
+            loadEagerRelations: false,
+          })
+        : null,
+      brandId
+        ? this.brandRepo.findOne({
+            where: { id: brandId },
+            select: { id: true, name: true, slug: true },
+            loadEagerRelations: false,
+          })
+        : null,
+      subBrandId
+        ? this.subBrandRepo.findOne({
+            where: { id: subBrandId },
+            select: { id: true, name: true, slug: true, brandId: true },
+            loadEagerRelations: false,
+          })
+        : null,
     ]);
 
     if (categoryId && !category)
@@ -1149,19 +1382,31 @@ export class ProductsService {
 
     // ۱. بررسی و به‌روزرسانی روابط پایه در صورت تغییر
     if (categoryId && categoryId !== product.category?.id) {
-      const cat = await this.categoryRepo.findOneBy({ id: categoryId });
+      const cat = await this.categoryRepo.findOne({
+        where: { id: categoryId },
+        select: { id: true, name: true, slug: true },
+        loadEagerRelations: false,
+      });
       if (!cat) throw new NotFoundException('دسته‌بندی نامعتبر است');
       product.category = cat;
     }
 
     if (brandId && brandId !== product.brand?.id) {
-      const b = await this.brandRepo.findOneBy({ id: brandId });
+      const b = await this.brandRepo.findOne({
+        where: { id: brandId },
+        select: { id: true, name: true, slug: true },
+        loadEagerRelations: false,
+      });
       if (!b) throw new NotFoundException('برند نامعتبر است');
       product.brand = b;
     }
 
     if (subBrandId && subBrandId !== product.subBrand?.id) {
-      const sb = await this.subBrandRepo.findOneBy({ id: subBrandId });
+      const sb = await this.subBrandRepo.findOne({
+        where: { id: subBrandId },
+        select: { id: true, name: true, slug: true, brandId: true },
+        loadEagerRelations: false,
+      });
       if (!sb) throw new NotFoundException('زیربرند نامعتبر است');
       product.subBrand = sb;
     }
@@ -1389,24 +1634,7 @@ export class ProductsService {
    * واکشی تکی محصول به همراه تمام روابط مورد نیاز فرانت‌اند
    */
   async findOne(id: number): Promise<Products> {
-    const product = await this.productRepo.findOne({
-      where: { id },
-      relations: {
-        category: true,
-        brand: true,
-        subBrand: true,
-        images: true,
-        tags: true,
-        variants: {
-          attributeValues: {
-            attribute: true, // لود کامل نام مشخصه برای فرانت‌اند
-          },
-        },
-      },
-    });
-
-    if (!product) throw new NotFoundException('محصول یافت نشد');
-    return this.cleanCircularReferences(product);
+    return this.findById(id);
   }
 
   /**
@@ -1459,9 +1687,11 @@ export class ProductsService {
   async remove(id: number): Promise<{ message: string }> {
     const product = await this.productRepo.findOne({
       where: { id },
+      select: { id: true, variants: { id: true, images: true } },
       relations: {
-        variants: true, // نیازی به لود کردن images نیست چون MediaService خودش بر اساس ownerId و ownerType مدیریتشان می‌کند
+        variants: true,
       },
+      loadEagerRelations: false,
     });
 
     if (!product) throw new NotFoundException('محصول یافت نشد');
@@ -1529,6 +1759,7 @@ export class ProductsService {
 
     const { entities: images, raw } = await this.imageRepo
       .createQueryBuilder('img')
+      .select(['img.id', 'img.url'])
       .leftJoin('img.product', 'p')
       .addSelect('p.id', 'productId')
       .where('p.id IN (:...ids)', { ids })

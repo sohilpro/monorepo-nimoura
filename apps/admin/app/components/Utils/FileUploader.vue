@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-2" dir="rtl">
-    <label v-if="label" class="block mb-1 font-medium text-sm text-slate-700 dark:text-slate-300">
+    <label v-if="label" class="block mb-1 font-medium text-sm text-gray-700">
       {{ label }}
     </label>
 
@@ -9,7 +9,7 @@
       <div
         v-for="item in displayItems"
         :key="item.source + '-' + (item.id ?? item.url)"
-        class="relative w-28 h-28 sm:w-32 sm:h-32 border-2 border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden group shadow-xs bg-slate-50 dark:bg-slate-800 transition-all hover:border-brand-500"
+        class="relative w-28 h-28 sm:w-32 sm:h-32 border-2 border-gray-200 rounded-xl overflow-hidden group shadow-xs bg-gray-50 transition-all hover:border-brand-500"
       >
         <img
           :src="item.url"
@@ -35,10 +35,10 @@
         <!-- لایه لودینگ هنگام آپلود -->
         <div
           v-if="item.uploading"
-          class="absolute inset-0 bg-white/90 dark:bg-slate-900/90 flex flex-col items-center justify-center gap-1.5 p-2 text-center"
+          class="absolute inset-0 bg-white/90 flex flex-col items-center justify-center gap-1.5 p-2 text-center"
         >
           <div class="w-6 h-6 border-2 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
-          <span class="text-[10px] text-slate-600 dark:text-slate-300 font-medium">در حال آپلود...</span>
+          <span class="text-[10px] text-gray-600 font-medium">در حال آپلود...</span>
         </div>
       </div>
     </div>
@@ -53,20 +53,20 @@
       :class="[
         'border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all group select-none',
         isDragging
-          ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-950/20 scale-[0.99]'
-          : 'border-slate-300 dark:border-slate-700 hover:border-brand-500 bg-slate-50/50 dark:bg-slate-800/40 hover:bg-brand-50/20',
+          ? 'border-brand-500 bg-brand-50/50 scale-[0.99]'
+          : 'border-gray-300 hover:border-brand-500 bg-gray-50/50 hover:bg-brand-50/20',
       ]"
     >
       <div class="flex flex-col items-center gap-2">
         <div
-          class="w-11 h-11 rounded-full bg-brand-50 dark:bg-brand-950/50 text-brand-600 dark:text-brand-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs"
+          class="w-11 h-11 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs"
         >
           <i class="pi pi-cloud-upload text-xl" />
         </div>
-        <p class="text-sm font-semibold text-slate-700 dark:text-slate-200">
+        <p class="text-sm font-semibold text-gray-700">
           برای انتخاب فایل کلیک کنید یا فایل را به اینجا بکشید
         </p>
-        <p class="text-xs text-slate-400">
+        <p class="text-xs text-gray-400">
           {{ multiple ? 'امکان انتخاب چند تصویر هم‌زمان (JPG، PNG، WEBP)' : 'یک تصویر شاخص (JPG، PNG، WEBP)' }}
         </p>
       </div>

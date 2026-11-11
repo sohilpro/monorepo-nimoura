@@ -6,24 +6,24 @@ import {
   IsString,
   IsDate,
   IsArray,
-} from "class-validator";
-import { PromotionType } from "../entities/promotion.entity";
-import { Type } from "class-transformer";
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+} from 'class-validator';
+import { PromotionType } from '../entities/promotion.entity';
+import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreatePromotionDto {
   @ApiProperty({
     type: String,
-    description: "عنوان تخفیف (برای نمایش در پنل مدیریت یا گزارش‌ها)",
-    example: "تخفیف ویژه تابستان",
+    description: 'عنوان تخفیف (برای نمایش در پنل مدیریت یا گزارش‌ها)',
+    example: 'تخفیف ویژه تابستان',
   })
   @IsString()
   title!: string;
 
   @ApiPropertyOptional({
     type: String,
-    description: "توضیحات اختیاری درباره‌ی این تخفیف",
-    example: "این تخفیف فقط برای محصولات منتخب تابستانی اعمال می‌شود.",
+    description: 'توضیحات اختیاری درباره‌ی این تخفیف',
+    example: 'این تخفیف فقط برای محصولات منتخب تابستانی اعمال می‌شود.',
   })
   @IsOptional()
   @IsString()
@@ -31,7 +31,7 @@ export class CreatePromotionDto {
 
   @ApiProperty({
     enum: PromotionType,
-    description: "نوع تخفیف (درصدی یا ثابت)",
+    description: 'نوع تخفیف (درصدی یا ثابت)',
     example: PromotionType.PERCENTAGE,
   })
   @IsEnum(PromotionType)
@@ -39,7 +39,7 @@ export class CreatePromotionDto {
 
   @ApiProperty({
     type: Number,
-    description: "مقدار تخفیف (درصد یا مبلغ ثابت، وابسته به نوع)",
+    description: 'مقدار تخفیف (درصد یا مبلغ ثابت، وابسته به نوع)',
     example: 20,
   })
   @IsNumber()
@@ -47,8 +47,8 @@ export class CreatePromotionDto {
 
   @ApiPropertyOptional({
     type: String,
-    description: "کد تخفیف (در صورت غیردستی بودن کد، این مقدار اختیاری است)",
-    example: "OFF20",
+    description: 'کد تخفیف (در صورت غیردستی بودن کد، این مقدار اختیاری است)',
+    example: 'OFF20',
   })
   @IsOptional()
   @IsString()
@@ -56,9 +56,9 @@ export class CreatePromotionDto {
 
   @ApiProperty({
     type: String,
-    format: "date-time",
-    description: "تاریخ شروع تخفیف",
-    example: "2025-08-01T00:00:00.000Z",
+    format: 'date-time',
+    description: 'تاریخ شروع تخفیف',
+    example: '2025-08-01T00:00:00.000Z',
   })
   @Type(() => Date)
   @IsDate()
@@ -66,9 +66,9 @@ export class CreatePromotionDto {
 
   @ApiProperty({
     type: String,
-    format: "date-time",
-    description: "تاریخ پایان تخفیف",
-    example: "2025-08-15T23:59:59.000Z",
+    format: 'date-time',
+    description: 'تاریخ پایان تخفیف',
+    example: '2025-08-15T23:59:59.000Z',
   })
   @Type(() => Date)
   @IsDate()
@@ -76,7 +76,7 @@ export class CreatePromotionDto {
 
   @ApiProperty({
     type: Boolean,
-    description: "آیا این تخفیف عمومی است یا فقط برای کاربران خاص؟",
+    description: 'آیا این تخفیف عمومی است یا فقط برای کاربران خاص؟',
     example: true,
   })
   @IsBoolean()
@@ -84,7 +84,7 @@ export class CreatePromotionDto {
 
   @ApiPropertyOptional({
     type: [Number],
-    description: "لیست شناسه محصولات مشمول این تخفیف (اختیاری)",
+    description: 'لیست شناسه محصولات مشمول این تخفیف (اختیاری)',
     example: [101, 102, 103],
   })
   @IsOptional()
@@ -94,7 +94,7 @@ export class CreatePromotionDto {
   @ApiPropertyOptional({
     type: [Number],
     description:
-      "لیست شناسه دسته‌بندی‌هایی که تخفیف روی آن‌ها اعمال می‌شود (اختیاری)",
+      'لیست شناسه دسته‌بندی‌هایی که تخفیف روی آن‌ها اعمال می‌شود (اختیاری)',
     example: [5, 7],
   })
   @IsOptional()
@@ -103,8 +103,7 @@ export class CreatePromotionDto {
 
   @ApiPropertyOptional({
     type: [Number],
-    description:
-      "لیست شناسه برند ها که تخفیف روی آن‌ها اعمال می‌شود (اختیاری)",
+    description: 'لیست شناسه برند ها که تخفیف روی آن‌ها اعمال می‌شود (اختیاری)',
     example: [5, 7],
   })
   @IsOptional()

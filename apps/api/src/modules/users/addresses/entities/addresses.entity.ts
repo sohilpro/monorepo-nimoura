@@ -1,5 +1,5 @@
 import { CustomBaseEntity } from 'src/common/database/base.entity';
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, Index, ManyToOne } from 'typeorm';
 import { Users } from '../../entities/users.entity';
 
 @Entity('addresses')
@@ -19,6 +19,7 @@ export class Addresses extends CustomBaseEntity {
   @Column({ type: 'text' })
   address!: string;
 
+  @Index('idx_addresses_user')
   @Column()
   userId!: number;
 

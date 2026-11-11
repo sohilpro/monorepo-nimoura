@@ -4,7 +4,7 @@
       <div>
         <label
           :for="id"
-          class="flex gap-2 items-center text-sm font-medium text-gray-700 cursor-pointer select-none dark:text-gray-400"
+          class="flex gap-2 items-center text-sm font-medium text-gray-700 cursor-pointer select-none"
         >
           <div class="relative">
             <input
@@ -20,9 +20,9 @@
                 'mr-3 flex h-5 w-5 items-center justify-center rounded-md border-[1.25px]',
                 modelValue
                   ? 'border-brand-500 bg-brand-500'
-                  : 'bg-transparent border-gray-300 dark:border-gray-700',
+                  : 'bg-transparent border-gray-300',
                 !disabled &&
-                  'hover:border-brand-500 dark:hover:border-brand-500',
+                  'hover:border-brand-500',
                 disabled && 'opacity-50 cursor-not-allowed',
               ]"
             >

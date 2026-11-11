@@ -107,7 +107,7 @@
                 <div v-else class="size-11 shrink-0 rounded-lg bg-gray-100" />
                 <span class="min-w-0 flex-1">
                   <span class="line-clamp-1 text-sm font-medium text-gray-800">{{ product.title }}</span>
-                  <span v-if="product.type === 'variant'" class="mt-0.5 inline-block rounded bg-purple-100 px-1.5 py-0.5 text-[11px] text-purple-700">دارای تنوع</span>
+                  <span v-if="product.type === 'variant'" class="mt-0.5 inline-block rounded bg-nimoura-accent/45 px-1.5 py-0.5 text-[11px] text-nimoura-velvet">دارای تنوع</span>
                 </span>
                 <span class="shrink-0 text-sm font-bold text-gray-700">{{ formatPrice(effective(product), '') }}</span>
               </button>

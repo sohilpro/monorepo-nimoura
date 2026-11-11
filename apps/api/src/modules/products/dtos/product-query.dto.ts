@@ -114,7 +114,8 @@ export class ProductFilterQueryDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({
     type: [Number],
-    description: 'شناسه تگ‌ها (جداشده با ویرگول). تگ‌های یک گروه OR و گروه‌های مختلف AND می‌شوند.',
+    description:
+      'شناسه تگ‌ها (جداشده با ویرگول). تگ‌های یک گروه OR و گروه‌های مختلف AND می‌شوند.',
     example: '3,15,22',
   })
   @IsOptional()

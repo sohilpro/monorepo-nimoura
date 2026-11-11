@@ -1,5 +1,8 @@
 <template>
-  <div v-if="paginatedData.length" class="p-4">
+  <div
+    v-if="paginatedData.length"
+    class="rounded-2xl border border-gray-200 bg-white p-4 sm:p-5 shadow-theme-xs"
+  >
     <!-- Search, Pagination & View Toggle -->
     <div
       class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-4"
@@ -8,14 +11,14 @@
         v-model="searchLocal"
         type="text"
         placeholder="جستجو..."
-        class="md:w-1/3 dark:bg-dark-900 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:focus:border-brand-800"
+        class="md:w-1/3 h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10"
       />
 
       <div class="flex gap-2 justify-end">
         <slot />
         <NuxtLink
           :to="`/${urlEdit}/create`"
-          class="bg-blue-500 text-white flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-blue-500/90"
+          class="bg-brand-500 text-white flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-theme-xs hover:bg-brand-600 transition"
         >
           ایجاد +
         </NuxtLink>
@@ -39,14 +42,14 @@
     <!-- Bulk Actions -->
     <div
       v-if="selectedItems.length"
-      class="mb-4 flex items-center justify-between bg-gray-100 p-2 rounded-xl dark:bg-gray-800"
+      class="mb-4 flex items-center justify-between bg-brand-50/70 border border-brand-200/70 p-2.5 rounded-xl"
     >
-      <span>{{ selectedItems.length }} مورد انتخاب شده</span>
+      <span class="text-sm font-medium text-brand-800">{{ selectedItems.length }} مورد انتخاب شده</span>
       <div class="flex gap-2">
         <button
           type="button"
           @click="deleteItem(selectedItems[0])"
-          class="px-3 py-1 bg-red-500 text-white rounded-xl hover:bg-red-600 transition"
+          class="px-3 py-1 bg-rose-600 text-white text-sm rounded-xl hover:bg-rose-700 transition"
         >
           🗑 حذف
         </button>
@@ -54,7 +57,7 @@
         <NuxtLink
           v-if="selectedItems.length === 1"
           :to="`/${urlEdit}/${selectedItems[0]?.id}`"
-          class="px-3 py-1 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition"
+          class="px-3 py-1 bg-brand-500 text-white text-sm rounded-xl hover:bg-brand-600 transition"
         >
           ✏️ ویرایش
         </NuxtLink>
@@ -96,16 +99,16 @@
         type="button"
         @click="changePage(currentPage - 1)"
         :disabled="currentPage === 1"
-        class="px-3 py-1 border rounded-r-xl disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-3.5 py-1.5 text-sm border border-gray-200 rounded-r-xl hover:bg-brand-50 hover:text-brand-600 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
       >
         قبلی
       </button>
-      <span class="px-4 py-1 border-t border-b">صفحه {{ currentPage }}</span>
+      <span class="px-4 py-1.5 text-sm border-t border-b border-gray-200 text-gray-700">صفحه {{ currentPage }}</span>
       <button
         type="button"
         @click="changePage(currentPage + 1)"
         :disabled="currentPage >= pageCount"
-        class="px-3 py-1 border rounded-l-xl disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-3.5 py-1.5 text-sm border border-gray-200 rounded-l-xl hover:bg-brand-50 hover:text-brand-600 transition disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
       >
         بعدی
       </button>
@@ -344,9 +347,9 @@ const viewComponent = computed(() =>
   view.value === "card" ? CardView : TableView,
 );
 const viewBtnClass = (val) =>
-  `rounded-xl px-3 py-2 border transition ${
+  `rounded-xl px-3 py-2 text-sm border transition ${
     val === view.value
-      ? "bg-gray-800 text-white dark:bg-gray-100 dark:text-gray-900"
-      : "bg-white text-gray-700 dark:bg-gray-800 dark:text-gray-200"
+      ? "bg-nimoura-dark border-nimoura-dark text-white"
+      : "bg-white border-gray-200 text-gray-700 hover:border-brand-300 hover:text-brand-600"
   }`;
 </script>

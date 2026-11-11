@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsInt, IsBoolean, MaxLength, Min } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  IsBoolean,
+  MaxLength,
+  Min,
+} from 'class-validator';
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 
 export class CreatePositionDto {

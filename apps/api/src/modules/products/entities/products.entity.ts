@@ -19,18 +19,21 @@ import { BundleItems } from './bundle-items.entity';
 import { ProductPriceTiers } from './product-price-tiers.entity';
 
 @Entity('products')
+@Index('idx_products_avail_created', ['isAvailable', 'createdAt'])
+@Index('idx_products_avail_price', ['isAvailable', 'price'])
+@Index('idx_products_avail_rating', ['isAvailable', 'averageRating'])
+@Index('idx_products_avail_amazing', ['isAvailable', 'isAmazingOffer'])
 export class Products extends CustomBaseEntity {
-  @ManyToOne(() => Categories, (category) => category.products, {
-    eager: true,
-  })
+  @Index('idx_products_category')
+  @ManyToOne(() => Categories, (category) => category.products)
   category!: Categories;
 
-  @ManyToOne(() => Brands, (brand) => brand.products, { eager: true })
+  @Index('idx_products_brand')
+  @ManyToOne(() => Brands, (brand) => brand.products)
   brand!: Brands;
 
-  @ManyToOne(() => SubBrands, (subBrand) => subBrand.products, {
-    eager: true,
-  })
+  @Index('idx_products_sub_brand')
+  @ManyToOne(() => SubBrands, (subBrand) => subBrand.products)
   subBrand?: SubBrands;
 
   @Column()
@@ -42,6 +45,7 @@ export class Products extends CustomBaseEntity {
   @Column()
   englishTitle!: string;
 
+  @Index('idx_products_average_rating')
   @Column('float', { default: 0.5 })
   averageRating!: number;
 
@@ -98,6 +102,7 @@ export class Products extends CustomBaseEntity {
   @Column({ unique: true })
   sku!: string;
 
+  @Index('idx_products_type')
   @Column({
     type: 'enum',
     enum: ['simple', 'variant', 'bundle'],
@@ -112,10 +117,10 @@ export class Products extends CustomBaseEntity {
 
   @OneToMany(() => ProductVariants, (variant) => variant.product, {
     cascade: true,
-    eager: true,
   })
   variants?: ProductVariants[];
 
+  @Index('idx_products_stock')
   @Column('int', { default: 0 })
   stock!: number;
 
@@ -139,5 +144,5 @@ export class Products extends CustomBaseEntity {
   isAmazingOffer?: boolean;
 
   @OneToMany(() => ProductPriceTiers, (t) => t.product, { cascade: true })
-priceTiers?: ProductPriceTiers[];
+  priceTiers?: ProductPriceTiers[];
 }

@@ -109,6 +109,16 @@ export class PaymentService {
 
     const payment: any = await this.paymentRepo.findOne({
       where: { authority: query.Authority },
+      select: {
+        id: true,
+        orderId: true,
+        amount: true,
+        authority: true,
+        refId: true,
+        status: true,
+        verifiedAt: true,
+      },
+      loadEagerRelations: false,
     });
     if (!payment) throw new NotFoundException('اطلاعات تراکنش یافت نشد');
 
@@ -219,6 +229,16 @@ export class PaymentService {
     // ردیف Payment برای ترب موقع اولین گزارش ساخته می‌شه (Authority = transactionId یکتا)
     let payment: any = await this.paymentRepo.findOne({
       where: { authority: query.Authority },
+      select: {
+        id: true,
+        orderId: true,
+        amount: true,
+        authority: true,
+        refId: true,
+        status: true,
+        verifiedAt: true,
+      },
+      loadEagerRelations: false,
     });
     if (!payment) {
       payment = await this.paymentRepo.save(

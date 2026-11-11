@@ -1,6 +1,6 @@
 <template>
   <div>
-    <label class="text-sm font-semibold mb-3 text-gray-700 dark:text-gray-400">
+    <label class="text-sm font-semibold mb-3 text-gray-700">
       {{ label }}
     </label>
 

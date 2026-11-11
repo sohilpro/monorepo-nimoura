@@ -83,14 +83,51 @@ export class CartService {
   async getCartByUser(userId: number): Promise<any> {
     let cart = await this.cartRepo
       .createQueryBuilder('cart')
+      .select([
+        'cart.id',
+        'cart.isPromotional',
+        'item.id',
+        'item.quantity',
+        'item.unitPrice',
+        'item.totalPrice',
+        'item.createdAt',
+        'product.id',
+        'product.title',
+        'product.slug',
+        'product.thumbnail',
+        'product.price',
+        'product.priceDiscount',
+        'product.stock',
+        'product.isAvailable',
+        'product.type',
+        'prodTiers.id',
+        'prodTiers.minQuantity',
+        'prodTiers.price',
+        'variant.id',
+        'variant.sku',
+        'variant.price',
+        'variant.priceDiscount',
+        'variant.stock',
+        'variant.isAvailable',
+        'variant.images',
+        'varTiers.id',
+        'varTiers.minQuantity',
+        'varTiers.price',
+        'attrValue.id',
+        'attrValue.value',
+        'attrValue.colorHex',
+        'attr.id',
+        'attr.name',
+        'attr.kind',
+      ])
       .leftJoin('cart.user', 'user')
-      .leftJoinAndSelect('cart.items', 'item')
-      .leftJoinAndSelect('item.product', 'product')
-      .leftJoinAndSelect('product.priceTiers', 'prodTiers')
-      .leftJoinAndSelect('item.variant', 'variant')
-      .leftJoinAndSelect('variant.priceTiers', 'varTiers')
-      .leftJoinAndSelect('variant.attributeValues', 'attrValue')
-      .leftJoinAndSelect('attrValue.attribute', 'attr')
+      .leftJoin('cart.items', 'item')
+      .leftJoin('item.product', 'product')
+      .leftJoin('product.priceTiers', 'prodTiers')
+      .leftJoin('item.variant', 'variant')
+      .leftJoin('variant.priceTiers', 'varTiers')
+      .leftJoin('variant.attributeValues', 'attrValue')
+      .leftJoin('attrValue.attribute', 'attr')
       .where('user.id = :userId', { userId })
       .orderBy('item.createdAt', 'ASC')
       .addOrderBy('item.id', 'ASC')
@@ -98,7 +135,7 @@ export class CartService {
 
     if (!cart) {
       cart = this.cartRepo.create({
-        user: { id: userId } as any,
+        user: { id: userId },
         items: [],
       });
       await this.cartRepo.save(cart);
@@ -130,12 +167,22 @@ export class CartService {
     // ۱. دریافت یا ایجاد سبد خرید کاربر
     let cart = await this.cartRepo.findOne({
       where: { user: { id: userId } },
+      select: {
+        id: true,
+        items: {
+          id: true,
+          quantity: true,
+          product: { id: true },
+          variant: { id: true },
+        },
+      },
       relations: {
         items: {
           product: true,
           variant: true,
         },
       },
+      loadEagerRelations: false,
     });
 
     if (!cart) {
@@ -146,12 +193,30 @@ export class CartService {
     // ۲. بارگذاری محصول به همراه پله‌های قیمتی و واریانت‌ها
     const product = await this.productRepo.findOne({
       where: { id: productId },
+      select: {
+        id: true,
+        price: true,
+        priceDiscount: true,
+        stock: true,
+        isAvailable: true,
+        type: true,
+        priceTiers: { id: true, minQuantity: true, price: true },
+        variants: {
+          id: true,
+          price: true,
+          priceDiscount: true,
+          stock: true,
+          isAvailable: true,
+          priceTiers: { id: true, minQuantity: true, price: true },
+        },
+      },
       relations: {
         priceTiers: true,
         variants: {
           priceTiers: true,
         },
       },
+      loadEagerRelations: false,
     });
 
     if (!product) {
@@ -164,7 +229,17 @@ export class CartService {
     if (variantId) {
       variantEntity = await this.variantRepo.findOne({
         where: { id: variantId },
+        select: {
+          id: true,
+          price: true,
+          priceDiscount: true,
+          stock: true,
+          isAvailable: true,
+          product: { id: true },
+          priceTiers: { id: true, minQuantity: true, price: true },
+        },
         relations: { product: true, priceTiers: true },
+        loadEagerRelations: false,
       });
 
       if (!variantEntity) {
@@ -256,12 +331,34 @@ export class CartService {
 
     const cart = await this.cartRepo.findOne({
       where: { user: { id: userId } },
+      select: {
+        id: true,
+        items: {
+          id: true,
+          quantity: true,
+          product: {
+            id: true,
+            price: true,
+            priceDiscount: true,
+            stock: true,
+            priceTiers: { id: true, minQuantity: true, price: true },
+          },
+          variant: {
+            id: true,
+            price: true,
+            priceDiscount: true,
+            stock: true,
+            priceTiers: { id: true, minQuantity: true, price: true },
+          },
+        },
+      },
       relations: {
         items: {
           product: { priceTiers: true },
           variant: { priceTiers: true },
         },
       },
+      loadEagerRelations: false,
     });
 
     if (!cart) {
@@ -320,12 +417,21 @@ export class CartService {
   ): Promise<any> {
     const cart = await this.cartRepo.findOne({
       where: { user: { id: userId } },
+      select: {
+        id: true,
+        items: {
+          id: true,
+          product: { id: true },
+          variant: { id: true },
+        },
+      },
       relations: {
         items: {
           product: true,
           variant: true,
         },
       },
+      loadEagerRelations: false,
     });
 
     if (!cart) {
@@ -359,12 +465,32 @@ export class CartService {
 
     let userCart = await this.cartRepo.findOne({
       where: { user: { id: userId } },
+      select: {
+        id: true,
+        items: {
+          id: true,
+          quantity: true,
+          product: {
+            id: true,
+            price: true,
+            priceDiscount: true,
+            priceTiers: { id: true, minQuantity: true, price: true },
+          },
+          variant: {
+            id: true,
+            price: true,
+            priceDiscount: true,
+            priceTiers: { id: true, minQuantity: true, price: true },
+          },
+        },
+      },
       relations: {
         items: {
           product: { priceTiers: true },
           variant: { priceTiers: true },
         },
       },
+      loadEagerRelations: false,
     });
 
     if (!userCart) {
@@ -386,12 +512,27 @@ export class CartService {
     const productIds = Array.from(new Set(items.map((i) => i.productId)));
     const products = await this.productRepo.find({
       where: { id: In(productIds) },
+      select: {
+        id: true,
+        type: true,
+        price: true,
+        priceDiscount: true,
+        priceTiers: { id: true, minQuantity: true, price: true },
+        variants: {
+          id: true,
+          price: true,
+          priceDiscount: true,
+          isAvailable: true,
+          priceTiers: { id: true, minQuantity: true, price: true },
+        },
+      },
       relations: {
         priceTiers: true,
         variants: {
           priceTiers: true,
         },
       },
+      loadEagerRelations: false,
     });
 
     const productMap = new Map(products.map((p) => [p.id, p]));
@@ -472,7 +613,7 @@ export class CartService {
 
     await this.cleanupGuestCart(guestId);
 
-    userCart.guestId = null as any;
+    userCart.guestId = null;
     userCart.items = finalCartItems;
     await this.cartRepo.save(userCart);
 
@@ -487,7 +628,9 @@ export class CartService {
 
     const guestCart = await this.cartRepo.findOne({
       where: { guestId },
+      select: { id: true, items: { id: true } },
       relations: { items: true },
+      loadEagerRelations: false,
     });
 
     if (guestCart) {
@@ -513,12 +656,29 @@ export class CartService {
 
     const products = await this.productRepo.find({
       where: { id: In(productIds) },
+      select: {
+        id: true,
+        title: true,
+        type: true,
+        price: true,
+        priceDiscount: true,
+        isAvailable: true,
+        priceTiers: { id: true, minQuantity: true, price: true },
+        variants: {
+          id: true,
+          price: true,
+          priceDiscount: true,
+          isAvailable: true,
+          priceTiers: { id: true, minQuantity: true, price: true },
+        },
+      },
       relations: {
         priceTiers: true,
         variants: {
           priceTiers: true,
         },
       },
+      loadEagerRelations: false,
     });
 
     const productMap = new Map(products.map((p) => [p.id, p]));
@@ -599,7 +759,9 @@ export class CartService {
   async clearCart(userId: number): Promise<void> {
     const cart = await this.cartRepo.findOne({
       where: { user: { id: userId } },
+      select: { id: true, items: { id: true } },
       relations: { items: true },
+      loadEagerRelations: false,
     });
     if (!cart) return;
     await this.itemRepo.remove(cart.items);

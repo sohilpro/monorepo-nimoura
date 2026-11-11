@@ -46,11 +46,31 @@ export class TorobService {
     // رشته‌ی خام مستقیم به Postgres داده می‌شود تا میکروثانیه‌ی ورودی حفظ شود.
     const rows = await this.orders
       .createQueryBuilder('o')
-      .leftJoinAndSelect('o.items', 'item')
-      .leftJoinAndSelect('item.product', 'product')
-      .leftJoinAndSelect('o.shippingInfo', 'shipping')
-      .leftJoinAndSelect('o.paymentInfo', 'payment')
-      .leftJoinAndSelect('o.user', 'user')
+      .select([
+        'o.id',
+        'o.status',
+        'o.shippingCost',
+        'o.finalTotal',
+        'o.torobClid',
+        'o.purchasedAt',
+        'o.updatedAt',
+        'item.id',
+        'item.quantity',
+        'item.unitPrice',
+        'product.id',
+        'product.slug',
+        'shipping.id',
+        'shipping.phone',
+        'payment.id',
+        'payment.method',
+        'user.id',
+        'user.mobile',
+      ])
+      .leftJoin('o.items', 'item')
+      .leftJoin('item.product', 'product')
+      .leftJoin('o.shippingInfo', 'shipping')
+      .leftJoin('o.paymentInfo', 'payment')
+      .leftJoin('o.user', 'user')
       .where('o.torobClid IS NOT NULL')
       .andWhere('o.purchasedAt IS NOT NULL')
       .andWhere('o.purchasedAt > CAST(:gt AS timestamptz)', {

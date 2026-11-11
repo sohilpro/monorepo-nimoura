@@ -11,8 +11,6 @@ import { CustomBaseEntity } from 'src/common/database/base.entity';
 
 @Entity('magazine_categories')
 export class Category extends CustomBaseEntity {
- 
-
   @Column({ length: 150 })
   name: string;
 
@@ -29,6 +27,7 @@ export class Category extends CustomBaseEntity {
   @Column({ type: 'varchar', length: 50, nullable: true })
   icon: string;
 
+  @Index('idx_mag_categories_sort')
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder: number;
 
@@ -43,6 +42,7 @@ export class Category extends CustomBaseEntity {
   })
   metaDescription: string;
 
+  @Index('idx_mag_categories_parent')
   @ManyToOne(() => Category, (category) => category.children, {
     nullable: true,
     onDelete: 'SET NULL',
@@ -55,6 +55,4 @@ export class Category extends CustomBaseEntity {
 
   @OneToMany(() => Article, (article) => article.category)
   articles: Article[];
-
-
 }

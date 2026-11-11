@@ -15,6 +15,7 @@ export class Media extends CustomBaseEntity {
   ownerType: MediaOwnerType;
 
   // شناسه رکورد مالک: id محصول، id برند، id کامنت، id مقاله و ...
+  @Index('idx_media_owner_id')
   @Column({ type: 'varchar' })
   ownerId: string;
 
@@ -34,6 +35,7 @@ export class Media extends CustomBaseEntity {
   ftpPath: string;
 
   // آدرس عمومی قابل نمایش برای فرانت‌اند
+  @Index('idx_media_public_url')
   @Column({ type: 'varchar' })
   publicUrl: string;
 

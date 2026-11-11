@@ -85,6 +85,10 @@
 }
 
 @layer base {
+  html {
+    color-scheme: light;
+  }
+
   body {
     @apply relative font-vazir bg-nimoura-base text-nimoura-text-700 transition-all text-base leading-relaxed;
   }

@@ -21,17 +21,25 @@ const { title, subtitle } = toRefs(props);
 </script>
 
 <style scoped>
-@reference "tailwindcss";
 .card {
-  @apply rounded-2xl border border-neutral-200 bg-white shadow-sm;
+  border-radius: 1rem;
+  border: 1px solid var(--color-gray-200, #ebe0df);
+  background-color: #ffffff;
+  box-shadow: var(--shadow-theme-xs);
 }
 .card-header {
-  @apply flex items-center justify-between border-b border-neutral-100 px-4 py-3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-gray-100, #f7eeec);
+  padding: 0.75rem 1rem;
 }
 .card-title {
-  @apply text-sm font-semibold text-neutral-800;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-gray-800, #3a3131);
 }
 .card-body {
-  @apply p-4;
+  padding: 1rem;
 }
 </style>

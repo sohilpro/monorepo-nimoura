@@ -1,6 +1,6 @@
 <template>
-  <table class="w-full table-auto border rounded-xl">
-    <thead class="bg-gray-100 dark:bg-gray-800 text-right">
+  <table class="w-full table-auto border border-gray-200 rounded-xl overflow-hidden">
+    <thead class="bg-brand-50/70 text-right border-b border-gray-200">
       <tr>
         <th class="p-2">
           <CommonCheckboxInput
@@ -16,7 +16,7 @@
         <th
           v-for="col in columns"
           :key="col.key"
-          class="p-2 cursor-pointer select-none text-gray-700 dark:text-gray-300"
+          class="p-2 cursor-pointer select-none text-gray-700"
           @click="emitSort(col.key)"
         >
           <span class="inline-flex items-center gap-1">
@@ -26,14 +26,14 @@
             </span>
           </span>
         </th>
-        <th class="p-2 text-gray-700 dark:text-gray-300">عملیات</th>
+        <th class="p-2 text-gray-700">عملیات</th>
       </tr>
     </thead>
     <tbody>
       <tr
         v-for="(item, i) in sortedData"
         :key="item?.id ?? i"
-        class="odd:bg-white even:bg-gray-50 dark:odd:bg-gray-900 dark:even:bg-gray-800/50"
+        class="odd:bg-white even:bg-gray-50/60 hover:bg-brand-50/30 transition-colors"
       >
         <td class="p-2">
           <CommonCheckboxInput
@@ -50,7 +50,7 @@
               v-if="cell.type === 'badge'"
               :class="[
                 'inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium',
-                cell.badgeClass || 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+                cell.badgeClass || 'bg-gray-100 text-gray-700',
               ]"
             >
               {{ cell.text }}
@@ -62,7 +62,7 @@
               class="flex items-center gap-3"
             >
               <div
-                class="h-12 w-12 shrink-0 rounded-md bg-gray-100 dark:bg-gray-700 overflow-hidden flex items-center justify-center border border-gray-200 dark:border-gray-600"
+                class="h-12 w-12 shrink-0 rounded-md bg-gray-100 overflow-hidden flex items-center justify-center border border-gray-200"
               >
                 <img
                   v-if="cell.image"
@@ -91,17 +91,17 @@
                 v-if="cell.link"
                 target="_blank"
                 :to="cell.link"
-                class="text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline dark:text-brand-400"
+                class="text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline"
               >
                 {{ cell.text }}
               </NuxtLink>
-              <span v-else class="text-sm font-medium text-gray-700 dark:text-gray-200">
+              <span v-else class="text-sm font-medium text-gray-700">
                 {{ cell.text }}
               </span>
             </div>
 
             <!-- Plain text cell -->
-            <span v-else class="text-sm text-gray-700 dark:text-gray-300">
+            <span v-else class="text-sm text-gray-700">
               {{ cell.text }}
             </span>
           </template>
@@ -114,7 +114,7 @@
               @click.stop="
                 openDropdownId = openDropdownId === item.id ? null : item.id
               "
-              class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              class="text-gray-500 hover:text-gray-700"
             >
               <svg
                 class="fill-current"
@@ -132,18 +132,18 @@
 
             <div
               v-if="openDropdownId === item.id"
-              class="absolute z-50 -left-2 w-40 rounded-xl border border-gray-200 bg-white shadow-lg dark:bg-gray-800 dark:border-gray-700"
+              class="absolute z-50 -left-2 w-40 rounded-xl border border-gray-200 bg-white shadow-lg"
             >
               <NuxtLink
                 :to="`/${props.urlEdit}/${item.id}`"
-                class="w-full block text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+                class="w-full block text-right px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >
                 ✏️ ویرایش
               </NuxtLink>
               <button
                 type="button"
                 @click="$emit('deleteItem', item)"
-                class="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700"
+                class="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
               >
                 🗑 حذف
               </button>

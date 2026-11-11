@@ -22,7 +22,10 @@ import {
 } from '../constants/attribute-kind';
 
 export class VariantAttributeValueDto {
-  @ApiProperty({ example: 'رنگ', description: 'نام ویژگی (حجم، وزن، رنگ و...)' })
+  @ApiProperty({
+    example: 'رنگ',
+    description: 'نام ویژگی (حجم، وزن، رنگ و...)',
+  })
   @IsString()
   @IsNotEmpty({ message: 'نام ویژگی تنوع الزامی است.' })
   @MaxLength(50)
@@ -33,13 +36,19 @@ export class VariantAttributeValueDto {
   @IsEnum(ATTRIBUTE_KINDS, { message: 'نوع ویژگی نامعتبر است.' })
   kind?: AttributeKind;
 
-  @ApiProperty({ example: 'رزگلد', description: 'مقدار نمایشی، مثل «۵۰۰ میلی‌لیتر» یا «رزگلد»' })
+  @ApiProperty({
+    example: 'رزگلد',
+    description: 'مقدار نمایشی، مثل «۵۰۰ میلی‌لیتر» یا «رزگلد»',
+  })
   @IsString()
   @IsNotEmpty({ message: 'مقدار ویژگی تنوع الزامی است.' })
   @MaxLength(100)
   value!: string;
 
-  @ApiPropertyOptional({ example: '#B76E79', description: 'کد رنگ (فقط برای ویژگی رنگی)' })
+  @ApiPropertyOptional({
+    example: '#B76E79',
+    description: 'کد رنگ (فقط برای ویژگی رنگی)',
+  })
   @IsOptional()
   @IsString()
   @Matches(HEX_COLOR_REGEX, { message: 'کد رنگ باید به فرمت #RRGGBB باشد.' })
@@ -53,7 +62,9 @@ export class CreateVariantDto {
   @IsInt()
   id?: number;
 
-  @ApiPropertyOptional({ description: 'کد انبارداری یکتا؛ در صورت خالی بودن خودکار ساخته می‌شود' })
+  @ApiPropertyOptional({
+    description: 'کد انبارداری یکتا؛ در صورت خالی بودن خودکار ساخته می‌شود',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(100)
@@ -91,7 +102,9 @@ export class CreateVariantDto {
 
   @ApiProperty({ type: [VariantAttributeValueDto] })
   @IsArray()
-  @ArrayMinSize(1, { message: 'هر تنوع باید حداقل یک ویژگی (مثل حجم یا رنگ) داشته باشد.' })
+  @ArrayMinSize(1, {
+    message: 'هر تنوع باید حداقل یک ویژگی (مثل حجم یا رنگ) داشته باشد.',
+  })
   @ArrayMaxSize(5)
   @ValidateNested({ each: true })
   @Type(() => VariantAttributeValueDto)

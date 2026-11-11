@@ -12,7 +12,10 @@ import {
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { AdminController } from 'src/common/auth/decorators/admin-controller.decorator';
 import { AdminOrderQueryDto } from '../dtos/admin-order-query.dto';
-import { CreateOrderAdminDto, UpdateOrderAdminDto } from '../dtos/admin-order.dto';
+import {
+  CreateOrderAdminDto,
+  UpdateOrderAdminDto,
+} from '../dtos/admin-order.dto';
 import { UpdateOrderStatusDto } from '../dtos/update-order-status.dto';
 import { InvoiceService } from '../invoice.service';
 import { OrdersAdminService } from '../orders-admin.service';
@@ -39,7 +42,8 @@ export class AdminOrdersController {
   @Post()
   @ApiOperation({
     summary: 'ایجاد سفارش توسط مدیریت',
-    description: 'قیمت‌ها و جمع کل سمت سرور محاسبه می‌شوند و موجودی کالاها کسر می‌شود.',
+    description:
+      'قیمت‌ها و جمع کل سمت سرور محاسبه می‌شوند و موجودی کالاها کسر می‌شود.',
   })
   @ApiResponse({ status: 201, description: 'سفارش ایجاد شد.' })
   async create(@Body() dto: CreateOrderAdminDto) {
@@ -93,7 +97,8 @@ export class AdminOrdersController {
   @Patch(':id/cancel')
   @ApiOperation({
     summary: 'لغو سفارش',
-    description: 'وضعیت به «لغو شده» می‌رود و موجودی کالاها به انبار برمی‌گردد.',
+    description:
+      'وضعیت به «لغو شده» می‌رود و موجودی کالاها به انبار برمی‌گردد.',
   })
   @ApiParam({ name: 'id', type: Number })
   async cancel(@Param('id', ParseIntPipe) id: number) {

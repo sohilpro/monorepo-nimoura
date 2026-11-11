@@ -1,4 +1,4 @@
 export enum UsernameEnum {
-  Email = "email" , 
-  Mobile = "mobile",
+  Email = 'email',
+  Mobile = 'mobile',
 }

@@ -4,12 +4,12 @@
     class="fixed inset-0 z-[9999] flex items-center justify-center backdrop-blur-2xl bg-opacity-50"
   >
     <div
-      class="bg-white shadow-2xl dark:bg-gray-900 rounded-lg p-6 w-full max-w-md"
+      class="bg-white shadow-2xl rounded-lg p-6 w-full max-w-md"
     >
-      <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-4">
+      <h2 class="text-lg font-bold text-gray-800 mb-4">
         {{ title }}
       </h2>
-      <p class="text-sm text-gray-600 dark:text-gray-300 mb-6">
+      <p class="text-sm text-gray-600 mb-6">
         {{ message }}
       </p>
 

@@ -70,7 +70,7 @@ export function useAdminOrders() {
       case OrderStatus.DELIVERED:
         return 'bg-emerald-50 text-emerald-700 border-emerald-200';
       case OrderStatus.SHIPPED:
-        return 'bg-blue-50 text-blue-700 border-blue-200';
+        return 'bg-nimoura-accent/40 text-nimoura-velvet border-nimoura-accent';
       case OrderStatus.PENDING:
       case OrderStatus.PROCESSING:
         return 'bg-amber-50 text-amber-700 border-amber-200';

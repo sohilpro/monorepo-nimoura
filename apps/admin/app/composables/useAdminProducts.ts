@@ -164,6 +164,32 @@ export function useAdminProducts() {
     }
   }
 
+  /**
+   * دریافت گزینه‌های دسته‌بندی
+   */
+  async function fetchCategoryOptions(): Promise<Category[]> {
+    try {
+      const res = await $fetch<any>('/api/category/list', { query: { limit: 200 } });
+      const data = res?.data ?? res;
+      return data?.categories || data?.items || [];
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * دریافت گزینه‌های برند و زیربرند
+   */
+  async function fetchBrandOptions(): Promise<Brand[]> {
+    try {
+      const res = await $fetch<any>('/api/product/brand/list', { query: { limit: 200 } });
+      const data = res?.data ?? res;
+      return data?.brands || data?.items || [];
+    } catch {
+      return [];
+    }
+  }
+
   return {
     getProductsList,
     getProductById,

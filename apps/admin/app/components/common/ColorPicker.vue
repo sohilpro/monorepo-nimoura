@@ -1,13 +1,13 @@
 <template>
   <div ref="rootRef" class="relative text-start" :class="{ 'opacity-50 pointer-events-none': disabled }">
-    <label v-if="label" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+    <label v-if="label" class="mb-1.5 block text-sm font-medium text-gray-700">
       {{ label }}
     </label>
 
     <!-- Trigger -->
     <button
       type="button"
-      class="flex h-11 w-full items-center gap-3 rounded-lg border border-gray-300 bg-white px-2.5 text-start transition hover:border-brand-300 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900"
+      class="flex h-11 w-full items-center gap-3 rounded-lg border border-gray-300 bg-white px-2.5 text-start transition hover:border-brand-300 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10"
       :aria-expanded="open"
       aria-haspopup="dialog"
       :disabled="disabled"
@@ -17,7 +17,7 @@
         class="size-7 shrink-0 rounded-md border border-black/10 shadow-inner"
         :style="{ backgroundColor: currentHex }"
       />
-      <span class="min-w-0 flex-1 truncate text-sm text-gray-800 dark:text-white/90" dir="ltr">
+      <span class="min-w-0 flex-1 truncate text-sm text-gray-800" dir="ltr">
         {{ currentHex }}
       </span>
       <span v-if="colorName" class="hidden truncate text-xs text-gray-500 sm:block">{{ colorName }}</span>
@@ -34,7 +34,7 @@
       v-if="open"
       role="dialog"
       aria-label="انتخاب رنگ"
-      class="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] space-y-4 overflow-y-auto rounded-t-2xl border border-gray-200 bg-white p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-900 sm:absolute sm:inset-x-auto sm:bottom-auto sm:start-0 sm:top-full sm:mt-2 sm:max-h-none sm:w-80 sm:rounded-2xl"
+      class="fixed inset-x-0 bottom-0 z-50 max-h-[85vh] space-y-4 overflow-y-auto rounded-t-2xl border border-gray-200 bg-white p-4 shadow-2xl sm:absolute sm:inset-x-auto sm:bottom-auto sm:start-0 sm:top-full sm:mt-2 sm:max-h-none sm:w-80 sm:rounded-2xl"
       @keydown.esc="open = false"
     >
       <div class="flex items-center justify-between sm:hidden">

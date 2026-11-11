@@ -13,7 +13,9 @@ import { AttributeValues } from './attribute-values.entity';
 import { ProductPriceTiers } from './product-price-tiers.entity';
 
 @Entity('product_variants')
+@Index('idx_product_variants_product_avail', ['product', 'isAvailable'])
 export class ProductVariants extends CustomBaseEntity {
+  @Index('idx_product_variants_product')
   @ManyToOne(() => Products, (product) => product.variants, {
     onDelete: 'CASCADE',
   })
@@ -32,6 +34,7 @@ export class ProductVariants extends CustomBaseEntity {
   @Column('float', { default: 0 })
   percentageDiscount!: number; // درصد تخفیف
 
+  @Index('idx_product_variants_stock')
   @Column('int', { default: 0 })
   stock!: number; // موجودی انبار
 
@@ -45,9 +48,6 @@ export class ProductVariants extends CustomBaseEntity {
   @ManyToMany(
     () => AttributeValues,
     (attributeValue) => attributeValue.variants,
-    {
-      eager: true,
-    },
   )
   @JoinTable({
     name: 'variant_attribute_values',

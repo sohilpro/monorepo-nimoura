@@ -35,7 +35,9 @@ export class CreateTagDto {
   @ApiPropertyOptional({ description: 'اگر خالی باشد از نام ساخته می‌شود' })
   @IsOptional()
   @IsString()
-  @Matches(/^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u, { message: 'شناسه تگ نامعتبر است.' })
+  @Matches(/^[\p{L}\p{N}]+(?:-[\p{L}\p{N}]+)*$/u, {
+    message: 'شناسه تگ نامعتبر است.',
+  })
   @MaxLength(160)
   slug?: string;
 

@@ -1,5 +1,5 @@
 export interface OtpTokenPayloadType {
-  username: string
-  iat : number;
-  exp : number
+  username: string;
+  iat: number;
+  exp: number;
 }

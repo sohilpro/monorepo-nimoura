@@ -13,7 +13,7 @@
       <Button
         label="حذف فیلترها"
         link
-        class="!p-0 !text-xs !font-medium !text-nimoura-primary hover:!text-[#a9606b] xl:!text-sm"
+        class="!p-0 !text-xs !font-medium !text-nimoura-primary hover:!opacity-80 xl:!text-sm"
         @click="clearFilters"
       />
     </div>
@@ -63,13 +63,35 @@
       </div>
 
       <!-- TAG FILTERS (skin type, hair type, benefits, ...) -->
-      <div v-if="facets?.groups?.length" class="px-3 xl:px-4">
-        <CategoriesUtilsFacetGroups
-          :groups="facets.groups"
-          :selected="selectedTagIds"
-          @toggle="toggleTag"
-        />
-      </div>
+      <ClientOnly>
+        <div v-if="facetsPending && !facets?.groups?.length" class="space-y-3 px-3 py-3.5 xl:px-4">
+          <div v-for="g in 2" :key="g" class="space-y-2">
+            <Skeleton width="5rem" height="0.9rem" border-radius="0.375rem" />
+            <div v-for="t in 3" :key="t" class="flex items-center gap-2.5">
+              <Skeleton width="1.1rem" height="1.1rem" border-radius="0.375rem" />
+              <Skeleton width="60%" height="0.8rem" border-radius="0.375rem" />
+            </div>
+          </div>
+        </div>
+        <div v-else-if="facets?.groups?.length" class="px-3 xl:px-4">
+          <CategoriesUtilsFacetGroups
+            :groups="facets.groups"
+            :selected="selectedTagIds"
+            @toggle="toggleTag"
+          />
+        </div>
+        <template #fallback>
+          <div class="space-y-3 px-3 py-3.5 xl:px-4">
+            <div v-for="g in 2" :key="g" class="space-y-2">
+              <Skeleton width="5rem" height="0.9rem" border-radius="0.375rem" />
+              <div v-for="t in 3" :key="t" class="flex items-center gap-2.5">
+                <Skeleton width="1.1rem" height="1.1rem" border-radius="0.375rem" />
+                <Skeleton width="60%" height="0.8rem" border-radius="0.375rem" />
+              </div>
+            </div>
+          </div>
+        </template>
+      </ClientOnly>
 
       <!-- PRICE RANGE -->
       <Accordion :value="['0']" multiple class="!border-0">
@@ -140,6 +162,7 @@ import type { ProductFacets } from '@nimoura/shared-types';
 const props = defineProps<{
   clearFilters: any;
   facets?: ProductFacets | null;
+  facetsPending?: boolean;
 }>();
 const { clearFilters } = props;
 
@@ -224,21 +247,21 @@ watch(
 /* ========================================= */
 
 :deep(.nimoura-slider .p-slider-range) {
-  background: #b76e79;
+  background: var(--color-nimoura-primary);
 }
 
 :deep(.nimoura-slider .p-slider-track) {
-  background: #e9e6e6;
+  background: var(--color-nimoura-text-100);
 }
 
 :deep(.nimoura-slider .p-slider-handle) {
   width: 18px;
   height: 18px;
 
-  border: 2px solid #b76e79;
-  background: #ffffff;
+  border: 2px solid var(--color-nimoura-primary);
+  background: white;
 
-  box-shadow: 0 3px 10px rgba(183, 110, 121, 0.2);
+  box-shadow: 0 3px 10px rgb(183 110 121 / 0.2);
 
   transition:
     transform 0.2s ease,
@@ -246,13 +269,13 @@ watch(
 }
 
 :deep(.nimoura-slider .p-slider-handle:hover) {
-  box-shadow: 0 4px 14px rgba(183, 110, 121, 0.3);
+  box-shadow: 0 4px 14px rgb(183 110 121 / 0.3);
 }
 
 :deep(.nimoura-slider .p-slider-handle:focus) {
   box-shadow:
-    0 0 0 4px rgba(183, 110, 121, 0.12),
-    0 4px 14px rgba(183, 110, 121, 0.2);
+    0 0 0 4px rgb(183 110 121 / 0.12),
+    0 4px 14px rgb(183 110 121 / 0.2);
 }
 
 /* ========================================= */
@@ -284,11 +307,11 @@ watch(
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cfc9c9;
+  background: var(--color-nimoura-text-200);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #b76e79;
+  background: var(--color-nimoura-primary);
 }
 </style>

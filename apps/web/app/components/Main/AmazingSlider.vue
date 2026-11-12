@@ -4,6 +4,7 @@ import useEmblaCarousel from "embla-carousel-vue";
 interface AmazingProduct {
   id: number | string;
   title: string;
+  slug?: string;
   price: number;
   priceDiscount: number;
   discountPercent?: number;
@@ -15,10 +16,6 @@ const pending = ref(true);
 const hasFetched = ref(false);
 
 // -------------------- Embla --------------------
-// نکته‌ی مهم: این div همیشه mount می‌مونه (نه پشت v-if/v-else-if)، دقیقاً
-// مثل ProductSlider که درست کار می‌کنه. فقط محتوای داخلش (اسکلتون/کارت واقعی)
-// عوض می‌شه. هم‌چنین از dir="rtl" روی DOM استفاده نمی‌کنیم، چون آپشن
-// direction: "rtl" خودش کافیه و ست‌کردن هردو باعث خنثی‌شدن drag می‌شه.
 const [emblaRef, emblaApi] = useEmblaCarousel({
   loop: false,
   align: "start",
@@ -27,6 +24,26 @@ const [emblaRef, emblaApi] = useEmblaCarousel({
   containScroll: "trimSnaps",
 });
 
+const canScrollPrev = ref(false);
+const canScrollNext = ref(false);
+
+function syncScrollState() {
+  const api = emblaApi.value;
+  if (!api) return;
+  canScrollPrev.value = api.canScrollPrev();
+  canScrollNext.value = api.canScrollNext();
+}
+
+watch(emblaApi, (api) => {
+  if (!api) return;
+  syncScrollState();
+  api.on("select", syncScrollState);
+  api.on("reInit", syncScrollState);
+});
+
+const scrollPrev = () => emblaApi.value?.scrollPrev();
+const scrollNext = () => emblaApi.value?.scrollNext();
+
 // -------------------- Fetch --------------------
 async function fetchAmazingProducts() {
   if (hasFetched.value) return;
@@ -34,7 +51,7 @@ async function fetchAmazingProducts() {
 
   try {
     const data: any = await $fetch("/api/products/amazing", {
-      query: { limit: 8 },
+      query: { limit: 10 },
     });
     amazingProducts.value = data?.data?.products ?? [];
   } catch {
@@ -44,6 +61,7 @@ async function fetchAmazingProducts() {
     hasFetched.value = true;
     await nextTick();
     emblaApi.value?.reInit();
+    syncScrollState();
   }
 }
 
@@ -73,81 +91,102 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <section ref="sectionRef" class="mx-4 lg:container mt-20">
-    <div class="w-full rounded-xl bg-nimoura-primary p-4 relative">
+  <section
+    v-if="!hasFetched || pending || amazingProducts.length > 0"
+    ref="sectionRef"
+    class="mx-4 mt-14 lg:container lg:mt-20"
+  >
+    <div class="relative w-full rounded-2xl bg-nimoura-primary p-3.5 sm:p-4">
       <!-- هدر موبایل -->
-      <div class="flex lg:hidden items-center justify-between mb-3">
-        <div class="flex w-full items-center justify-between gap-2">
-          <IconsAmazingsMobile class="w-28 h-7" />
-          <ProductCountdownTimer :days="3" />
+      <div class="mb-3 flex items-center justify-between gap-2 lg:hidden">
+        <div class="flex items-center gap-2.5">
+          <IconsAmazingsMobile class="h-7 w-24 shrink-0" />
+          <ProductCountdownTimer :days="1" />
         </div>
-        <!-- <NuxtLink
-          to="/product/amazing"
-          class="flex items-center gap-x-0.5 text-white"
+
+        <NuxtLink
+          to="/products/amazing"
+          class="inline-flex shrink-0 items-center gap-1 rounded-full bg-white/15 px-2.5 py-1 text-xs font-medium text-white transition-colors active:bg-white/25"
         >
-          <p>همه</p>
-          <i class="pi pi-arrow-left text-xs!"></i>
-        </NuxtLink> -->
+          <span>همه</span>
+          <i class="pi pi-chevron-left text-[10px]!" />
+        </NuxtLink>
       </div>
 
-      <!-- ویوپورت Embla: همیشه mount هست -->
-      <div ref="emblaRef" class="overflow-hidden rounded-xl">
-        <div class="flex gap-x-2.5 touch-pan-y">
-          <!-- تایمر - فقط دسکتاپ -->
-          <div
-            class="hidden lg:flex flex-none w-40 h-[220px] flex-col justify-center items-center gap-4"
-          >
-            <NuxtLink to="/product/amazing">
-              <IconsAmazings class="w-28 h-28" />
-            </NuxtLink>
-            <ProductCountdownTimer :days="1" />
-          </div>
-
-          <!-- اسکلتون -->
-          <template v-if="pending || !hasFetched">
+      <!-- ویوپورت Embla -->
+      <div class="relative">
+        <div ref="emblaRef" class="overflow-hidden rounded-xl">
+          <div class="flex gap-x-2.5 touch-pan-y">
+            <!-- تایمر - فقط دسکتاپ -->
             <div
-              v-for="i in 8"
-              :key="`skeleton-${i}`"
-              class="flex-none w-[148px] h-[220px] bg-white border border-nimoura-border/30 rounded-2xl flex flex-col p-3"
-            >
-              <div class="flex justify-center items-center h-27 shrink-0">
-                <Skeleton width="96px" height="96px" border-radius="0.5rem" />
-              </div>
-              <div class="flex-1 mt-1 space-y-1.5">
-                <Skeleton width="100%" height="0.7rem" />
-                <Skeleton width="60%" height="0.7rem" />
-              </div>
-              <div class="flex flex-col items-end mt-2 gap-1">
-                <Skeleton width="3.5rem" height="0.65rem" />
-                <Skeleton width="4.5rem" height="0.85rem" />
-              </div>
-            </div>
-          </template>
-
-          <!-- کارت‌های واقعی -->
-          <template v-else>
-            <ProductCard
-              v-for="product in amazingProducts"
-              :key="product.id"
-              :product="product"
-              class="flex-none"
-            />
-
-            <!-- مشاهده همه -->
-            <div
-              v-if="amazingProducts.length"
-              class="flex-none flex flex-col justify-center items-center"
+              class="hidden h-[220px] w-40 flex-none flex-col items-center justify-center gap-4 lg:flex"
             >
               <NuxtLink
-                to="/product/amazing"
-                class="flex flex-col items-center gap-2 text-nimoura-primary bg-white px-3 h-[220px] justify-center rounded-2xl text-sm text-center"
+                to="/products/amazing"
+                aria-label="مشاهده پیشنهادات شگفت‌انگیز"
               >
-                <i class="pi pi-arrow-circle-left text-4xl!"></i>
-                <p>مشاهده همه</p>
+                <IconsAmazings class="h-28 w-28" />
               </NuxtLink>
+              <ProductCountdownTimer :days="1" />
             </div>
-          </template>
+
+            <!-- اسکلتون -->
+            <template v-if="pending || !hasFetched">
+              <div
+                v-for="i in 8"
+                :key="`skeleton-${i}`"
+                class="flex-none"
+              >
+                <ProductCardSkeleton />
+              </div>
+            </template>
+
+            <!-- کارت‌های واقعی -->
+            <template v-else>
+              <ProductCard
+                v-for="product in amazingProducts"
+                :key="product.id"
+                :product="product"
+                class="flex-none"
+              />
+
+              <!-- مشاهده همه -->
+              <div
+                v-if="amazingProducts.length"
+                class="flex flex-none flex-col items-center justify-center"
+              >
+                <NuxtLink
+                  to="/products/amazing"
+                  class="flex h-[220px] flex-col items-center justify-center gap-2 rounded-2xl bg-white px-4 text-center text-sm font-medium text-nimoura-primary transition-transform hover:scale-[0.98]"
+                >
+                  <i class="pi pi-arrow-circle-left text-4xl!" />
+                  <span>مشاهده همه</span>
+                </NuxtLink>
+              </div>
+            </template>
+          </div>
         </div>
+
+        <!-- دکمه‌های اسکرول دسکتاپ -->
+        <button
+          v-show="!pending && canScrollPrev"
+          type="button"
+          class="absolute -right-2 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-nimoura-text-700 shadow-md transition-opacity hover:shadow-lg lg:flex"
+          aria-label="اسلاید قبلی"
+          @click="scrollPrev"
+        >
+          <i class="pi pi-chevron-right text-xs!" />
+        </button>
+
+        <button
+          v-show="!pending && canScrollNext"
+          type="button"
+          class="absolute -left-2 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white text-nimoura-text-700 shadow-md transition-opacity hover:shadow-lg lg:flex"
+          aria-label="اسلاید بعدی"
+          @click="scrollNext"
+        >
+          <i class="pi pi-chevron-left text-xs!" />
+        </button>
       </div>
     </div>
   </section>

@@ -29,7 +29,12 @@ type NewCartItemInput = {
 };
 
 function sameVariant(a?: CartVariant, b?: CartVariant) {
-  return JSON.stringify(a) === JSON.stringify(b);
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  if (a.id !== undefined && b.id !== undefined) {
+    return Number(a.id) === Number(b.id);
+  }
+  return a.value === b.value && a.alt === b.alt;
 }
 
 function resolvePricing(item: any, isLoggedIn: boolean) {

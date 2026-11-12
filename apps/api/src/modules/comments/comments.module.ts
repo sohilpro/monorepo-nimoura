@@ -7,10 +7,12 @@ import { Users } from '../users/entities/users.entity';
 import { CommentsService } from './comments.service';
 import { AdminCommentsController } from './controllers/comments-admin.controller';
 import { CommentsController } from './controllers/comments.controller';
+import { MediaModule } from '../media/media.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Comments, CommentReactions, Products, Users]),
+    MediaModule,
   ],
   controllers: [AdminCommentsController, CommentsController],
   providers: [CommentsService],

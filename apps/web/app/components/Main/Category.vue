@@ -35,8 +35,8 @@
           :key="index"
           :to="
             item.category
-              ? `/categories/${item.category.id}/${createSlug(item.category.name)}`
-              : `/brand/${createSlug(item.brand.name)}?id=${item.brand.id}`
+              ? `/categories/${item.category.slug || createSlug(item.category.name)}`
+              : `/brand/${encodeURIComponent(item.brand.slug || createSlug(item.brand.name))}`
           "
           class="group flex-none flex flex-col items-center gap-y-1 cursor-pointer text-nimoura-text-700"
         >

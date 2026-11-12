@@ -169,6 +169,14 @@ async function start() {
   freePort(3000);
   freePort(3001);
 
+  // 0. Ensure workspace packages consumed by Node.js runtime (@nimoura/utils) are built.
+  log('ORCHESTRATOR', colors.yellow, 'Building @nimoura/utils for backend runtime...');
+  try {
+    execSync(`${npmCmd} run build --workspace=@nimoura/utils`, { stdio: 'inherit' });
+  } catch {
+    log('ORCHESTRATOR', colors.red, 'Failed to build @nimoura/utils.');
+  }
+
   // 1. Start the backend (NestJS on port 4000).
   log('ORCHESTRATOR', colors.yellow, 'Step 1 of 3: Starting the backend server (@nimoura/api) on port 4000...');
   runService('API', '@nimoura/api', colors.cyan);

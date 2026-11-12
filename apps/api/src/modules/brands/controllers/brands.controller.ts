@@ -3,7 +3,6 @@ import {
   Controller,
   Get,
   Param,
-  ParseIntPipe,
   Query,
   HttpCode,
   HttpStatus,
@@ -29,13 +28,17 @@ export class BrandsController {
   }
 
   @Public()
-  @Get(':id')
+  @Get(':identifier')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'دریافت مشخصات یک برند با شناسه' })
-  @ApiParam({ name: 'id', type: Number, description: 'شناسه برند' })
+  @ApiOperation({ summary: 'دریافت مشخصات یک برند با شناسه یا اسلاگ' })
+  @ApiParam({
+    name: 'identifier',
+    type: String,
+    description: 'شناسه عددی یا اسلاگ برند',
+  })
   @ApiResponse({ status: 200, description: 'اطلاعات برند دریافت شد' })
   @ApiResponse({ status: 404, description: 'برند پیدا نشد' })
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.brandService.findOne(id);
+  findOne(@Param('identifier') identifier: string) {
+    return this.brandService.findByIdentifier(identifier);
   }
 }

@@ -2,8 +2,8 @@
   <div class="w-full md:w-2/4 flex flex-col justify-center items-center gap-y-4">
 
     <!-- ══ DESKTOP ══ -->
-    <template v-if="!isMobile">
-      <div class="overflow-hidden w-full rounded-xl relative" ref="mainRef">
+    <div class="hidden w-full flex-col items-center gap-y-4 md:flex">
+      <div class="overflow-hidden w-full rounded-xl relative aspect-square bg-nimoura-base/30" ref="mainRef">
         <div
           v-if="isZooming"
           class="zoom-lens pointer-events-none absolute z-10 border-2 border-white/60 bg-white/10"
@@ -13,10 +13,10 @@
             transform: 'translate(-50%, -50%)', borderRadius: '4px',
           }"
         />
-        <div class="flex touch-pan-y">
+        <div class="flex h-full touch-pan-y">
           <div
             v-for="(img, i) in images" :key="'main-' + i"
-            class="flex-none w-full relative overflow-hidden"
+            class="flex-none w-full h-full relative overflow-hidden"
             @mouseenter="onMouseEnter(i)"
             @mouseleave="onMouseLeave"
             @mousemove="onMouseMove($event)"
@@ -24,8 +24,14 @@
             <NuxtPicture
               :src="img" :alt="`نمایش تصویر ${i + 1}`"
               format="avif,webp,jpeg"
-              :img-attrs="{ class: 'object-cover w-full h-full select-none', style: 'cursor:crosshair', draggable: 'false' }"
-              sizes="600px" width="800" height="800" loading="lazy"
+              :img-attrs="{
+                class: 'object-cover w-full h-full select-none',
+                style: 'cursor:crosshair',
+                draggable: 'false',
+                fetchpriority: i === 0 ? 'high' : undefined,
+              }"
+              sizes="600px" width="800" height="800"
+              :loading="i === 0 ? 'eager' : 'lazy'"
             />
           </div>
         </div>
@@ -50,7 +56,7 @@
         <div class="flex gap-x-2 touch-pan-y">
           <div
             v-for="(img, i) in images" :key="'thumb-' + i"
-            class="flex-none w-[18%] rounded-lg overflow-hidden cursor-pointer transition-all duration-200 border-2"
+            class="flex-none w-[18%] aspect-square rounded-lg overflow-hidden cursor-pointer transition-all duration-200 border-2 bg-nimoura-base/30"
             :class="activeIndex === i ? 'border-nimoura-primary' : 'border-transparent'"
             @click="scrollTo(i)"
           >
@@ -63,26 +69,30 @@
           </div>
         </div>
       </div>
-    </template>
+    </div>
 
     <!-- ══ MOBILE STRIP ══ -->
-    <div v-show="isMobile" ref="mobileStripRef" class="overflow-hidden w-full relative">
-      <div class="flex gap-1">
+    <div ref="mobileStripRef" class="overflow-hidden w-full relative md:hidden">
+      <div class="flex gap-1.5">
         <div
           v-for="(img, i) in images" :key="'mstrip-' + i"
-          class="flex-none w-5h-56 h-56 rounded-2xl overflow-hidden cursor-pointer border border-gray-100"
+          class="flex-none w-56 h-56 rounded-2xl overflow-hidden cursor-pointer border border-gray-100 bg-nimoura-base/30"
           @click="openGallery(i)"
         >
           <NuxtPicture
             :src="img" :alt="`تصویر ${i + 1}`"
             format="avif,webp,jpeg"
-            :img-attrs="{ class: 'object-cover w-full h-full' }"
-            width="340" height="340" loading="lazy"
+            :img-attrs="{
+              class: 'object-cover w-full h-full',
+              fetchpriority: i === 0 ? 'high' : undefined,
+            }"
+            width="340" height="340"
+            :loading="i === 0 ? 'eager' : 'lazy'"
           />
         </div>
       </div>
       <!-- Dots -->
-      <div v-show="isMobile" class="flex justify-center gap-1.5 absolute top-2 right-1/2">
+      <div class="pointer-events-none absolute inset-x-0 top-2 flex justify-center gap-1.5">
         <span
           v-for="(_, i) in images" :key="'dot-' + i"
           class="block rounded-full transition-all duration-300"
@@ -289,9 +299,6 @@ const productGlobalOffset = (ci: number, imgIdx: number): number => {
   for (let i = 0; i < ci; i++) offset += props.customerReviews?.[i]?.images.length ?? 0
   return offset + imgIdx
 }
-
-// ── Mobile ────────────────────────────────────────────
-const isMobile = useIsMobile()
 
 // ── Gallery ───────────────────────────────────────────
 const galleryOpen = ref(false)

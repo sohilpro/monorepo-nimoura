@@ -1,22 +1,23 @@
 export default defineEventHandler(async (event) => {
-  const {
-    apiBase ,
-  } = useRuntimeConfig();
-  const token = getCookie(event, "accesstoken");
-  const query = getQuery(event);
-  const body = await readBody(event)
-
-  try {
-    const data = await $fetch(`${apiBase}/cart/remove/${query.id}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body,
+  const token = getCookie(event, 'accesstoken');
+  if (!token) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'ابتدا وارد حساب کاربری خود شوید',
     });
-
-    return data;
-  } catch (error) {
-    return error;
   }
+
+  const query = getQuery(event);
+  const body = await readBody(event).catch(() => ({}));
+  const variantId =
+    query.variantId ?? body?.variantId ?? body?.variant?.id ?? undefined;
+
+  return await apiFetch(event, `/cart/remove/${query.id}`, {
+    method: 'DELETE',
+    query: variantId ? { variantId } : undefined,
+    body,
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 });

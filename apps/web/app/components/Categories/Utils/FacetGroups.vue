@@ -1,72 +1,83 @@
 <template>
-  <div class="divide-y divide-nimoura-text-100">
-    <section v-for="group in groups" :key="group.id" class="py-1">
-      <button
-        type="button"
-        class="flex w-full items-center justify-between gap-2 py-3 text-start"
-        :aria-expanded="isOpen(group.id)"
-        @click="toggleGroup(group.id)"
+  <Accordion
+    v-model:value="openGroupIds"
+    multiple
+    class="!border-0"
+    :pt="{ root: { class: 'divide-y divide-nimoura-text-100' } }"
+  >
+    <AccordionPanel
+      v-for="group in groups"
+      :key="group.id"
+      :value="String(group.id)"
+      class="!border-0"
+    >
+      <AccordionHeader
+        class="!bg-transparent !px-0 !py-3 !text-sm !font-semibold !text-nimoura-text-800 !shadow-none hover:!bg-nimoura-primary/5"
       >
-        <span class="flex items-center gap-2 text-sm font-semibold text-nimoura-text-800">
-          {{ group.name }}
-          <span
+        <span class="flex items-center gap-2">
+          <span>{{ group.name }}</span>
+          <Badge
             v-if="selectedIn(group)"
-            class="rounded-full bg-nimoura-primary px-1.5 text-[10px] font-medium leading-5 text-white"
-          >
-            {{ numberFormat(selectedIn(group)) }}
-          </span>
+            :value="numberFormat(selectedIn(group))"
+            size="small"
+            class="!bg-nimoura-primary !text-white"
+          />
         </span>
-        <i
-          class="pi text-[11px] text-nimoura-text-400 transition-transform"
-          :class="isOpen(group.id) ? 'pi-chevron-up' : 'pi-chevron-down'"
-        />
-      </button>
+      </AccordionHeader>
 
-      <ul v-show="isOpen(group.id)" class="space-y-0.5 pb-3">
-        <li v-for="tag in visibleTags(group)" :key="tag.id">
-          <label
-            class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm transition-colors hover:bg-nimoura-primary/5"
-          >
-            <input
-              type="checkbox"
-              class="peer sr-only"
-              :checked="selected.includes(tag.id)"
-              @change="emit('toggle', tag.id)"
-            />
-            <span
-              class="flex size-[18px] shrink-0 items-center justify-center rounded-md border border-nimoura-text-200 bg-white transition-colors peer-checked:border-nimoura-primary peer-checked:bg-nimoura-primary peer-focus-visible:ring-2 peer-focus-visible:ring-nimoura-primary/30"
+      <AccordionContent
+        :pt="{
+          content: { class: '!bg-transparent !px-0 !pb-3 !pt-0' },
+        }"
+      >
+        <ul class="space-y-0.5">
+          <li v-for="tag in visibleTags(group)" :key="tag.id">
+            <label
+              class="flex cursor-pointer items-center gap-2.5 rounded-lg px-1.5 py-1.5 text-sm transition-colors hover:bg-nimoura-primary/5"
             >
-              <i v-if="selected.includes(tag.id)" class="pi pi-check text-[9px] text-white" />
-            </span>
-            <span
-              v-if="tag.color"
-              class="size-3 shrink-0 rounded-full border border-black/10"
-              :style="{ backgroundColor: tag.color }"
-            />
-            <span
-              class="min-w-0 flex-1 truncate"
-              :class="selected.includes(tag.id) ? 'font-medium text-nimoura-text-800' : 'text-nimoura-text-600'"
-            >
-              {{ tag.name }}
-            </span>
-            <span class="shrink-0 text-[11px] tabular-nums text-nimoura-text-400">
-              {{ numberFormat(tag.count) }}
-            </span>
-          </label>
-        </li>
+              <Checkbox
+                :model-value="selected.includes(tag.id)"
+                binary
+                @update:model-value="emit('toggle', tag.id)"
+              />
+              <span
+                v-if="tag.color"
+                class="size-3 shrink-0 rounded-full border border-black/10"
+                :style="{ backgroundColor: tag.color }"
+              />
+              <span
+                class="min-w-0 flex-1 truncate"
+                :class="
+                  selected.includes(tag.id)
+                    ? 'font-medium text-nimoura-text-800'
+                    : 'text-nimoura-text-600'
+                "
+              >
+                {{ tag.name }}
+              </span>
+              <span class="shrink-0 text-[11px] tabular-nums text-nimoura-text-400">
+                {{ numberFormat(tag.count) }}
+              </span>
+            </label>
+          </li>
 
-        <li v-if="group.tags.length > LIMIT">
-          <button
-            type="button"
-            class="px-1.5 pt-1 text-xs font-medium text-nimoura-primary hover:underline"
-            @click="toggleExpanded(group.id)"
-          >
-            {{ expanded.has(group.id) ? 'نمایش کمتر' : `نمایش همه (${numberFormat(group.tags.length)})` }}
-          </button>
-        </li>
-      </ul>
-    </section>
-  </div>
+          <li v-if="group.tags.length > LIMIT">
+            <Button
+              :label="
+                expanded.has(group.id)
+                  ? 'نمایش کمتر'
+                  : `نمایش همه (${numberFormat(group.tags.length)})`
+              "
+              link
+              size="small"
+              class="!px-1.5 !pt-1 !pb-0 !text-xs !font-medium !text-nimoura-primary"
+              @click="toggleExpanded(group.id)"
+            />
+          </li>
+        </ul>
+      </AccordionContent>
+    </AccordionPanel>
+  </Accordion>
 </template>
 
 <script setup lang="ts">
@@ -76,11 +87,23 @@ const props = defineProps<{ groups: FacetGroup[]; selected: number[] }>();
 const emit = defineEmits<{ toggle: [tagId: number] }>();
 
 const LIMIT = 6;
-const closed = ref<Set<number>>(new Set());
 const expanded = ref<Set<number>>(new Set());
+const openGroupIds = ref<string[]>([]);
+const initialized = ref(false);
 
-const isOpen = (id: number) => !closed.value.has(id);
-const selectedIn = (group: FacetGroup) => group.tags.filter((t) => props.selected.includes(t.id)).length;
+watch(
+  () => props.groups,
+  (groups) => {
+    if (!initialized.value && groups.length > 0) {
+      openGroupIds.value = [String(groups[0]!.id)];
+      initialized.value = true;
+    }
+  },
+  { immediate: true },
+);
+
+const selectedIn = (group: FacetGroup) =>
+  group.tags.filter((t) => props.selected.includes(t.id)).length;
 
 // always show selected tags, even beyond the first LIMIT
 const visibleTags = (group: FacetGroup) =>
@@ -88,11 +111,10 @@ const visibleTags = (group: FacetGroup) =>
     ? group.tags
     : group.tags.filter((t, i) => i < LIMIT || props.selected.includes(t.id));
 
-function flip(source: Ref<Set<number>>, id: number) {
-  const next = new Set(source.value);
-  next.has(id) ? next.delete(id) : next.add(id);
-  source.value = next;
+function toggleExpanded(id: number) {
+  const next = new Set(expanded.value);
+  if (next.has(id)) next.delete(id);
+  else next.add(id);
+  expanded.value = next;
 }
-const toggleGroup = (id: number) => flip(closed, id);
-const toggleExpanded = (id: number) => flip(expanded, id);
 </script>

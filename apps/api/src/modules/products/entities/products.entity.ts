@@ -46,7 +46,7 @@ export class Products extends CustomBaseEntity {
   englishTitle!: string;
 
   @Index('idx_products_average_rating')
-  @Column('float', { default: 0.5 })
+  @Column('float', { default: 5 })
   averageRating!: number;
 
   @Column('int', { default: 0 })

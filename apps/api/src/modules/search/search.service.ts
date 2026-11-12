@@ -10,6 +10,8 @@ import { SortableColumn, SortOrder } from '../products/dtos/product-query.dto';
 
 interface SearchFilters {
   isAvailable?: boolean;
+  inStock?: boolean;
+  onSale?: boolean;
   minPrice?: number;
   maxPrice?: number;
   brandId?: number;
@@ -19,9 +21,8 @@ interface SearchFilters {
 
 const QUICK_THRESHOLD = 0.15;
 
-// ⚠️ ستونی که «محبوب‌ترین» بر اساس آن مرتب می‌شود.
-//    همان چیزی را بگذار که در سرویس محصولاتت برای sort=popular استفاده می‌کنی.
-const POPULAR_SORT_FIELD = 'product.salesCount';
+const SEARCH_EFFECTIVE_PRICE_SQL =
+  '(CASE WHEN product."priceDiscount" > 0 AND product."priceDiscount" < product.price THEN product."priceDiscount" ELSE product.price END)';
 
 // فقط فیلدهایی که کارت محصول در لیست نیاز دارد.
 // (introduce / howToUse / specifications / shortDescription / توضیحات برند عمداً نیستند)
@@ -74,6 +75,8 @@ export class SearchService {
       minPrice,
       maxPrice,
       isAvailable,
+      inStock,
+      onSale,
       brandId,
       subBrandId,
       categoryId,
@@ -84,6 +87,8 @@ export class SearchService {
     const offset = (page - 1) * limit;
     const filters: SearchFilters = {
       isAvailable,
+      inStock,
+      onSale,
       minPrice,
       maxPrice,
       brandId,
@@ -297,13 +302,22 @@ export class SearchService {
         qb.orderBy('product.createdAt', 'DESC');
         break;
       case 'cheapest':
-        qb.orderBy('product.price', 'ASC');
+        qb.addSelect(SEARCH_EFFECTIVE_PRICE_SQL, 'effective_price').orderBy(
+          'effective_price',
+          'ASC',
+        );
         break;
       case 'expensive':
-        qb.orderBy('product.price', 'DESC');
+        qb.addSelect(SEARCH_EFFECTIVE_PRICE_SQL, 'effective_price').orderBy(
+          'effective_price',
+          'DESC',
+        );
         break;
       case 'popular':
-        qb.orderBy(POPULAR_SORT_FIELD, 'DESC');
+        qb.orderBy('product.averageRating', 'DESC').addOrderBy(
+          'product.ratingsCount',
+          'DESC',
+        );
         break;
       case 'title':
         qb.orderBy('product.title', dir);
@@ -334,13 +348,21 @@ export class SearchService {
         isAvailable: filters.isAvailable,
       });
     }
+    if (filters.inStock) {
+      qb.andWhere('product.stock > 0');
+    }
+    if (filters.onSale) {
+      qb.andWhere(
+        'product."priceDiscount" > 0 AND product."priceDiscount" < product.price',
+      );
+    }
     if (filters.minPrice !== undefined) {
-      qb.andWhere('product.price >= :minPrice', {
+      qb.andWhere(`${SEARCH_EFFECTIVE_PRICE_SQL} >= :minPrice`, {
         minPrice: filters.minPrice,
       });
     }
     if (filters.maxPrice !== undefined) {
-      qb.andWhere('product.price <= :maxPrice', {
+      qb.andWhere(`${SEARCH_EFFECTIVE_PRICE_SQL} <= :maxPrice`, {
         maxPrice: filters.maxPrice,
       });
     }

@@ -108,7 +108,7 @@
                 <NuxtLink
                   v-for="item in categoryResult"
                   :key="`cat-${item.id}`"
-                  :to="`/categories/${item.id}/${createSlug(item.name)}`"
+                  :to="`/categories/${item.slug || createSlug(item.name)}`"
                   class="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg border border-nimoura-border bg-white px-3 py-1.5 text-xs font-medium text-nimoura-text-700 transition-all duration-200 hover:border-nimoura-primary hover:bg-nimoura-base hover:text-nimoura-primary"
                   @click="closeSearch"
                 >
@@ -127,7 +127,7 @@
                 <NuxtLink
                   v-for="item in brandResults"
                   :key="`brand-${item.id}`"
-                  :to="`/brand/${createSlug(item.name)}?id=${item.id}`"
+                  :to="`/brand/${encodeURIComponent(item.slug || createSlug(item.name))}`"
                   class="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg border border-nimoura-border bg-white px-3 py-1.5 text-xs font-medium text-nimoura-text-700 transition-all duration-200 hover:border-nimoura-primary hover:bg-nimoura-base hover:text-nimoura-primary"
                   @click="closeSearch"
                 >
@@ -151,7 +151,7 @@
               <ul class="mt-3 flex flex-col gap-2">
                 <li v-for="item in productResults" :key="item.id">
                   <NuxtLink
-                    :to="`/product/${item.id}/${createSlug(item.title)}`"
+                    :to="`/product/${encodeURIComponent(item.slug || createSlug(item.title))}`"
                     class="group flex items-center gap-3 rounded-xl border border-nimoura-border/70 bg-white p-2 transition-all duration-200 hover:border-nimoura-primary hover:bg-nimoura-base"
                     @click="closeSearch"
                   >
@@ -171,8 +171,6 @@
                     >
                       {{ item.title }}
                     </span>
-
-                  
                   </NuxtLink>
                 </li>
               </ul>
@@ -250,11 +248,25 @@ const hasAnyResult = computed(
     productResults.value.length,
 );
 
-const trends = [
-  { title: "ضد آفتاب", href: "/categories/6/" + createSlug("ضد آفتاب") },
-  { title: "آبرسان", href: "/categories/25/" + createSlug("آبرسان") },
-  { title: "ژل شستشو", href: "/categories/26/" + createSlug("ژل شستشو") },
-];
+const { categories: allCategories } = useCategories();
+
+function trendHref(title) {
+  const stack = [...(allCategories.value ?? [])];
+  while (stack.length) {
+    const node = stack.shift();
+    if (node.slug && (node.name === title || node.name?.includes(title))) {
+      return `/categories/${node.slug}`;
+    }
+    if (node.children?.length) stack.push(...node.children);
+  }
+  return `/search?q=${encodeURIComponent(title)}`;
+}
+
+const trends = computed(() => [
+  { title: "ضد آفتاب", href: trendHref("ضد آفتاب") },
+  { title: "آبرسان", href: trendHref("آبرسان") },
+  { title: "ژل شستشو", href: trendHref("ژل شستشو") },
+]);
 
 /* ───────────────────────  Search Logic  ─────────────────────── */
 // یک درخواست واحد به ماژول سرچ (محصول + دسته + برند با هم)

@@ -1,5 +1,6 @@
 <template>
   <section
+    v-if="!hideWhenEmpty || !hasFetched || pending || products.length > 0"
     ref="sectionRef"
     :class="[!dontShowBtnAll ? ' lg:container mt-10 lg:mt-20' : 'w-full']"
   >
@@ -67,42 +68,21 @@
       <!-- Viewport -->
       <div v-else ref="emblaRef" class="overflow-hidden">
         <div class="flex gap-2.5 sm:gap-3 touch-pan-y">
-          <!-- اسکلتون: کپی دقیق ابعاد و چیدمان ProductCard -->
+          <!-- اسکلتون: کپی دقیق ابعاد و چیدمان ProductCard با PrimeVue -->
           <template v-if="pending || !hasFetched">
             <div
-              v-for="n in 6"
+              v-for="n in skeletonCount"
               :key="`skeleton-${n}`"
-              class="flex-none w-[148px] h-[220px] min-w-0"
+              class="flex-none min-w-0"
             >
-              <div
-                class="w-full h-full rounded-2xl border border-nimoura-border/30 flex flex-col p-3 animate-pulse"
-              >
-                <!-- تصویر -->
-                <div class="flex justify-center items-center h-27 shrink-0">
-                  <div class="w-24 h-24 rounded-lg bg-nimoura-text-100"></div>
-                </div>
-
-                <!-- عنوان (دو خط) -->
-                <div class="flex-1 mt-1 space-y-1.5">
-                  <div class="h-2.5 bg-nimoura-text-100 rounded w-full"></div>
-                  <div
-                    class="h-2.5 bg-nimoura-text-100 rounded w-2/3 ml-auto"
-                  ></div>
-                </div>
-
-                <!-- قیمت (خط قبلی + خط نهایی، راست‌چین) -->
-                <div class="flex flex-col items-end mt-2 gap-1.5">
-                  <div class="h-2 bg-nimoura-text-100 rounded w-10"></div>
-                  <div class="h-3 bg-nimoura-text-100 rounded w-16"></div>
-                </div>
-              </div>
+              <ProductCardSkeleton />
             </div>
           </template>
 
           <div
             v-for="product in products"
             :key="product.id"
-            class="flex-none w-35.5 min-w-0"
+            class="flex-none w-[148px] min-w-0"
           >
             <ProductCard :product />
           </div>
@@ -159,7 +139,7 @@
 <script setup lang="ts">
 import useEmblaCarousel from "embla-carousel-vue";
 
-const { description, subTitle, title, query, href, endpoint, dontShowBtnAll } =
+const { description, subTitle, title, query, href, endpoint, dontShowBtnAll, limit, hideWhenEmpty } =
   defineProps<{
     title?: string;
     subTitle?: string;
@@ -168,6 +148,8 @@ const { description, subTitle, title, query, href, endpoint, dontShowBtnAll } =
     query?: string | any;
     endpoint?: string;
     dontShowBtnAll?: boolean;
+    limit?: number;
+    hideWhenEmpty?: boolean;
   }>();
 
 // -------------------- Embla --------------------
@@ -211,6 +193,23 @@ const resolvedEndpoint = computed(() => {
     return `/api${path}${qs ? `?${qs}` : ""}`;
   }
   return null;
+});
+
+const skeletonCount = computed(() => {
+  if (typeof limit === "number" && limit > 0) return limit;
+  if (typeof query === "object" && query !== null && Number(query.limit) > 0) {
+    return Math.trunc(Number(query.limit));
+  }
+  const endpointStr = resolvedEndpoint.value;
+  if (endpointStr) {
+    const qIndex = endpointStr.indexOf("?");
+    if (qIndex !== -1) {
+      const params = new URLSearchParams(endpointStr.slice(qIndex + 1));
+      const parsed = Number(params.get("limit"));
+      if (Number.isFinite(parsed) && parsed > 0) return Math.trunc(parsed);
+    }
+  }
+  return 8;
 });
 
 const rawResponse = ref<any>(null);

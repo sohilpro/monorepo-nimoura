@@ -15,7 +15,11 @@ export const useCartActions = () => {
         return userCart;
       });
     } catch (err: any) {
-      toast.error(err?.data?.message || "خطا در دریافت سبد خرید");
+      toast.error(
+        err?.data?.statusMessage ||
+          err?.data?.message ||
+          "خطا در دریافت سبد خرید",
+      );
     }
   };
 
@@ -24,10 +28,11 @@ export const useCartActions = () => {
     product: {
       productId: number;
       title: string;
+      slug?: string;
       price: number;
       priceDiscount: number; // همیشه priceDiscount باشد
       thumbnail?: string;
-      variant?: { value: string; alt: string } | null;
+      variant?: { id?: number; value: string; alt: string } | null;
     },
     quantity = 1,
   ) => {
@@ -48,10 +53,20 @@ export const useCartActions = () => {
         toast.success("کالا به سبد خرید شما افزوده شد!");
         await fetchUserCart();
       } catch (err: any) {
-        toast.error(err?.data?.message || "افزودن کالا با خطا مواجه شد");
+        toast.error(
+          err?.data?.statusMessage ||
+            err?.data?.message ||
+            "افزودن کالا با خطا مواجه شد",
+        );
       }
     } else {
-      cart.addItem(product, quantity);
+      cart.addItem(
+        {
+          ...product,
+          slug: product.slug || createSlug(product.title),
+        },
+        quantity,
+      );
       toast.success("کالا به سبد خرید شما افزوده شد!");
     }
   };
@@ -59,7 +74,7 @@ export const useCartActions = () => {
   // حذف آیتم از سبد
   const removeItem = async (
     productId: number,
-    variant?: { value: string; alt: string },
+    variant?: { id?: number; value: string; alt: string },
   ) => {
     if (auth.value) {
       try {
@@ -74,7 +89,11 @@ export const useCartActions = () => {
         toast.info("کالا از سبد خرید حذف شد");
         await fetchUserCart();
       } catch (err: any) {
-        toast.error(err?.data?.message || "حذف کالا با خطا مواجه شد");
+        toast.error(
+          err?.data?.statusMessage ||
+            err?.data?.message ||
+            "حذف کالا با خطا مواجه شد",
+        );
       }
     } else {
       cart.removeItem(productId, variant);
@@ -86,7 +105,7 @@ export const useCartActions = () => {
   const updateQuantity = async (
     productId: number,
     quantity: number,
-    variant?: { value: string; alt: string },
+    variant?: { id?: number; value: string; alt: string },
   ) => {
     if (auth.value) {
       try {
@@ -99,7 +118,11 @@ export const useCartActions = () => {
         );
         await fetchUserCart();
       } catch (err: any) {
-        toast.error(err?.data?.message || "بروزرسانی تعداد با خطا مواجه شد");
+        toast.error(
+          err?.data?.statusMessage ||
+            err?.data?.message ||
+            "بروزرسانی تعداد با خطا مواجه شد",
+        );
       }
     } else {
       cart.updateQuantity(productId, quantity, variant);

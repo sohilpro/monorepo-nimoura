@@ -117,9 +117,10 @@ const navItems: NavItem[] = [
 // ─── Route ────────────────────────────────────
 const route = useRoute()
 
-const shouldShowNavbar = computed(() =>
-  !/^\/product\/\d+\/[^/]+$/.test(route.path)
-)
+const shouldShowNavbar = computed(() => {
+  if (route.path === '/products/amazing' || route.path === '/products/amazing') return true
+  return !/^\/product\/[^/]+(\/[^/]+)?$/.test(route.path)
+})
 
 function isActive(item: NavItem) {
   if (!item.to) return false

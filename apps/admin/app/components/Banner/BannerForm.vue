@@ -40,7 +40,7 @@
             <CommonCustomInput
               v-model="form.link"
               label="آدرس لینک بنر (URL)"
-              placeholder="مثال: /categories/1/makeup یا https://..."
+              placeholder="مثال: /categories/cosmetics یا https://..."
             />
 
             <!-- دستیار ساخت سریع لینک بر اساس دسته‌بندی یا برند -->
@@ -269,7 +269,7 @@ function onSelectCategory(catId: any) {
   if (!catId) return;
   const cat = categoryOptions.value.find((c) => c.id === catId);
   if (cat) {
-    form.link = `/categories/${cat.id}/${createSlug(cat.name)}`;
+    form.link = `/categories/${cat.slug || createSlug(cat.name)}`;
     selectedBrandId.value = null;
   }
 }

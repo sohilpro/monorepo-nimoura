@@ -204,11 +204,14 @@ async function handleAddToCart() {
       {
         productId: props.product.id,
         title: props.product.title,
-        price: props.product.price,
-        priceDiscount: props.product.priceDiscount,
+        slug: props.product.slug || createSlug(props.product.title),
+        price: props.selectedVariant?.price ?? props.product.price,
+        priceDiscount:
+          props.selectedVariant?.priceDiscount ?? props.product.priceDiscount,
         thumbnail: props.product.thumbnail,
         variant: props.selectedVariant
           ? {
+              id: props.selectedVariant.id,
               value: props.selectedVariant.value,
               alt: props.selectedVariant.alt,
             }

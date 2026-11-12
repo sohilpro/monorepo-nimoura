@@ -1,18 +1,15 @@
 export default defineEventHandler(async (event) => {
-  const {
-    apiBase ,
-  } = useRuntimeConfig();
-  const token = getCookie(event, "accesstoken");
-
-  try {
-    const data = await $fetch(`${apiBase}/cart`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+  const token = getCookie(event, 'accesstoken');
+  if (!token) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'ابتدا وارد حساب کاربری خود شوید',
     });
-
-    return data;
-  } catch (error) {
-    return error;
   }
+
+  return await apiFetch(event, '/cart', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 });

@@ -114,7 +114,7 @@
             <NuxtLink
               v-for="item in categoryResults"
               :key="`cat-${item.id}`"
-              :to="`/categories/${item.id}/${createSlug(item.name)}`"
+              :to="`/categories/${item.slug || createSlug(item.name)}`"
               class="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg border border-nimoura-border bg-white px-3 py-1.5 text-xs font-medium text-nimoura-text-700 transition-all duration-200 hover:border-nimoura-primary hover:bg-nimoura-base hover:text-nimoura-primary"
               @click="close"
             >
@@ -132,7 +132,7 @@
             <NuxtLink
               v-for="item in brandResults"
               :key="`brand-${item.id}`"
-              :to="`/brand/${createSlug(item.name)}?id=${item.id}`"
+              :to="`/brand/${encodeURIComponent(item.slug || createSlug(item.name))}`"
               class="inline-flex w-fit items-center justify-center whitespace-nowrap rounded-lg border border-nimoura-border bg-white px-3 py-1.5 text-xs font-medium text-nimoura-text-700 transition-all duration-200 hover:border-nimoura-primary hover:bg-nimoura-base hover:text-nimoura-primary"
               @click="close"
             >
@@ -148,7 +148,7 @@
           <ul class="mt-3 flex flex-col gap-2.5">
             <li v-for="item in products" :key="item.id">
               <NuxtLink
-                :to="`/product/${item.id}/${createSlug(item.title)}`"
+                :to="`/product/${encodeURIComponent(item.slug || createSlug(item.title))}`"
                 class="flex items-center gap-2 rounded border border-gray-200 p-1 transition-colors product-link"
                 @click="close"
               >
@@ -194,11 +194,25 @@ const products = ref([]);
 const categoryResults = ref([]);
 const brandResults = ref([]);
 
-const trends = [
-  { title: "ضد آفتاب", href: `/categories/6/${createSlug("ضد آفتاب")}` },
-  { title: "آبرسان", href: `/categories/25/${createSlug("آبرسان")}` },
-  { title: "ژل شستشو", href: `/categories/26/${createSlug("ژل شستشو")}` },
-];
+const { categories: allCategories } = useCategories();
+
+function trendHref(title) {
+  const stack = [...(allCategories.value ?? [])];
+  while (stack.length) {
+    const node = stack.shift();
+    if (node.slug && (node.name === title || node.name?.includes(title))) {
+      return `/categories/${node.slug}`;
+    }
+    if (node.children?.length) stack.push(...node.children);
+  }
+  return `/search?q=${encodeURIComponent(title)}`;
+}
+
+const trends = computed(() => [
+  { title: "ضد آفتاب", href: trendHref("ضد آفتاب") },
+  { title: "آبرسان", href: trendHref("آبرسان") },
+  { title: "ژل شستشو", href: trendHref("ژل شستشو") },
+]);
 
 const focusRingStyle = computed(() =>
   focused.value

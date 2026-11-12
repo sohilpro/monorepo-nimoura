@@ -15,12 +15,18 @@ export interface CategoryNode {
 export function buildCategoryBreadcrumb(
   category: CategoryNode | null | undefined,
   basePath: string = '/categories',
+  options?: { currentLabel?: string },
 ): BreadcrumbItem[] {
   const items: BreadcrumbItem[] = [
     { label: 'خانه', href: '/' },
   ];
 
-  if (!category) return items;
+  if (!category) {
+    if (options?.currentLabel) {
+      items.push({ label: options.currentLabel });
+    }
+    return items;
+  }
 
   const chain: CategoryNode[] = [];
   const visited = new Set<number>();
@@ -35,15 +41,62 @@ export function buildCategoryBreadcrumb(
 
   chain.reverse();
 
+  const hasCurrentLabel = Boolean(options?.currentLabel);
+
   chain.forEach((cat, index) => {
-    const isLast = index === chain.length - 1;
+    const isLast = !hasCurrentLabel && index === chain.length - 1;
     const slug = cat.slug || createSlug(cat.name);
 
     items.push({
       label: cat.name || '',
-      href: isLast ? undefined : `${basePath}/${cat.id}/${slug}`,
+      href: isLast ? undefined : `${basePath}/${encodeURIComponent(slug)}`,
     });
   });
+
+  if (options?.currentLabel) {
+    items.push({ label: options.currentLabel });
+  }
+
+  return items;
+}
+
+export interface BrandNode {
+  id: number;
+  name: string;
+  slug?: string;
+  subBrand?: {
+    id: number;
+    name: string;
+    slug?: string;
+  } | null;
+}
+
+export function buildBrandBreadcrumb(
+  brand: BrandNode | null | undefined,
+  basePath: string = '/brand',
+): BreadcrumbItem[] {
+  const items: BreadcrumbItem[] = [{ label: 'خانه', href: '/' }];
+
+  if (!brand) return items;
+
+  const brandSlug = brand.slug || createSlug(brand.name);
+  const encodedBrandSlug = encodeURIComponent(brandSlug);
+
+  if (brand.subBrand) {
+    items.push({
+      label: brand.name || '',
+      href: `${basePath}/${encodedBrandSlug}`,
+    });
+    items.push({
+      label: brand.subBrand.name || '',
+      href: undefined,
+    });
+  } else {
+    items.push({
+      label: brand.name || '',
+      href: undefined,
+    });
+  }
 
   return items;
 }

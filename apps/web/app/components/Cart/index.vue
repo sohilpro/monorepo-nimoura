@@ -139,7 +139,10 @@ onMounted(async () => {
             :key="item.key"
             class="group bg-white/70 backdrop-blur border border-nimoura-text-100 rounded-2xl p-4 sm:p-5 flex gap-4 sm:gap-6 shadow-sm hover:shadow-md transition-shadow"
           >
-            <NuxtLink :to="`/products/${item.slug}`" class="shrink-0">
+            <NuxtLink
+              :to="`/product/${encodeURIComponent(item.slug || createSlug(item.title))}`"
+              class="shrink-0"
+            >
               <img
                 :src="item.thumbnail || '/images/placeholder-product.jpg'"
                 :alt="item.title"
@@ -151,7 +154,7 @@ onMounted(async () => {
               <div class="flex justify-between gap-3">
                 <div class="min-w-0">
                   <NuxtLink
-                    :to="`/products/${item.slug}`"
+                    :to="`/product/${encodeURIComponent(item.slug || createSlug(item.title))}`"
                     class="font-display text-nimoura-text-900 text-base sm:text-lg hover:text-nimoura-primary transition-colors line-clamp-1"
                   >
                     {{ item.title }}

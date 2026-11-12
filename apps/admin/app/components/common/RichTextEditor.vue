@@ -62,6 +62,16 @@
         <!-- تیترها -->
         <div class="flex items-center gap-0.5">
           <button
+            v-if="allowH1"
+            type="button"
+            title="تیتر ۱ (H1)"
+            class="toolbar-btn font-bold text-xs"
+            :class="{ 'is-active': editor.isActive('heading', { level: 1 }) }"
+            @click="editor.chain().focus().toggleHeading({ level: 1 }).run()"
+          >
+            H1
+          </button>
+          <button
             type="button"
             title="تیتر ۲"
             class="toolbar-btn font-bold text-xs"
@@ -273,6 +283,7 @@ const props = withDefaults(
     minHeight?: string;
     ownerType?: string;
     disabled?: boolean;
+    allowH1?: boolean;
   }>(),
   {
     modelValue: '',
@@ -280,6 +291,7 @@ const props = withDefaults(
     minHeight: '260px',
     ownerType: 'article_content',
     disabled: false,
+    allowH1: false,
   }
 );
 
@@ -296,7 +308,7 @@ const editor = useEditor({
   editable: !props.disabled,
   extensions: [
     StarterKit.configure({
-      heading: { levels: [2, 3, 4] },
+      heading: { levels: props.allowH1 ? [1, 2, 3, 4] : [2, 3, 4] },
     }),
     Underline,
     Link.configure({
@@ -457,6 +469,14 @@ function setLink() {
   float: right;
   height: 0;
   pointer-events: none;
+}
+
+:deep(.tiptap h1) {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin-top: 1.25rem;
+  margin-bottom: 0.65rem;
+  color: var(--color-gray-900, #2e2636);
 }
 
 :deep(.tiptap h2) {

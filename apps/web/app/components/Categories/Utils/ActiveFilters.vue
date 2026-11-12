@@ -1,25 +1,26 @@
 <template>
   <div v-if="chips.length" class="mb-3 flex flex-wrap items-center gap-2" aria-label="فیلترهای فعال">
-    <button
+    <Chip
       v-for="chip in chips"
       :key="chip.key"
-      type="button"
-      class="inline-flex items-center gap-1.5 rounded-full border border-nimoura-primary/25 bg-nimoura-primary/5 px-3 py-1 text-xs text-nimoura-text-700 transition hover:bg-nimoura-primary/10"
-      :title="`حذف «${chip.label}»`"
-      @click="chip.remove()"
-    >
-      {{ chip.label }}
-      <i class="pi pi-times text-[9px] text-nimoura-primary" />
-    </button>
+      :label="chip.label"
+      removable
+      class="!rounded-full !border !border-nimoura-primary/25 !bg-nimoura-primary/5 !px-3 !py-1 !text-xs !text-nimoura-text-700 transition hover:!bg-nimoura-primary/10"
+      :pt="{
+        label: { class: '!leading-4' },
+        removeIcon: { class: '!size-3.5 !text-nimoura-primary cursor-pointer' },
+      }"
+      @remove="chip.remove()"
+    />
 
-    <button
+    <Button
       v-if="chips.length > 1"
-      type="button"
-      class="px-1 text-xs font-medium text-nimoura-primary hover:underline"
+      label="حذف همه"
+      link
+      size="small"
+      class="!px-1 !py-0.5 !text-xs !font-medium !text-nimoura-primary"
       @click="clearFilters()"
-    >
-      حذف همه
-    </button>
+    />
   </div>
 </template>
 

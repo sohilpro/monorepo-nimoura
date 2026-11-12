@@ -1,11 +1,19 @@
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event);
-  const token = getCookie(event, "accesstoken") ?? getHeader(event, "authorization");
-  const { apiBase } = useRuntimeConfig();
+  const token = getCookie(event, 'accesstoken');
+  if (!token) {
+    throw createError({
+      statusCode: 401,
+      statusMessage: 'ابتدا وارد حساب کاربری خود شوید',
+    });
+  }
 
-  return await $fetch(`${apiBase}/comments`, {
-    method: "POST",
+  const body = await readBody(event);
+
+  return await apiFetch(event, '/comments', {
+    method: 'POST',
     body,
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
   });
 });

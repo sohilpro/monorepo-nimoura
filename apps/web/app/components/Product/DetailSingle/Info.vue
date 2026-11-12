@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full lg:w-3/4">
+  <div class="w-full lg:flex-1 lg:min-w-0">
     <div
       class="flex flex-col md:flex-row justify-start gap-x-8 xl:gap-x-5 items-start"
     >
@@ -9,28 +9,37 @@
           `${product.thumbnail}`,
           ...(product.images?.map((img: any) => `${img.url}`) ?? []),
         ]"
-        :customer-reviews="customerReviews"
       />
 
       <!-- INFOS -->
       <div
         class="w-full gap-y-3 mt-3 lg:mt-0 md:w-3/4 flex flex-col lg:gap-y-7"
       >
-        <div v-if="product.brand || product.subBrand" class="flex items-center gap-2">
+        <nav
+          v-if="product.brand || product.subBrand"
+          aria-label="مسیر برند محصول"
+          class="flex flex-wrap items-center gap-1.5 text-xs sm:text-sm"
+        >
           <NuxtLink
-            v-if="product.brand"
-            :to="`/brand/${createSlug(product.brand.name)}?id=${product.brand.id}`"
-            class="font-vazir font-medium text-nimoura-text-400"
-            >{{ product.brand.name }}
-          </NuxtLink>
-          <span v-if="product.brand && product.subBrand">/</span>
-          <NuxtLink
-            v-if="product.brand && product.subBrand"
-            :to="`/brand/${createSlug(product.brand.name)}/${createSlug(product.subBrand.name)}?id=${product.brand.id}&subBrandId=${product.subBrand.id}`"
-            class="font-vazir font-medium text-nimoura-text-400"
-            >{{ product.subBrand.name }}</NuxtLink
+            v-if="product.brand && brandHref"
+            :to="brandHref"
+            class="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-vazir font-medium text-nimoura-text-500 transition-colors hover:bg-nimoura-base hover:text-nimoura-primary"
           >
-        </div>
+            {{ product.brand.name }}
+          </NuxtLink>
+          <span
+            v-if="product.brand && product.subBrand && subBrandHref"
+            class="text-nimoura-text-300"
+            aria-hidden="true"
+          >/</span>
+          <NuxtLink
+            v-if="product.brand && product.subBrand && subBrandHref"
+            :to="subBrandHref"
+            class="inline-flex items-center rounded-md px-1.5 py-0.5 font-vazir font-medium text-nimoura-text-600 transition-colors hover:bg-nimoura-base hover:text-nimoura-primary"
+          >
+            {{ product.subBrand.name }}
+          </NuxtLink>
+        </nav>
 
         <div class="flex flex-col gap-y-3">
           <h1
@@ -65,10 +74,18 @@
             </button>
             <span class="flex items-center gap-x-1 text-sm font-modam">
               <i class="pi pi-star text-amber-300 text-sm!"></i>
-              {{ product.averageRating }} امتیاز
+              {{ formattedRating }} امتیاز
             </span>
 
-            <UtilsBadge> دیدگاه 0 </UtilsBadge>
+            <button
+              type="button"
+              class="transition-opacity hover:opacity-80"
+              @click="handleGoToReviews"
+            >
+              <UtilsBadge>
+                دیدگاه {{ numberFormat(product.ratingsCount ?? Totalcomments ?? 0) }}
+              </UtilsBadge>
+            </button>
 
             <span v-if="product.isAvailable" class="text-green-600">موجود</span>
             <span v-else class="text-red-600">ناموجود</span>
@@ -79,8 +96,9 @@
           {{ product.shortDescription }}
         </p>
 
-<ProductVariantPicker
+        <ProductVariantPicker
           v-if="product.type === 'variant'"
+          id="variant-picker"
           :variants="product.variants"
           :selected-variant="selectedVariant"
           @update:selected-variant="emit('update:selectedVariant', $event)"
@@ -116,7 +134,7 @@
           <div
             class="flex font-vazir text-nimoura-text-700 items-center justify-between"
           >
-            <h1 class="font-bold text-lg">مشخصات</h1>
+            <h2 class="font-bold text-lg">مشخصات</h2>
 
             <button
               @click="handleGoToSpecifications"
@@ -134,7 +152,7 @@
               class="flex gap-2 *:p-2 *:h-16 *:bg-neutral-100 *:rounded-lg *:flex *:flex-col *:gap-y-1.5"
             >
               <div
-                v-for="(specification, index) in product.specifications.slice(
+                v-for="(specification, index) in (product.specifications ?? []).slice(
                   0,
                   4,
                 )"
@@ -157,7 +175,7 @@
             class="hidden md:grid grid-cols-12 gap-2 *:p-2 *:h-16 *:bg-neutral-100 *:rounded-lg *:flex *:flex-col *:gap-y-1.5"
           >
             <div
-              v-for="(specification, index) in product.specifications.slice(
+              v-for="(specification, index) in (product.specifications ?? []).slice(
                 0,
                 6,
               )"
@@ -243,6 +261,34 @@ const emit = defineEmits<{
   (e: "update:selectedVariant", val: Variant | null): void;
 }>();
 
+const formattedRating = computed(() => {
+  const val = Number(props.product?.averageRating);
+  return Number.isFinite(val) && val > 0 ? val.toFixed(1) : "5.0";
+});
+
+// ─── Brand & SubBrand SEO URLs ────────────────
+const brandSlug = computed(() => {
+  const brand = props.product?.brand;
+  if (!brand) return "";
+  return brand.slug || createSlug(brand.name);
+});
+
+const subBrandSlug = computed(() => {
+  const subBrand = props.product?.subBrand;
+  if (!subBrand) return "";
+  return subBrand.slug || createSlug(subBrand.name);
+});
+
+const brandHref = computed(() =>
+  brandSlug.value ? `/brand/${encodeURIComponent(brandSlug.value)}` : "",
+);
+
+const subBrandHref = computed(() =>
+  brandSlug.value && subBrandSlug.value
+    ? `/brand/${encodeURIComponent(brandSlug.value)}/${encodeURIComponent(subBrandSlug.value)}`
+    : "",
+);
+
 // ─── Tags and stock notice ────────────────────
 const tagGroups = computed(() => {
   const groups = new Map<string, { name: string; tags: any[] }>();
@@ -258,7 +304,7 @@ const tagGroups = computed(() => {
 const tagLink = (tagId: number) => {
   const category = props.product?.category;
   return category
-    ? `/categories/${category.id}/${createSlug(category.name)}?tags=${tagId}`
+    ? `/categories/${category.slug || createSlug(category.name)}?tags=${tagId}`
     : "/";
 };
 
@@ -290,7 +336,8 @@ async function handleToggle() {
 }
 
 function handleShare() {
-  const url = `${window.location.origin}/product/${props.product.id}/${createSlug(props.product.title)}`;
+  const slug = props.product.slug || createSlug(props.product.title);
+  const url = `${window.location.origin}/product/${encodeURIComponent(slug)}`;
 
   share({
     title: props.product.title,
@@ -305,6 +352,14 @@ const handleGoToSpecifications = () =>
     const el = document.querySelector("#specifications");
     if (el) {
       el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
+
+const handleGoToReviews = () =>
+  nextTick(() => {
+    const el = document.querySelector("#reviews");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   });
 </script>

@@ -50,12 +50,16 @@ export class ProductsController {
     return this.facetsService.getFacets({
       search: query.search,
       brandId: query.brandId,
+      brandSlug: query.brandSlug,
       subBrandId: query.subBrandId,
+      subBrandSlug: query.subBrandSlug,
       categoryId: query.categoryId,
+      categorySlug: query.categorySlug,
       minPrice: query.minPrice,
       maxPrice: query.maxPrice,
       inStock: parseBool(query.inStock) || parseBool(query.isAvailable),
       onSale: query.onSale,
+      amazing: query.amazing,
       tagIds: query.tags,
     });
   }
@@ -76,7 +80,7 @@ export class ProductsController {
 
   @Get('amazing')
   @ApiOperation({ summary: 'دریافت محصولات شگفت‌انگیز / تخفیف‌دار' })
-  async getAmazingOffers(@Query() query: PaginationQueryDto) {
+  async getAmazingOffers(@Query() query: ProductFilterQueryDto) {
     const result = await this.productsService.findAmazing(query);
     return {
       ...result,
@@ -110,14 +114,14 @@ export class ProductsController {
     };
   }
 
-  @Get('category/:id')
-  @ApiOperation({ summary: 'دریافت محصولات یک دسته‌بندی خاص' })
-  @ApiParam({ name: 'id', description: 'شناسه دسته‌بندی' })
+  @Get('category/:identifier')
+  @ApiOperation({ summary: 'دریافت محصولات یک دسته‌بندی خاص با شناسه یا اسلاگ' })
+  @ApiParam({ name: 'identifier', description: 'شناسه عددی یا اسلاگ دسته‌بندی' })
   async getProductsByCategory(
-    @Param('id', ParseIntPipe) categoryId: number,
+    @Param('identifier') identifier: string,
     @Query() query?: ProductFilterQueryDto,
   ) {
-    const result = await this.productsService.findByCategory(categoryId, query);
+    const result = await this.productsService.findByCategory(identifier, query);
 
     return {
       ...result,

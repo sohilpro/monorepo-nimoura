@@ -12,8 +12,12 @@ export interface ListingFilters {
   maxPrice?: number;
   inStock?: boolean;
   onSale?: boolean;
+  amazing?: boolean;
   tagIds?: number[];
 }
+
+export const IN_STOCK_PRODUCT_SQL =
+  `((p."type" = 'simple' AND p."stock" > 0) OR (p."type" = 'variant' AND EXISTS (SELECT 1 FROM "product_variants" v WHERE v."productId" = p."id" AND v."deleted_at" IS NULL AND v."isAvailable" = true AND v."stock" > 0)) OR (p."type" = 'bundle' AND p."stock" > 0))`;
 
 /** The price the customer actually pays (discounted price when valid). */
 export const EFFECTIVE_PRICE_SQL =
@@ -62,9 +66,11 @@ export class ProductListingFilters {
       }
     }
 
-    if (f.inStock) qb.andWhere('p.stock > 0');
+    if (f.inStock) qb.andWhere(IN_STOCK_PRODUCT_SQL);
     if (f.onSale)
       qb.andWhere('p.priceDiscount > 0 AND p.priceDiscount < p.price');
+    if (f.amazing)
+      qb.andWhere('p.isAmazingOffer = :amazing', { amazing: true });
 
     await this.tagFilter.apply(qb, 'p', f.tagIds ?? [], {
       excludeGroupId: options.excludeTagGroupId,

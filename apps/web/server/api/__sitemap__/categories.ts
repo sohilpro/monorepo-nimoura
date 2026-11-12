@@ -1,17 +1,21 @@
 import type { SitemapUrlInput } from "#sitemap/types";
+import { createSlug } from "@nimoura/utils";
 
 export default defineSitemapEventHandler(async () => {
-  // 📌 دریافت دسته‌بندی‌ها از API
-  const categories: any = await $fetch<{ id: string; slug: string }[]>(
-    `/api/categories/list`,
-    { query: { limit: 100 } }
-  );
+  const { apiBase } = useRuntimeConfig();
 
-  // 📌 ساخت آدرس دسته‌بندی‌ها
-  return categories.data.categories.map((c: any) => ({
-    loc: `/categories/${c.id}/${c.name}`,
+  // دریافت دسته‌بندی‌ها از API
+  const response: any = await $fetch(`${apiBase}/categories`, {
+    query: { limit: 100 },
+  });
+
+  const categories = response?.data?.categories ?? response?.categories ?? [];
+
+  // ساخت آدرس یکتای دسته‌بندی‌ها بر اساس اسلاگ خود دسته‌بندی
+  return categories.map((c: any) => ({
+    loc: `/categories/${c.slug || createSlug(c.name)}`,
     changefreq: "weekly",
     priority: 0.8,
-    lastmod: new Date().toISOString(),
+    lastmod: c.updatedAt || new Date().toISOString(),
   })) satisfies SitemapUrlInput[];
 });

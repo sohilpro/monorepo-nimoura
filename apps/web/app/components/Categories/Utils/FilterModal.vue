@@ -1,208 +1,201 @@
 <template>
-  <Teleport to="body">
-    <!-- BACKDROP -->
-    <Transition name="fm-backdrop">
-      <div
-        v-if="visible"
-        class="fixed inset-0 z-40 bg-nimoura-text-900/35 backdrop-blur-[2px]"
-        @click="handleClose"
-      />
-    </Transition>
+  <Drawer
+    :visible="visible"
+    position="bottom"
+    modal
+    dismissable
+    :show-close-icon="false"
+    :pt="{
+      root: {
+        class:
+          '!h-auto !max-h-[85vh] !rounded-t-3xl !border-t !border-nimoura-text-100 !bg-white',
+      },
+      header: {
+        class: '!border-b !border-nimoura-text-100 !px-4 !py-3',
+      },
+      content: {
+        class: '!px-4 !py-0 sm:!px-5 scrollbar-hide',
+      },
+      footer: {
+        class: '!border-t !border-nimoura-text-100 !bg-white !px-4 !py-3 sm:!px-5',
+      },
+    }"
+    @update:visible="onVisibleChange"
+  >
+    <template #header>
+      <div class="flex w-full items-center justify-between">
+        <p class="font-vazir text-sm font-semibold text-nimoura-text-800">
+          فیلترها
+        </p>
 
-    <!-- FILTER SHEET -->
-    <Transition name="fm-sheet">
-      <div
-        v-if="visible"
-        class="fixed inset-x-0 bottom-0 z-90 flex max-h-[85vh] flex-col overflow-hidden rounded-t-3xl border-t border-nimoura-text-100 bg-white shadow-[0_-12px_40px_rgba(39,33,33,0.12)]"
-        @click.stop
-      >
-        <!-- DRAG HANDLE -->
-        <div
-          class="flex w-full shrink-0 cursor-pointer justify-center pb-2 pt-3"
+        <Button
+          icon="pi pi-times"
+          text
+          rounded
+          size="small"
+          severity="secondary"
+          aria-label="بستن"
+          class="!text-nimoura-text-400 hover:!bg-nimoura-primary/10 hover:!text-nimoura-primary"
           @click="handleClose"
+        />
+      </div>
+    </template>
+
+    <div>
+      <!-- AVAILABILITY -->
+      <div
+        class="flex items-center justify-between border-b border-nimoura-text-100 py-4"
+      >
+        <label
+          for="available-products-toggle-m"
+          class="cursor-pointer text-sm font-medium text-nimoura-text-700"
         >
-          <div
-            class="h-1.5 w-10 rounded-full bg-nimoura-text-200 transition-colors hover:bg-nimoura-primary/50"
+          فقط کالاهای موجود
+        </label>
+
+        <ToggleSwitch
+          v-model="showAvailableOnly"
+          input-id="available-products-toggle-m"
+          class="nimoura-toggle"
+          :pt="{
+            slider: {
+              class: showAvailableOnly ? 'bg-nimoura-primary! ' : '',
+            },
+          }"
+        />
+      </div>
+
+      <!-- ON SALE -->
+      <div
+        class="flex items-center justify-between border-b border-nimoura-text-100 py-4"
+      >
+        <label
+          for="on-sale-toggle-m"
+          class="cursor-pointer text-sm font-medium text-nimoura-text-700"
+        >
+          فقط تخفیف‌دارها
+          <span
+            v-if="facets?.counts?.onSale"
+            class="text-[11px] font-normal text-nimoura-text-400"
+          >
+            ({{ numberFormat(facets.counts.onSale) }})
+          </span>
+        </label>
+
+        <ToggleSwitch
+          v-model="showOnSale"
+          input-id="on-sale-toggle-m"
+          class="nimoura-toggle"
+          :pt="{ slider: { class: showOnSale ? 'bg-nimoura-primary! ' : '' } }"
+        />
+      </div>
+
+      <!-- TAG FILTERS -->
+      <div
+        v-if="facetsPending && !facets?.groups?.length"
+        class="space-y-3 border-b border-nimoura-text-100 py-4"
+      >
+        <div v-for="g in 2" :key="g" class="space-y-2">
+          <Skeleton width="5rem" height="0.9rem" border-radius="0.375rem" />
+          <div v-for="t in 3" :key="t" class="flex items-center gap-2.5">
+            <Skeleton width="1.1rem" height="1.1rem" border-radius="0.375rem" />
+            <Skeleton width="60%" height="0.8rem" border-radius="0.375rem" />
+          </div>
+        </div>
+      </div>
+      <div
+        v-else-if="facets?.groups?.length"
+        class="border-b border-nimoura-text-100"
+      >
+        <CategoriesUtilsFacetGroups
+          :groups="facets.groups"
+          :selected="draftTags"
+          @toggle="toggleDraftTag"
+        />
+      </div>
+
+      <!-- PRICE RANGE -->
+      <div class="py-5">
+        <div class="mb-5 flex items-center justify-between">
+          <p class="text-sm font-semibold text-nimoura-text-800">
+            محدوده قیمت
+          </p>
+
+          <Tag
+            value="تومان"
+            rounded
+            class="!bg-nimoura-primary/10 !px-2.5 !py-1 !text-[11px] !font-medium !text-nimoura-primary"
           />
         </div>
 
-        <!-- HEADER -->
-        <div
-          class="flex shrink-0 items-center justify-between border-b border-nimoura-text-100 px-4 py-3"
-        >
-          <p class="font-vazir text-sm font-semibold text-nimoura-text-800">
-            فیلترها
-          </p>
+        <!-- SLIDER -->
+        <Slider
+          v-model="priceRange"
+          range
+          :min="MIN_PRICE"
+          :max="maxPrice"
+          :step="10000"
+          class="nimoura-slider !mx-1"
+        />
 
-          <button
-            type="button"
-            class="flex size-8 items-center justify-center rounded-full text-nimoura-text-400 transition-all hover:bg-nimoura-primary/10 hover:text-nimoura-primary active:scale-90"
-            @click="handleClose"
-          >
-            <svg
-              class="size-5"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <!-- SCROLLABLE BODY -->
-        <div class="min-h-0 flex-1 overflow-y-auto px-4 sm:px-5">
-          <!-- AVAILABILITY -->
+        <!-- PRICE VALUES -->
+        <div class="mt-5 flex items-center justify-between gap-3">
+          <!-- MIN -->
           <div
-            class="flex items-center justify-between border-b border-nimoura-text-100 py-4"
+            class="flex-1 rounded-xl border border-nimoura-text-200 bg-nimoura-base/40 px-3 py-2.5 text-center transition-colors focus-within:border-nimoura-primary"
           >
-            <label
-              for="available-products-toggle"
-              class="cursor-pointer text-sm font-medium text-nimoura-text-700"
-            >
-              فقط کالاهای موجود
-            </label>
+            <span class="block text-[10px] text-nimoura-text-400">
+              حداقل
+            </span>
 
-            <ToggleSwitch
-              v-model="showAvailableOnly"
-              input-id="available-products-toggle"
-              class="nimoura-toggle"
-              :pt="{
-                slider: {
-                  class: showAvailableOnly
-                    ? 'bg-nimoura-primary! '
-                    : '',
-                },
-              }"
-            />
+            <span
+              class="mt-0.5 block text-xs font-semibold tabular-nums text-nimoura-text-800"
+            >
+              {{ numberFormat(priceRange[0]) }}
+            </span>
           </div>
 
-          <!-- ON SALE -->
+          <span class="shrink-0 text-nimoura-text-300"> — </span>
+
+          <!-- MAX -->
           <div
-            class="flex items-center justify-between border-b border-nimoura-text-100 py-4"
+            class="flex-1 rounded-xl border border-nimoura-text-200 bg-nimoura-base/40 px-3 py-2.5 text-center transition-colors focus-within:border-nimoura-primary"
           >
-            <label
-              for="on-sale-toggle-m"
-              class="cursor-pointer text-sm font-medium text-nimoura-text-700"
+            <span class="block text-[10px] text-nimoura-text-400">
+              حداکثر
+            </span>
+
+            <span
+              class="mt-0.5 block text-xs font-semibold tabular-nums text-nimoura-text-800"
             >
-              فقط تخفیف‌دارها
-              <span
-                v-if="facets?.counts?.onSale"
-                class="text-[11px] font-normal text-nimoura-text-400"
-              >
-                ({{ numberFormat(facets.counts.onSale) }})
-              </span>
-            </label>
-
-            <ToggleSwitch
-              v-model="showOnSale"
-              input-id="on-sale-toggle-m"
-              class="nimoura-toggle"
-              :pt="{ slider: { class: showOnSale ? 'bg-nimoura-primary! ' : '' } }"
-            />
+              {{ numberFormat(priceRange[1]) }}
+            </span>
           </div>
-
-          <!-- TAG FILTERS -->
-          <div v-if="facets?.groups?.length" class="border-b border-nimoura-text-100">
-            <CategoriesUtilsFacetGroups
-              :groups="facets.groups"
-              :selected="draftTags"
-              @toggle="toggleDraftTag"
-            />
-          </div>
-
-          <!-- PRICE RANGE -->
-          <div class="py-5">
-            <div class="mb-5 flex items-center justify-between">
-              <p class="text-sm font-semibold text-nimoura-text-800">
-                محدوده قیمت
-              </p>
-
-              <span
-                class="rounded-full bg-nimoura-primary/10 px-2.5 py-1 text-[11px] font-medium text-nimoura-primary"
-              >
-                تومان
-              </span>
-            </div>
-
-            <!-- SLIDER -->
-            <Slider
-              v-model="priceRange"
-              range
-              :min="MIN_PRICE"
-              :max="maxPrice"
-              :step="10000"
-              class="nimoura-slider !mx-1"
-            />
-
-            <!-- PRICE VALUES -->
-            <div class="mt-5 flex items-center justify-between gap-3">
-              <!-- MIN -->
-              <div
-                class="flex-1 rounded-xl border border-nimoura-text-200 bg-nimoura-base/40 px-3 py-2.5 text-center transition-colors focus-within:border-nimoura-primary"
-              >
-                <span class="block text-[10px] text-nimoura-text-400">
-                  حداقل
-                </span>
-
-                <span
-                  class="mt-0.5 block text-xs font-semibold tabular-nums text-nimoura-text-800"
-                >
-                  {{ numberFormat(priceRange[0]) }}
-                </span>
-              </div>
-
-              <span class="shrink-0 text-nimoura-text-300"> — </span>
-
-              <!-- MAX -->
-              <div
-                class="flex-1 rounded-xl border border-nimoura-text-200 bg-nimoura-base/40 px-3 py-2.5 text-center transition-colors focus-within:border-nimoura-primary"
-              >
-                <span class="block text-[10px] text-nimoura-text-400">
-                  حداکثر
-                </span>
-
-                <span
-                  class="mt-0.5 block text-xs font-semibold tabular-nums text-nimoura-text-800"
-                >
-                  {{ numberFormat(priceRange[1]) }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- FOOTER -->
-        <div
-          class="flex shrink-0 items-center gap-3 border-t border-nimoura-text-100 bg-white px-4 py-3 sm:px-5"
-          style="padding-bottom: max(env(safe-area-inset-bottom), 12px)"
-        >
-          <!-- CLEAR -->
-          <button
-            type="button"
-            class="shrink-0 rounded-xl border border-nimoura-text-200 bg-white px-4 py-3 text-sm font-medium text-nimoura-text-600 transition-all hover:border-nimoura-primary/40 hover:bg-nimoura-primary/5 hover:text-nimoura-primary active:scale-[0.98]"
-            @click="handleClearFilters"
-          >
-            حذف فیلترها
-          </button>
-
-          <!-- APPLY -->
-          <button
-            type="button"
-            class="w-full rounded-xl bg-nimoura-primary py-3 text-sm font-semibold text-white shadow-[0_6px_18px_rgba(183,110,121,0.20)] transition-all hover:bg-[#a9606b] active:scale-[0.99] active:shadow-none"
-            @click="handleApply"
-          >
-            اعمال فیلتر
-          </button>
         </div>
       </div>
-    </Transition>
-  </Teleport>
+    </div>
+
+    <template #footer>
+      <div
+        class="flex w-full items-center gap-3"
+        style="padding-bottom: max(env(safe-area-inset-bottom), 4px)"
+      >
+        <Button
+          label="حذف فیلترها"
+          outlined
+          severity="secondary"
+          class="!shrink-0 !rounded-xl !border-nimoura-text-200 !px-4 !py-3 !text-sm !font-medium !text-nimoura-text-600 hover:!border-nimoura-primary/40 hover:!bg-nimoura-primary/5 hover:!text-nimoura-primary"
+          @click="handleClearFilters"
+        />
+
+        <Button
+          label="اعمال فیلتر"
+          class="!w-full !rounded-xl !border-nimoura-primary !bg-nimoura-primary !py-3 !text-sm !font-semibold !text-white"
+          @click="handleApply"
+        />
+      </div>
+    </template>
+  </Drawer>
 </template>
 
 <script setup lang="ts">
@@ -213,6 +206,7 @@ const props = defineProps<{
   close: () => void;
   clearFilters: () => void;
   facets?: ProductFacets | null;
+  facetsPending?: boolean;
 }>();
 
 const route = useRoute();
@@ -248,10 +242,6 @@ function toggleDraftTag(id: number) {
 watch(
   () => props.visible,
   (val) => {
-    if (import.meta.client) {
-      document.body.style.overflow = val ? "hidden" : "";
-    }
-
     if (val) {
       showAvailableOnly.value = route.query.isAvailable === "true";
       showOnSale.value = route.query.onSale === "true";
@@ -268,21 +258,21 @@ watch(
   },
 );
 
-onUnmounted(() => {
-  if (import.meta.client) {
-    document.body.style.overflow = "";
-  }
-});
-
 function handleApply() {
+  const hasPriceChanged =
+    priceRange.value[0] > MIN_PRICE ||
+    priceRange.value[1] < maxPrice.value ||
+    route.query.minPrice !== undefined ||
+    route.query.maxPrice !== undefined;
+
   router.push({
     query: {
       ...route.query,
       isAvailable: showAvailableOnly.value ? "true" : undefined,
       onSale: showOnSale.value ? "true" : undefined,
       tags: draftTags.value.length ? draftTags.value.join(",") : undefined,
-      minPrice: priceRange.value[0],
-      maxPrice: priceRange.value[1],
+      minPrice: hasPriceChanged ? priceRange.value[0] : undefined,
+      maxPrice: hasPriceChanged ? priceRange.value[1] : undefined,
       page: undefined,
     },
   });
@@ -304,70 +294,43 @@ function handleClearFilters() {
 function handleClose() {
   props.close();
 }
+
+function onVisibleChange(nextVisible: boolean) {
+  if (!nextVisible) handleClose();
+}
 </script>
 
 <style scoped>
-/* -------------------------------- */
-/* Backdrop */
-/* -------------------------------- */
-
-.fm-backdrop-enter-active,
-.fm-backdrop-leave-active {
-  transition: opacity 0.25s ease;
-}
-
-.fm-backdrop-enter-from,
-.fm-backdrop-leave-to {
-  opacity: 0;
-}
-
-/* -------------------------------- */
-/* Bottom Sheet */
-/* -------------------------------- */
-
-.fm-sheet-enter-active {
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.fm-sheet-leave-active {
-  transition: transform 0.22s ease-in;
-}
-
-.fm-sheet-enter-from,
-.fm-sheet-leave-to {
-  transform: translateY(100%);
-}
-
 /* -------------------------------- */
 /* PrimeVue Slider */
 /* -------------------------------- */
 
 :deep(.nimoura-slider .p-slider-range) {
-  background: #b76e79;
+  background: var(--color-nimoura-primary);
 }
 
 :deep(.nimoura-slider .p-slider-handle) {
   width: 18px;
   height: 18px;
-  border: 2px solid #b76e79;
-  background: #ffffff;
-  box-shadow: 0 3px 10px rgba(183, 110, 121, 0.22);
+  border: 2px solid var(--color-nimoura-primary);
+  background: white;
+  box-shadow: 0 3px 10px rgb(183 110 121 / 0.22);
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
 
 :deep(.nimoura-slider .p-slider-handle:hover) {
-  box-shadow: 0 4px 14px rgba(183, 110, 121, 0.3);
+  box-shadow: 0 4px 14px rgb(183 110 121 / 0.3);
 }
 
 :deep(.nimoura-slider .p-slider-handle:focus) {
   box-shadow:
-    0 0 0 4px rgba(183, 110, 121, 0.12),
-    0 4px 14px rgba(183, 110, 121, 0.2);
+    0 0 0 4px rgb(183 110 121 / 0.12),
+    0 4px 14px rgb(183 110 121 / 0.2);
 }
 
 :deep(.nimoura-slider .p-slider-track) {
-  background: #e9e6e6;
+  background: var(--color-nimoura-text-100);
 }
 </style>

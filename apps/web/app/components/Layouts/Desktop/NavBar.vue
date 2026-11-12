@@ -80,7 +80,7 @@
                       class="flex flex-col gap-3"
                     >
                       <NuxtLink
-                        :to="`/categories/${subCat.id}/${createSlug(subCat.name)}`"
+                        :to="`/categories/${subCat.slug || createSlug(subCat.name)}`"
                         class="font-bold text-gray-900 border-r-2 border-nimoura-primary pr-2 hover:text-nimoura-primary transition-colors"
                       >
                         {{ subCat.name }}
@@ -90,7 +90,7 @@
                         <NuxtLink
                           v-for="child in subCat.children"
                           :key="child.id"
-                          :to="`/categories/${child.id}/${createSlug(child.name)}`"
+                          :to="`/categories/${child.slug || createSlug(child.name)}`"
                           class="text-sm text-gray-500 hover:text-nimoura-primary transition-colors"
                         >
                           {{ child.name }}
@@ -152,8 +152,8 @@ const currentSubCategories = computed(() => {
 
 const staticMenuItems = [
   { label: "جادوی نیمورا", to: "/videos" },
-  { label: "جدیدترین‌ها", to: "/news" },
-  { label: "تخفیف ویژه", to: "/product/amazing" },
+  { label: "جدیدترین‌ها", to: "/products/newest" },
+  { label: "تخفیف ویژه", to: "/products/amazing" },
   { label: "مجله نیمورا", to: "/magazine" },
   { label: "بیا داخل مغازه", to: "/store-3d?from=header" },
 ];

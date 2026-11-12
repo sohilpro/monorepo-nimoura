@@ -2,35 +2,30 @@
   <div class="flex flex-wrap items-center gap-x-3 gap-y-2 xl:gap-x-5">
     <!-- SORT TITLE -->
     <div class="flex shrink-0 items-center gap-x-2">
-      <svg class="size-5 text-nimoura-text-400 xl:size-6" aria-hidden="true">
-        <use href="#sort-list" />
-      </svg>
+      <i class="pi pi-sort-alt text-base text-nimoura-text-400" aria-hidden="true" />
 
       <h2
         class="font-vazir text-sm font-bold text-nimoura-text-400 xl:text-base"
       >
-        مرتب سازی :
+        مرتب‌سازی:
       </h2>
     </div>
 
     <!-- SORT OPTIONS -->
-    <ul class="flex flex-wrap items-center gap-x-2 gap-y-1 xl:gap-x-3">
-      <li
-        v-for="option in options"
-        :key="option.value"
-        class="cursor-pointer rounded-lg px-2 py-1 text-xs transition-all duration-200 sm:text-sm"
-        :class="
-          currentSort === option.value
-            ? ['bg-nimoura-primary/10', 'font-semibold', 'text-nimoura-primary']
-            : [
-                'text-nimoura-text-500',
-                'hover:bg-nimoura-text-100/60',
-                'hover:text-nimoura-text-700',
-              ]
-        "
-        @click="setSort(option.value)"
-      >
-        {{ option.label }}
+    <ul class="flex flex-wrap items-center gap-x-1.5 gap-y-1 xl:gap-x-2">
+      <li v-for="option in options" :key="option.value">
+        <Button
+          :label="option.label"
+          text
+          size="small"
+          class="!rounded-lg !px-2.5 !py-1 !text-xs sm:!text-sm transition-all duration-200"
+          :class="
+            currentSort === option.value
+              ? '!bg-nimoura-primary/10 !font-semibold !text-nimoura-primary'
+              : '!font-normal !text-nimoura-text-500 hover:!bg-nimoura-text-100/60 hover:!text-nimoura-text-700'
+          "
+          @click="setSort(option.value)"
+        />
       </li>
     </ul>
   </div>

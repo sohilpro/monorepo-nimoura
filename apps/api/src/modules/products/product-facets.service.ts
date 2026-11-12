@@ -2,10 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Products } from './entities/products.entity';
+import { Categories } from '../categories/entities/categories.entity';
+import { Brands } from '../brands/entities/brands.entity';
+import { SubBrands } from '../brands/entities/sub-brands.entity';
 import { TagGroupsService } from '../tags/services/tag-groups.service';
 import { CategoryTreeService } from './category-tree.service';
+import { generateSlug } from 'src/common/utils/slug.helper';
 import {
   EFFECTIVE_PRICE_SQL,
+  IN_STOCK_PRODUCT_SQL,
   ListingFilters,
   ProductListingFilters,
 } from './product-listing-filters.service';
@@ -43,19 +48,120 @@ export class ProductFacetsService {
   constructor(
     @InjectRepository(Products)
     private readonly productRepo: Repository<Products>,
+    @InjectRepository(Categories)
+    private readonly categoryRepo: Repository<Categories>,
+    @InjectRepository(Brands)
+    private readonly brandRepo: Repository<Brands>,
+    @InjectRepository(SubBrands)
+    private readonly subBrandRepo: Repository<SubBrands>,
     private readonly tagGroups: TagGroupsService,
     private readonly filters: ProductListingFilters,
     private readonly categoryTree: CategoryTreeService,
   ) {}
 
+  private async resolveBrandIdBySlug(
+    rawSlug?: string,
+  ): Promise<number | undefined> {
+    if (!rawSlug?.trim()) return undefined;
+    let decoded = rawSlug.trim();
+    try {
+      decoded = decodeURIComponent(decoded);
+    } catch {
+      // keep raw
+    }
+    const candidates = Array.from(
+      new Set([decoded, generateSlug(decoded)].filter(Boolean)),
+    );
+    for (const slug of candidates) {
+      const brand = await this.brandRepo.findOne({
+        where: { slug },
+        select: { id: true },
+        loadEagerRelations: false,
+      });
+      if (brand) return brand.id;
+    }
+    return undefined;
+  }
+
+  private async resolveSubBrandIdBySlug(
+    rawSlug?: string,
+    brandId?: number,
+  ): Promise<number | undefined> {
+    if (!rawSlug?.trim()) return undefined;
+    let decoded = rawSlug.trim();
+    try {
+      decoded = decodeURIComponent(decoded);
+    } catch {
+      // keep raw
+    }
+    const candidates = Array.from(
+      new Set([decoded, generateSlug(decoded)].filter(Boolean)),
+    );
+    for (const slug of candidates) {
+      const subBrand = await this.subBrandRepo.findOne({
+        where: brandId ? { slug, brandId } : { slug },
+        select: { id: true },
+        loadEagerRelations: false,
+      });
+      if (subBrand) return subBrand.id;
+    }
+    return undefined;
+  }
+
+  private async resolveCategoryIdBySlug(
+    rawSlug?: string,
+  ): Promise<number | undefined> {
+    if (!rawSlug?.trim()) return undefined;
+    let decoded = rawSlug.trim();
+    try {
+      decoded = decodeURIComponent(decoded);
+    } catch {
+      // keep raw
+    }
+    const candidates = Array.from(
+      new Set([decoded, generateSlug(decoded)].filter(Boolean)),
+    );
+    for (const slug of candidates) {
+      const cat = await this.categoryRepo.findOne({
+        where: { slug },
+        select: { id: true },
+        loadEagerRelations: false,
+      });
+      if (cat) return cat.id;
+    }
+    return undefined;
+  }
+
   async getFacets(
-    input: Omit<ListingFilters, 'categoryIds'> & { categoryId?: number },
+    input: Omit<ListingFilters, 'categoryIds'> & {
+      categoryId?: number;
+      categorySlug?: string;
+      brandSlug?: string;
+      subBrandSlug?: string;
+    },
   ): Promise<ProductFacets> {
-    const { categoryId, ...rest } = input;
+    const {
+      categoryId,
+      categorySlug,
+      brandId,
+      brandSlug,
+      subBrandId,
+      subBrandSlug,
+      ...rest
+    } = input;
+    const resolvedCategoryId =
+      categoryId ?? (await this.resolveCategoryIdBySlug(categorySlug));
+    const resolvedBrandId =
+      brandId ?? (await this.resolveBrandIdBySlug(brandSlug));
+    const resolvedSubBrandId =
+      subBrandId ??
+      (await this.resolveSubBrandIdBySlug(subBrandSlug, resolvedBrandId));
     const filters: ListingFilters = {
       ...rest,
-      categoryIds: categoryId
-        ? await this.categoryTree.getTreeIds(categoryId)
+      brandId: resolvedBrandId,
+      subBrandId: resolvedSubBrandId,
+      categoryIds: resolvedCategoryId
+        ? await this.categoryTree.getTreeIds(resolvedCategoryId)
         : undefined,
     };
     const selected = new Set(filters.tagIds ?? []);
@@ -159,10 +265,10 @@ export class ProductFacetsService {
 
   private async totals(filters: ListingFilters) {
     const inStockCond = filters.onSale
-      ? 'p."stock" > 0 AND p."priceDiscount" > 0 AND p."priceDiscount" < p."price"'
-      : 'p."stock" > 0';
+      ? `${IN_STOCK_PRODUCT_SQL} AND p."priceDiscount" > 0 AND p."priceDiscount" < p."price"`
+      : IN_STOCK_PRODUCT_SQL;
     const onSaleCond = filters.inStock
-      ? 'p."priceDiscount" > 0 AND p."priceDiscount" < p."price" AND p."stock" > 0'
+      ? `p."priceDiscount" > 0 AND p."priceDiscount" < p."price" AND ${IN_STOCK_PRODUCT_SQL}`
       : 'p."priceDiscount" > 0 AND p."priceDiscount" < p."price"';
 
     const qb = this.productRepo

@@ -34,7 +34,7 @@ export function useWishlist() {
         method: "POST",
       });
 
-      toast.success(res.message);
+      toast.success(res.data.message);
       await refresh(); // لیست و شمارش رو به‌روز کن
 
       return res.inWishlist as boolean;
@@ -50,7 +50,7 @@ export function useWishlist() {
         method: "DELETE",
       });
 
-      toast.info(res.message);
+      toast.info(res.data.message);
       await refresh();
     } catch (err: any) {
       toast.error(err?.data?.message || "خطا در حذف از علاقه‌مندی‌ها");

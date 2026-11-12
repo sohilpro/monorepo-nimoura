@@ -167,6 +167,56 @@ export class BrandsService {
     });
   }
 
+  async findByIdentifier(identifier: number | string) {
+    const raw = String(identifier).trim();
+    const isNumeric = /^\d+$/.test(raw);
+    const select = {
+      id: true,
+      name: true,
+      slug: true,
+      logo: true,
+      description: true,
+      createdAt: true,
+      updatedAt: true,
+      subBrands: { id: true, name: true, slug: true, brandId: true },
+    } as const;
+
+    let brand: Brands | null = null;
+    if (isNumeric) {
+      brand = await this.brandRepo.findOne({
+        where: { id: Number(raw) },
+        select,
+        relations: { subBrands: true },
+        loadEagerRelations: false,
+      });
+    } else {
+      let decoded = raw;
+      try {
+        decoded = decodeURIComponent(raw);
+      } catch {
+        // keep raw
+      }
+      const candidates = Array.from(
+        new Set([decoded, generateSlug(decoded)].filter(Boolean)),
+      );
+      for (const candidate of candidates) {
+        brand = await this.brandRepo.findOne({
+          where: { slug: candidate },
+          select,
+          relations: { subBrands: true },
+          loadEagerRelations: false,
+        });
+        if (brand) break;
+      }
+    }
+
+    if (!brand) {
+      throw new NotFoundException('برند مورد نظر یافت نشد');
+    }
+
+    return brand;
+  }
+
   async remove(id: number) {
     const brand = await this.findOne(id);
     if (!brand) throw new NotFoundException('برند یافت نشد');

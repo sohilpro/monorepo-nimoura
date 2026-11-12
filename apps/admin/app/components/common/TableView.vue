@@ -251,8 +251,8 @@ const formatCell = (col, item) => {
       }
       if ('image' in res || col.isCustom) {
         let link = null;
-        if (props.urlEdit === 'product' && item.id && item.slug) {
-          link = `https://nimoura.shop/product/${item.id}/${item.slug}`;
+        if (props.urlEdit === 'product' && item.slug) {
+          link = `https://nimoura.shop/product/${encodeURIComponent(item.slug)}`;
         }
         return {
           type: 'image-text',

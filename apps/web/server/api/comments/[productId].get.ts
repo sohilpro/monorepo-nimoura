@@ -1,7 +1,17 @@
 export default defineEventHandler(async (event) => {
-  const productId = getRouterParam(event, "productId");
+  const productId = getRouterParam(event, 'productId');
   const query = getQuery(event);
-  const { apiBase } = useRuntimeConfig();
+  const token = getCookie(event, 'accesstoken');
 
-  return await $fetch(`${apiBase}/comments/${productId}`, { query });
+  if (!productId || !/^\d+$/.test(String(productId))) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'شناسه محصول نامعتبر است',
+    });
+  }
+
+  return await apiFetch(event, `/comments/product/${productId}`, {
+    query,
+    ...(token ? { headers: { Authorization: `Bearer ${token}` } } : {}),
+  });
 });

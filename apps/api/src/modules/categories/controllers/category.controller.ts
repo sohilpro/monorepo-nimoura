@@ -1,5 +1,5 @@
 // src/modules/categories/controllers/category.controller.ts
-import { Controller, Get, Param, ParseIntPipe, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { Public } from 'src/common/auth/auth.decorators';
 import { CategoryService } from '../categories.service';
@@ -31,14 +31,18 @@ export class CategoryController {
     return await this.categoryService.findAll(query);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: 'دریافت یک دسته‌بندی با شناسه' })
-  @ApiParam({ name: 'id', type: Number, description: 'شناسه دسته‌بندی' })
+  @Get(':identifier')
+  @ApiOperation({ summary: 'دریافت یک دسته‌بندی با شناسه یا اسلاگ' })
+  @ApiParam({
+    name: 'identifier',
+    type: String,
+    description: 'شناسه عددی یا اسلاگ دسته‌بندی',
+  })
   @ApiResponse({
     status: 200,
     description: 'اطلاعات یک دسته‌بندی خاص',
   })
-  async findOne(@Param('id', ParseIntPipe) id: number) {
-    return await this.categoryService.findOne(id);
+  async findOne(@Param('identifier') identifier: string) {
+    return await this.categoryService.findByIdentifier(identifier);
   }
 }

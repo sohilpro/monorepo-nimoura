@@ -107,7 +107,7 @@
                   {{ selectedParent.name }}
                 </span>
                 <NuxtLink
-                  :to="`/categories/${selectedParent.id}/${createSlug(selectedParent.name)}`"
+                  :to="`/categories/${selectedParent.slug || createSlug(selectedParent.name)}`"
                   class="flex items-center gap-1 text-[12px] no-underline font-vazir"
                   style="color: var(--color-nimoura-primary)"
                   @click="close"
@@ -153,7 +153,7 @@
 
                   <NuxtLink
                     v-else
-                   :to="`/categories/${child.id}/${createSlug(child.name)}`"
+                   :to="`/categories/${child.slug || createSlug(child.name)}`"
                     class="flex w-full items-center justify-between px-4 py-3.5 no-underline transition-colors duration-150 hover-surface"
                     style="color: var(--color-nimoura-text-800)"
                     @click="close"
@@ -179,7 +179,7 @@
                         <NuxtLink
                           v-for="gc in child.children"
                           :key="gc.id"
-                          :to="`/categories/${gc.id}/${createSlug(gc.name)}`"
+                          :to="`/categories/${gc.slug || createSlug(gc.name)}`"
                           class="flex items-center gap-2 rounded-xl px-3 py-2.5 no-underline transition-colors duration-150 hover:bg-white"
                           style="color: var(--color-nimoura-text-700)"
                           @click="close"

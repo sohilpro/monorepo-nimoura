@@ -214,6 +214,8 @@ export default defineNuxtConfig({
     // Semi-static pages (SWR cache)
     "/": { swr: 3600 },
     "/categories/**": { swr: 1800 },
+    "/brand/**": { swr: 1800 },
+    "/products/**": { swr: 1800 },
     // Product pages (SSR)
     "/product/**": { ssr: true },
     // Private / User account & Checkout (SPA mode, noindex)

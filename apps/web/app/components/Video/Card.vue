@@ -170,7 +170,7 @@ async function share() {
     <!-- کارت کوچیک محصول لینک‌شده -->
     <NuxtLink
       v-if="video.product"
-      :to="`/product/${video.product.id}/${video.product.slug}`"
+      :to="`/product/${encodeURIComponent(video.product.slug || createSlug(video.product.title || ''))}`"
       class="absolute bottom-24 right-3 left-3 flex items-center gap-3 bg-white/95 backdrop-blur rounded-xl p-2 shadow-lg"
       @click.stop
     >

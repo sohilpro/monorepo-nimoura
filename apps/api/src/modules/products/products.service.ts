@@ -23,6 +23,7 @@ import { Categories } from '../categories/entities/categories.entity';
 import { TagsService } from 'src/modules/tags/services/tags.service';
 import { CategoryTreeService } from './category-tree.service';
 import {
+  EFFECTIVE_PRICE_SQL,
   ProductListingFilters,
   parseBool,
 } from './product-listing-filters.service';
@@ -41,6 +42,7 @@ import { ProductVariantsService } from './product-variants.service';
 import { ProductBundlesService } from './product-bundles.service';
 import { ProductPriceTiers } from './entities/product-price-tiers.entity';
 import { getErrorMessage } from 'src/common/utils/error.helper';
+import { generateSlug } from 'src/common/utils/slug.helper';
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 12;
@@ -284,7 +286,7 @@ export class ProductsService {
         : undefined,
       minPrice: query.minPrice,
       maxPrice: query.maxPrice,
-      inStock: parseBool(query.inStock),
+      inStock: parseBool(query.inStock) || parseBool(query.isAvailable),
       onSale: query.onSale,
       tagIds: query.tags,
     });
@@ -299,13 +301,21 @@ export class ProductsService {
     await Promise.all([this.attachImages(items), this.attachVariants(items)]);
     await this.attachPriceTiers(items);
 
+    const totalPages = Math.ceil(total / limit);
+
     return {
       products: this.calculateDiscounts(items),
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page * limit < total,
+      hasPrevPage: page > 1,
       meta: {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages,
       },
     };
   }
@@ -489,14 +499,17 @@ export class ProductsService {
     if (!ids.length) return { products: [], meta: emptyMeta };
 
     // ۲. خود محصولات
-    const [items, total] = await this.productRepo
+    const qb = this.productRepo
       .createQueryBuilder('p')
       .select(PRODUCT_CARD_SELECT)
       .leftJoin('p.category', 'c')
       .leftJoin('p.brand', 'b')
       .where('p.id IN (:...ids)', { ids })
-      .andWhere('p.isAvailable = :a', { a: true })
-      .orderBy('p.createdAt', 'DESC')
+      .andWhere('p.isAvailable = :a', { a: true });
+
+    this.applySorting(qb, query.sort ?? 'newest');
+
+    const [items, total] = await qb
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
@@ -513,10 +526,9 @@ export class ProductsService {
   /**
    * دریافت محصولات شگفت‌انگیز
    */
-  async findAmazing(query: PaginationQueryDto) {
+  async findAmazing(query: ProductFilterQueryDto) {
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = this.sanitizeLimit(query.limit, 10);
-    const { minPrice, maxPrice } = query;
 
     // تاریخ امروز به عنوان Seed روزانه
     const todaySeed = new Date().toISOString().split('T')[0];
@@ -526,8 +538,6 @@ export class ProductsService {
       .select(PRODUCT_CARD_SELECT)
       .leftJoin('p.category', 'c')
       .leftJoin('p.brand', 'b')
-      // ۱. اضافه کردن فرمول شافل به عنوان فیلد محاسباتی
-      .addSelect(`md5(concat(p.id, '${todaySeed}'))`, 'daily_shuffle')
       .where('p.isAmazingOffer = :amazing', { amazing: true })
       .andWhere('p.isAvailable = :available', { available: true })
       .andWhere(
@@ -539,26 +549,29 @@ export class ProductsService {
         },
       );
 
-    // ۲. فیلتر حداقل قیمت (هم برای محصول ساده هم واریانت‌ها)
-    if (minPrice !== undefined && minPrice !== null) {
-      qb.andWhere(
-        '( (p.type = :simple AND p.price >= :minPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_min WHERE v_min."productId" = p.id AND v_min.deleted_at IS NULL AND v_min.price >= :minPrice)) )',
-        { minPrice: Number(minPrice) },
-      );
+    await this.listingFilters.apply(qb, {
+      search: query.search,
+      brandId: query.brandId,
+      subBrandId: query.subBrandId,
+      categoryIds: query.categoryId
+        ? await this.categoryTree.getTreeIds(query.categoryId)
+        : undefined,
+      minPrice: query.minPrice,
+      maxPrice: query.maxPrice,
+      inStock: parseBool(query.inStock) || parseBool(query.isAvailable),
+      onSale: query.onSale,
+      tagIds: query.tags,
+    });
+
+    if (query.sort) {
+      this.applySorting(qb, query.sort);
+    } else {
+      qb.addSelect(`md5(concat(p.id, '${todaySeed}'))`, 'daily_shuffle')
+        .orderBy('daily_shuffle', 'ASC')
+        .addOrderBy('p.id', 'DESC');
     }
 
-    // ۳. فیلتر حداکثر قیمت (هم برای محصول ساده هم واریانت‌ها)
-    if (maxPrice !== undefined && maxPrice !== null) {
-      qb.andWhere(
-        '( (p.type = :simple AND p.price <= :maxPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_max WHERE v_max."productId" = p.id AND v_max.deleted_at IS NULL AND v_max.price <= :maxPrice)) )',
-        { maxPrice: Number(maxPrice) },
-      );
-    }
-
-    // ۴. مرتب‌سازی بر اساس نام مستعار تعریف‌شده
-    qb.orderBy('daily_shuffle', 'ASC')
-      .skip((page - 1) * limit)
-      .take(limit);
+    qb.skip((page - 1) * limit).take(limit);
 
     const [items, total] = await qb.getManyAndCount();
     await Promise.all([this.attachImages(items), this.attachVariants(items)]);
@@ -584,48 +597,90 @@ export class ProductsService {
   ) {
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = this.sanitizeLimit(query.limit);
-    const {
-      search,
-      sort = 'newest',
-      isAvailable,
-      categoryId,
-      minPrice,
-      maxPrice,
-      subBrandId,
-    } = query;
+    const { sort = 'newest' } = query;
 
-    // ۱. دریافت برند اصلی
-    const isNumericBrand = !isNaN(Number(brandIdentifier));
+    // ۱. دریافت برند اصلی (با شناسه عددی یا اسلاگ)
+    const rawBrand = String(brandIdentifier).trim();
+    const isNumericBrand = /^\d+$/.test(rawBrand);
     const brandRepo = this.productRepo.manager.getRepository(Brands);
     const subBrandRepo = this.productRepo.manager.getRepository(SubBrands);
 
-    const brand = await brandRepo.findOne({
-      where: isNumericBrand
-        ? { id: Number(brandIdentifier) }
-        : { slug: String(brandIdentifier).trim() },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        logo: true,
-        description: true,
-      },
-      loadEagerRelations: false,
-    });
+    const brandSelect = {
+      id: true,
+      name: true,
+      slug: true,
+      logo: true,
+      description: true,
+    } as const;
+
+    let brand: Brands | null = null;
+    if (isNumericBrand) {
+      brand = await brandRepo.findOne({
+        where: { id: Number(rawBrand) },
+        select: brandSelect,
+        loadEagerRelations: false,
+      });
+    } else {
+      let decodedBrand = rawBrand;
+      try {
+        decodedBrand = decodeURIComponent(rawBrand);
+      } catch {
+        // keep raw
+      }
+      const brandCandidates = Array.from(
+        new Set([decodedBrand, generateSlug(decodedBrand)].filter(Boolean)),
+      );
+      for (const candidate of brandCandidates) {
+        brand = await brandRepo.findOne({
+          where: { slug: candidate },
+          select: brandSelect,
+          loadEagerRelations: false,
+        });
+        if (brand) break;
+      }
+    }
 
     if (!brand) {
       throw new NotFoundException('برند مورد نظر یافت نشد');
     }
 
-    // ۲. در صورت وجود subBrandId، دریافت اطلاعات زیربرند مربوطه
+    // ۲. در صورت وجود subBrandId یا subBrandSlug، دریافت اطلاعات زیربرند مربوطه
     let activeSubBrand: SubBrands | null = null;
-    if (subBrandId) {
+    if (query.subBrandId) {
       activeSubBrand = await subBrandRepo.findOne({
-        where: { id: Number(subBrandId), brandId: brand.id },
+        where: { id: Number(query.subBrandId), brandId: brand.id },
         select: { id: true, name: true, slug: true },
         loadEagerRelations: false,
       });
+    } else if (query.subBrandSlug?.trim()) {
+      let decodedSub = query.subBrandSlug.trim();
+      try {
+        decodedSub = decodeURIComponent(decodedSub);
+      } catch {
+        // keep raw
+      }
+      const subCandidates = Array.from(
+        new Set([decodedSub, generateSlug(decodedSub)].filter(Boolean)),
+      );
+      for (const candidate of subCandidates) {
+        activeSubBrand = await subBrandRepo.findOne({
+          where: { slug: candidate, brandId: brand.id },
+          select: { id: true, name: true, slug: true },
+          loadEagerRelations: false,
+        });
+        if (activeSubBrand) break;
+      }
+      if (!activeSubBrand) {
+        throw new NotFoundException('زیربرند مورد نظر یافت نشد');
+      }
     }
+
+    const subBrands = await subBrandRepo.find({
+      where: { brandId: brand.id },
+      select: { id: true, name: true, slug: true, brandId: true },
+      order: { name: 'ASC' },
+      loadEagerRelations: false,
+    });
 
     // ۳. ساخت QueryBuilder برای محصولات
     const qb = this.productRepo
@@ -639,52 +694,22 @@ export class ProductsService {
       ])
       .leftJoin('p.brand', 'b')
       .leftJoin('p.subBrand', 'sb')
-      .leftJoin('p.category', 'c');
+      .leftJoin('p.category', 'c')
+      .where('p.brandId = :brandId', { brandId: brand.id })
+      .andWhere('p.isAvailable = :active', { active: true });
 
-    // فیلتر بر اساس برند اصلی پیدا شده
-    qb.where('p.brandId = :brandId', { brandId: brand.id });
-
-    // فیلتر ساب‌برند
-    if (subBrandId) {
-      qb.andWhere('p.subBrandId = :subBrandId', {
-        subBrandId: Number(subBrandId),
-      });
-    }
-
-    // فیلتر موجودی
-    if (typeof isAvailable === 'boolean') {
-      qb.andWhere('p.isAvailable = :isAvailable', { isAvailable });
-    }
-
-    // فیلتر حداقل قیمت
-    if (minPrice !== undefined && minPrice !== null && !isNaN(minPrice)) {
-      qb.andWhere(
-        '( (p.type = :simple AND p.price >= :minPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_min WHERE v_min."productId" = p.id AND v_min.deleted_at IS NULL AND v_min.price >= :minPrice)) )',
-        { minPrice: Number(minPrice), simple: 'simple', variant: 'variant' },
-      );
-    }
-
-    // فیلتر حداکثر قیمت
-    if (maxPrice !== undefined && maxPrice !== null && !isNaN(maxPrice)) {
-      qb.andWhere(
-        '( (p.type = :simple AND p.price <= :maxPrice) OR (p.type = :variant AND EXISTS (SELECT 1 FROM "product_variants" v_max WHERE v_max."productId" = p.id AND v_max.deleted_at IS NULL AND v_max.price <= :maxPrice)) )',
-        { maxPrice: Number(maxPrice), simple: 'simple', variant: 'variant' },
-      );
-    }
-
-    // فیلتر دسته‌بندی
-    if (categoryId) {
-      qb.andWhere('p.categoryId = :categoryId', {
-        categoryId: Number(categoryId),
-      });
-    }
-
-    // جستجو در عنوان
-    if (search) {
-      qb.andWhere('(p.title ILIKE :search OR p.englishTitle ILIKE :search)', {
-        search: `%${search.trim()}%`,
-      });
-    }
+    await this.listingFilters.apply(qb, {
+      search: query.search,
+      subBrandId: activeSubBrand?.id ?? query.subBrandId,
+      categoryIds: query.categoryId
+        ? await this.categoryTree.getTreeIds(query.categoryId)
+        : undefined,
+      minPrice: query.minPrice,
+      maxPrice: query.maxPrice,
+      inStock: parseBool(query.inStock) || parseBool(query.isAvailable),
+      onSale: query.onSale,
+      tagIds: query.tags,
+    });
 
     this.applySorting(qb, sort);
 
@@ -718,6 +743,7 @@ export class ProductsService {
         slug: brand.slug,
         logo: brand.logo,
         description: brand.description,
+        subBrands,
         subBrand: activeSubBrand
           ? {
               id: activeSubBrand.id,
@@ -730,47 +756,80 @@ export class ProductsService {
   }
 
   /**
-   * دریافت محصولات یک دسته‌بندی (به همراه تمام فرزندان آن در درخت)
+   * دریافت محصولات یک دسته‌بندی با شناسه یا اسلاگ (به همراه تمام فرزندان آن در درخت)
    */
-  async findByCategory(categoryId: number, query: ProductFilterQueryDto = {}) {
+  async findByCategory(
+    identifier: number | string,
+    query: ProductFilterQueryDto = {},
+  ) {
     const page = Math.max(Number(query.page) || 1, 1);
     const limit = this.sanitizeLimit(query.limit);
     const { sort = 'newest' } = query;
 
-    // ۱. پیدا کردن خودِ دسته‌بندی اصلی همراه با والدش جهت ساخت بریدکرامب
+    // ۱. پیدا کردن خودِ دسته‌بندی اصلی همراه با والدش جهت ساخت بریدکرامب و سئو
     const categoryRepo = this.productRepo.manager.getRepository(Categories);
-    const currentCategory = await categoryRepo.findOne({
-      where: { id: categoryId },
-      select: {
+    const categorySelect = {
+      id: true,
+      name: true,
+      slug: true,
+      seoTitle: true,
+      seoDescription: true,
+      seoText: true,
+      parent: {
         id: true,
         name: true,
         slug: true,
-        seoText: true,
         parent: {
           id: true,
           name: true,
           slug: true,
-          parent: {
-            id: true,
-            name: true,
-            slug: true,
-          },
         },
       },
-      relations: {
-        parent: {
-          parent: true, // لایه دوم والد
-        },
+    } as const;
+    const categoryRelations = {
+      parent: {
+        parent: true, // لایه دوم والد
       },
-      loadEagerRelations: false,
-    });
+    } as const;
+
+    const rawIdentifier = String(identifier).trim();
+    const isNumericId = /^\d+$/.test(rawIdentifier);
+
+    let currentCategory: Categories | null = null;
+    if (isNumericId) {
+      currentCategory = await categoryRepo.findOne({
+        where: { id: Number(rawIdentifier) },
+        select: categorySelect,
+        relations: categoryRelations,
+        loadEagerRelations: false,
+      });
+    } else {
+      let decodedSlug = rawIdentifier;
+      try {
+        decodedSlug = decodeURIComponent(rawIdentifier);
+      } catch {
+        // keep raw
+      }
+      const candidates = Array.from(
+        new Set([decodedSlug, generateSlug(decodedSlug)].filter(Boolean)),
+      );
+      for (const candidate of candidates) {
+        currentCategory = await categoryRepo.findOne({
+          where: { slug: candidate },
+          select: categorySelect,
+          relations: categoryRelations,
+          loadEagerRelations: false,
+        });
+        if (currentCategory) break;
+      }
+    }
 
     if (!currentCategory) {
       throw new NotFoundException('دسته‌بندی مورد نظر یافت نشد');
     }
 
     // ۲. شناسه این دسته‌بندی و تمام زیردسته‌های آن
-    const ids = await this.categoryTree.getTreeIds(categoryId);
+    const ids = await this.categoryTree.getTreeIds(currentCategory.id);
     if (!ids.length) {
       const emptyResult = buildPagination([[], 0], page, limit, 'products');
       return {
@@ -830,6 +889,8 @@ export class ProductsService {
         id: currentCategory.id,
         name: currentCategory.name,
         slug: currentCategory.slug,
+        seoTitle: currentCategory.seoTitle,
+        seoDescription: currentCategory.seoDescription,
         seoText: currentCategory.seoText,
         parent: currentCategory.parent
           ? {
@@ -977,89 +1038,146 @@ export class ProductsService {
   /**
    * واکشی تکی با اسلاگ (SEO-Friendly)
    */
-  async findBySlug(slug: string): Promise<Products> {
-    const product = await this.productRepo.findOne({
-      where: { slug },
-      select: {
+  async findBySlug(rawSlug: string): Promise<Products> {
+    let decoded = String(rawSlug || '').trim();
+    try {
+      decoded = decodeURIComponent(decoded);
+    } catch {
+      // keep raw
+    }
+    const candidates = Array.from(
+      new Set([decoded, generateSlug(decoded)].filter(Boolean)),
+    );
+
+    const select = {
+      id: true,
+      title: true,
+      englishTitle: true,
+      slug: true,
+      sku: true,
+      type: true,
+      price: true,
+      priceDiscount: true,
+      percentageDiscount: true,
+      stock: true,
+      lowStockThreshold: true,
+      isAvailable: true,
+      isAmazingOffer: true,
+      thumbnail: true,
+      shortDescription: true,
+      introduce: true,
+      howToUse: true,
+      specifications: true,
+      averageRating: true,
+      ratingsCount: true,
+      createdAt: true,
+      updatedAt: true,
+      category: {
         id: true,
-        title: true,
-        englishTitle: true,
+        name: true,
         slug: true,
+        parent: {
+          id: true,
+          name: true,
+          slug: true,
+          parent: {
+            id: true,
+            name: true,
+            slug: true,
+          },
+        },
+      },
+      brand: { id: true, name: true, slug: true },
+      subBrand: { id: true, name: true, slug: true, brandId: true },
+      tags: {
+        id: true,
+        name: true,
+        slug: true,
+        color: true,
+        isActive: true,
+        group: { id: true, name: true, slug: true, isActive: true },
+      },
+      images: { id: true, url: true },
+      priceTiers: { id: true, minQuantity: true, price: true },
+      variants: {
+        id: true,
         sku: true,
-        type: true,
         price: true,
         priceDiscount: true,
         percentageDiscount: true,
         stock: true,
-        lowStockThreshold: true,
         isAvailable: true,
-        isAmazingOffer: true,
-        thumbnail: true,
-        shortDescription: true,
-        introduce: true,
-        howToUse: true,
-        specifications: true,
-        averageRating: true,
-        ratingsCount: true,
+        images: true,
         createdAt: true,
         updatedAt: true,
-        category: { id: true, name: true, slug: true },
-        brand: { id: true, name: true, slug: true },
-        subBrand: { id: true, name: true, slug: true, brandId: true },
-        tags: {
+        attributeValues: {
           id: true,
-          name: true,
-          slug: true,
-          color: true,
-          isActive: true,
-          group: { id: true, name: true, slug: true, isActive: true },
+          value: true,
+          colorHex: true,
+          attribute: { id: true, name: true, kind: true },
         },
-        images: { id: true, url: true },
         priceTiers: { id: true, minQuantity: true, price: true },
-        variants: {
+      },
+      bundleItems: {
+        id: true,
+        quantity: true,
+        product: {
+          id: true,
+          title: true,
+          thumbnail: true,
+          sku: true,
+          type: true,
+          price: true,
+          priceDiscount: true,
+        },
+        variant: {
           id: true,
           sku: true,
           price: true,
           priceDiscount: true,
-          percentageDiscount: true,
-          stock: true,
-          isAvailable: true,
-          images: true,
-          createdAt: true,
-          updatedAt: true,
-          attributeValues: {
-            id: true,
-            value: true,
-            colorHex: true,
-            attribute: { id: true, name: true, kind: true },
+          attributeValues: { id: true, value: true, colorHex: true },
+        },
+      },
+    } as const;
+
+    const relations = {
+      category: {
+        parent: {
+          parent: true,
+        },
+      },
+      brand: true,
+      subBrand: true,
+      tags: { group: true },
+      images: true,
+      variants: {
+        attributeValues: { attribute: true },
+        priceTiers: true,
+      },
+      priceTiers: true,
+      bundleItems: {
+        product: true,
+        variant: { attributeValues: true },
+      },
+    } as const;
+
+    let product: Products | null = null;
+    for (const candidate of candidates) {
+      product = await this.productRepo.findOne({
+        where: { slug: candidate },
+        select,
+        relations,
+        loadEagerRelations: false,
+        order: {
+          priceTiers: { minQuantity: 'ASC' },
+          variants: {
+            id: 'ASC',
+            priceTiers: { minQuantity: 'ASC' },
           },
-          priceTiers: { id: true, minQuantity: true, price: true },
         },
-      },
-      relations: {
-        category: true,
-        brand: true,
-        subBrand: true,
-        tags: { group: true },
-        images: true,
-        variants: {
-          attributeValues: { attribute: true },
-          priceTiers: true, // لود پله‌های هر واریانت
-        },
-        priceTiers: true, // لود پله‌های محصول ساده
-      },
-      loadEagerRelations: false,
-      order: {
-        priceTiers: {
-          minQuantity: 'ASC', // سورت صعودی برای سهولت کار کلاینت و فرمول محاسبه
-        },
-        variants: {
-          priceTiers: {
-            minQuantity: 'ASC',
-          },
-        },
-      },
-    });
+      });
+      if (product) break;
+    }
 
     if (!product) {
       throw new NotFoundException('محصول یافت نشد');
@@ -1757,17 +1875,23 @@ export class ProductsService {
   private applySorting(qb: SelectQueryBuilder<Products>, sort: string) {
     switch (sort) {
       case 'cheapest':
-        qb.orderBy('p.price', 'ASC');
+        qb.addSelect(EFFECTIVE_PRICE_SQL, 'effective_price')
+          .orderBy('effective_price', 'ASC')
+          .addOrderBy('p.id', 'DESC');
         break;
       case 'expensive':
-        qb.orderBy('p.price', 'DESC');
+        qb.addSelect(EFFECTIVE_PRICE_SQL, 'effective_price')
+          .orderBy('effective_price', 'DESC')
+          .addOrderBy('p.id', 'DESC');
         break;
       case 'popular':
-        qb.orderBy('p.averageRating', 'DESC');
+        qb.orderBy('p.averageRating', 'DESC')
+          .addOrderBy('p.ratingsCount', 'DESC')
+          .addOrderBy('p.id', 'DESC');
         break;
       case 'newest':
       default:
-        qb.orderBy('p.createdAt', 'DESC');
+        qb.orderBy('p.createdAt', 'DESC').addOrderBy('p.id', 'DESC');
         break;
     }
   }

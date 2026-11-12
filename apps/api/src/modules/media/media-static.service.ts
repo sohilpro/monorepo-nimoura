@@ -361,5 +361,56 @@ export class MediaStaticService {
         `حجم فایل بیشتر از حد مجاز است (حداکثر ${(maxSize / (1024 * 1024)).toFixed(0)} مگابایت)`,
       );
     }
+
+    if (file.buffer && this.isImageMime(file.mimetype)) {
+      if (!this.matchesImageMagicBytes(file.buffer, file.mimetype)) {
+        throw new BadRequestException('محتوای فایل با فرمت تصویر مطابقت ندارد');
+      }
+    }
+  }
+
+  private isImageMime(mime: string): boolean {
+    return [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'image/svg+xml',
+    ].includes(mime);
+  }
+
+  private matchesImageMagicBytes(buffer: Buffer, mime: string): boolean {
+    if (mime === 'image/jpeg') {
+      return (
+        buffer.length >= 3 &&
+        buffer[0] === 0xff &&
+        buffer[1] === 0xd8 &&
+        buffer[2] === 0xff
+      );
+    }
+    if (mime === 'image/png') {
+      return (
+        buffer.length >= 8 &&
+        buffer[0] === 0x89 &&
+        buffer[1] === 0x50 &&
+        buffer[2] === 0x4e &&
+        buffer[3] === 0x47 &&
+        buffer[4] === 0x0d &&
+        buffer[5] === 0x0a &&
+        buffer[6] === 0x1a &&
+        buffer[7] === 0x0a
+      );
+    }
+    if (mime === 'image/webp') {
+      return (
+        buffer.length >= 12 &&
+        buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+        buffer.subarray(8, 12).toString('ascii') === 'WEBP'
+      );
+    }
+    if (mime === 'image/svg+xml') {
+      const head = buffer.subarray(0, 256).toString('utf8').trimStart();
+      return head.startsWith('<svg') || head.startsWith('<?xml');
+    }
+    return true;
   }
 }

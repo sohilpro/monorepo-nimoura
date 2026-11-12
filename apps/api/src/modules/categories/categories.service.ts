@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { generateSlug } from 'src/common/utils/slug.helper';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 import { CreateCategoryDto } from './dtos/create-category.dto';
@@ -88,6 +88,8 @@ export class CategoryService {
         id: true,
         name: true,
         slug: true,
+        seoTitle: true,
+        seoDescription: true,
         seoText: true,
         createdAt: true,
         updatedAt: true,
@@ -97,6 +99,53 @@ export class CategoryService {
       relations: { parent: true, children: true },
       loadEagerRelations: false,
     });
+    if (!category) throw new NotFoundException('دسته‌بندی یافت نشد');
+    return category;
+  }
+
+  async findByIdentifier(identifier: number | string): Promise<Categories> {
+    const raw = String(identifier).trim();
+    if (/^\d+$/.test(raw)) {
+      return this.findOne(Number(raw));
+    }
+
+    let decoded = raw;
+    try {
+      decoded = decodeURIComponent(raw);
+    } catch {
+      decoded = raw;
+    }
+
+    const candidates = Array.from(
+      new Set([decoded, generateSlug(decoded)].filter(Boolean)),
+    );
+
+    let category: Categories | null = null;
+    for (const candidate of candidates) {
+      category = await this.categoryRepo.findOne({
+        where: { slug: candidate },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          seoTitle: true,
+          seoDescription: true,
+          seoText: true,
+          createdAt: true,
+          updatedAt: true,
+          parent: {
+            id: true,
+            name: true,
+            slug: true,
+            parent: { id: true, name: true, slug: true },
+          },
+          children: { id: true, name: true, slug: true },
+        },
+        relations: { parent: { parent: true }, children: true },
+        loadEagerRelations: false,
+      });
+      if (category) break;
+    }
     if (!category) throw new NotFoundException('دسته‌بندی یافت نشد');
     return category;
   }
@@ -140,14 +189,37 @@ export class CategoryService {
     return roots;
   }
 
+  private async resolveUniqueSlug(
+    raw: string,
+    excludeId?: number,
+  ): Promise<string> {
+    const base = generateSlug(raw) || 'category';
+    let candidate = base;
+    let suffix = 2;
+
+    while (true) {
+      const existing = await this.categoryRepo.findOne({
+        where: excludeId
+          ? { slug: candidate, id: Not(excludeId) }
+          : { slug: candidate },
+        select: { id: true },
+        loadEagerRelations: false,
+      });
+      if (!existing) return candidate;
+      candidate = `${base}-${suffix++}`;
+    }
+  }
+
   // Admin
   async create(dto: CreateCategoryDto) {
-    const slug = dto.slug?.trim()
-      ? generateSlug(dto.slug)
-      : generateSlug(dto.name);
+    const slugSource = dto.slug?.trim() ? dto.slug : dto.name;
+    const slug = await this.resolveUniqueSlug(slugSource);
     const category = this.categoryRepo.create({
       name: dto.name.trim(),
       slug,
+      seoTitle: dto.seoTitle?.trim() || null,
+      seoDescription: dto.seoDescription?.trim() || null,
+      seoText: dto.seoText?.trim() || null,
     });
 
     if (dto.parentId) {
@@ -179,13 +251,26 @@ export class CategoryService {
 
     if (dto.name !== undefined) {
       category.name = dto.name.trim();
-      if (!dto.slug) {
-        category.slug = generateSlug(dto.name);
+      if (!category.slug && dto.slug === undefined) {
+        category.slug = await this.resolveUniqueSlug(category.name, id);
       }
     }
 
     if (dto.slug !== undefined) {
-      category.slug = generateSlug(dto.slug);
+      const slugSource = dto.slug.trim() || category.name;
+      category.slug = await this.resolveUniqueSlug(slugSource, id);
+    }
+
+    if (dto.seoTitle !== undefined) {
+      category.seoTitle = dto.seoTitle?.trim() || null;
+    }
+
+    if (dto.seoDescription !== undefined) {
+      category.seoDescription = dto.seoDescription?.trim() || null;
+    }
+
+    if (dto.seoText !== undefined) {
+      category.seoText = dto.seoText?.trim() || null;
     }
 
     if (dto.parentId !== undefined) {

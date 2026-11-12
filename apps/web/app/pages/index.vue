@@ -1,16 +1,17 @@
 <template>
   <div>
     <MainBannerHeader />
+    <!-- <BannersSlot position-key="hero-home" layout="carousel" height-class="" /> -->
     <Shop3dEntry variant="hero" source="home" />
     <!-- <Shop3dEntry variant="link" source="product" :product="product.slug" /> -->
     <Shop3dEntry variant="link" source="category" zone="makeup" label="برو به بخش آرایش در مغازه" />
-    <!-- :href="`/categories/1/${createSlug('لوازم آرایشی')}`" -->
+    <!-- :href="categoryHref(1, 'لوازم آرایشی')" -->
     <LazyUtilsProductSlider
       title="لوازم"
       sub-title="آرایشی"
       description="زیبایی رو از نیمورا بخواه"
       endpoint="/api/products/category?categoryId=1&limit=15"
-      :href="`/categories/1/${createSlug('لوازم آرایشی')}`"
+      :href="categoryHref(1, 'لوازم آرایشی')"
     />
 
     <!-- <LazyMainCategory /> -->
@@ -23,8 +24,8 @@
       title="جدید ترین"
       sub-title="محصولات"
       description="جدیدترین و بروزترین محصولات"
-      endpoint="/api/products/list?sort=createdAt&limit=15"
-      href="/tags/new-products?sort=createdAt"
+      endpoint="/api/products/list?sort=newest&limit=15"
+      href="/products/newest"
     />
 
     <!-- <LazyClientOnly>
@@ -34,14 +35,14 @@
       </template>
     </LazyClientOnly> -->
 
-     <LazyVideoSlider />
+     <!-- <LazyVideoSlider /> -->
 
     <LazyUtilsProductSlider
       title="پر فروش ترین"
       sub-title="محصولات"
       description="پر فروش بین همه"
-      href="/tags/best-seller?sort=averageRating"
-      endpoint="/api/products/list?sortBy=averageRating&limit=15"
+      href="/products/best-seller"
+      endpoint="/api/products/list?sort=popular&limit=15"
     />
 
    
@@ -57,7 +58,7 @@
       title="محصولات"
       sub-title="مراقب پوستی"
       description="بیشتر مراقب پوستت باش"
-      :href="`/categories/4/${createSlug('مراقبت پوستی')}`"
+      :href="categoryHref(4, 'مراقبت پوستی')"
       endpoint="/api/products/category?categoryId=4&limit=15"
     />
 
@@ -74,6 +75,22 @@
 
 <script setup lang="ts">
 import { createSlug } from '@nimoura/utils';
+
+const { categories } = useCategories();
+
+function categoryHref(id: number, fallbackName: string): string {
+  const stack = [...(categories.value ?? [])];
+  while (stack.length) {
+    const node = stack.shift()!;
+    if ((node.id === id || node.name?.trim() === fallbackName.trim()) && node.slug) {
+      return `/categories/${node.slug}`;
+    }
+    if (node.children?.length) {
+      stack.push(...node.children);
+    }
+  }
+  return `/categories/${id}/${createSlug(fallbackName)}`;
+}
 
 const config = useRuntimeConfig();
 const siteUrl = config.public?.baseURL || 'https://nimoura.shop';

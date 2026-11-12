@@ -22,12 +22,24 @@ describe('CommentsService Projections', () => {
       },
     ];
 
+    const qb: any = {
+      select: vi.fn().mockReturnThis(),
+      addSelect: vi.fn().mockReturnThis(),
+      where: vi.fn().mockReturnThis(),
+      andWhere: vi.fn().mockReturnThis(),
+      groupBy: vi.fn().mockReturnThis(),
+      getRawMany: vi.fn().mockResolvedValue([{ rating: 5, count: '1' }]),
+    };
+
     const commentRepo = {
       findAndCount: vi.fn().mockResolvedValue([rows, 1]),
+      createQueryBuilder: vi.fn().mockReturnValue(qb),
     } as any;
 
     const service = new CommentsService(
       commentRepo,
+      {} as any,
+      {} as any,
       {} as any,
       {} as any,
       {} as any,
@@ -43,6 +55,7 @@ describe('CommentsService Projections', () => {
       }),
     );
     expect(res.comments).toHaveLength(1);
+    expect(res.ratingDistribution).toHaveLength(5);
     expect(res.comments[0].user).toEqual({
       id: 10,
       first_name: 'نگار',
@@ -61,6 +74,8 @@ describe('CommentsService Projections', () => {
 
     const service = new CommentsService(
       commentRepo,
+      {} as any,
+      {} as any,
       {} as any,
       {} as any,
       {} as any,

@@ -1,36 +1,35 @@
 <template>
-  <section>
-    <Categories />
-  </section>
+  <div />
 </template>
 
 <script setup lang="ts">
+import { createSlug } from '@nimoura/utils';
+
 const route = useRoute();
-const config = useRuntimeConfig();
-const siteUrl = config.public?.baseURL || 'https://nimoura.shop';
+const id = String(route.params.id || '');
 
-const categoryTitle = computed(() => {
-  const slug = route.params.slug as string;
-  return slug ? decodeURIComponent(slug).replace(/-/g, ' ') : 'دسته‌بندی محصولات';
-});
+const { data: catResponse, error } = await useFetch<any>(
+  `/api/categories/${encodeURIComponent(id)}`,
+  { key: `category-legacy-redirect-${id}` },
+);
 
-useSeoMeta({
-  title: () => `خرید انواع ${categoryTitle.value} | فروشگاه اینترنتی نیمورا`,
-  description: () =>
-    `مشاهده قیمت و خرید بهترین محصولات ${categoryTitle.value} با ضمانت کیفیت و اصالت کالا و ارسال سریع در نیمورا.`,
-  ogTitle: () => `${categoryTitle.value} | نیمورا`,
-  ogDescription: () =>
-    `لیست جدیدترین و پرفروش‌ترین محصولات ${categoryTitle.value} در نیمورا`,
-  ogUrl: () => `${siteUrl}/categories/${route.params.id}/${route.params.slug}`,
-  twitterCard: 'summary_large_image',
-});
+if (error.value) {
+  throw createError({
+    statusCode: error.value.statusCode || 404,
+    statusMessage: 'دسته‌بندی مورد نظر یافت نشد',
+  });
+}
 
-useHead({
-  link: [
+const category = catResponse.value?.data ?? catResponse.value;
+const targetSlug = category?.slug || (category?.name ? createSlug(category.name) : String(route.params.slug || ''));
+
+if (targetSlug) {
+  await navigateTo(
     {
-      rel: 'canonical',
-      href: () => `${siteUrl}/categories/${route.params.id}/${route.params.slug}`,
+      path: `/categories/${encodeURIComponent(targetSlug)}`,
+      query: route.query,
     },
-  ],
-});
+    { redirectCode: 301 },
+  );
+}
 </script>

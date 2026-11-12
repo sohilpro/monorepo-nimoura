@@ -24,6 +24,12 @@ export class Categories extends CustomBaseEntity {
   @OneToMany(() => Products, (product) => product.category)
   products!: Products[];
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  seoTitle?: string | null;
+
   @Column({ type: 'text', nullable: true })
-  seoText?: string;
+  seoDescription?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  seoText?: string | null;
 }

@@ -8,4 +8,5 @@ export {
   calculateDiscountPercentage,
   calculateDiscountAmount,
   buildCategoryBreadcrumb,
+  buildBrandBreadcrumb,
 } from '@nimoura/utils';

@@ -1,3 +1,22 @@
+export const STOREFRONT_SORT_VALUES = [
+  'popular',
+  'newest',
+  'cheapest',
+  'expensive',
+] as const;
+
+export type StorefrontSort = (typeof STOREFRONT_SORT_VALUES)[number];
+
+export const STOREFRONT_SORT_OPTIONS: ReadonlyArray<{
+  label: string;
+  value: StorefrontSort;
+}> = [
+  { label: 'محبوب‌ترین', value: 'popular' },
+  { label: 'جدیدترین', value: 'newest' },
+  { label: 'ارزان‌ترین', value: 'cheapest' },
+  { label: 'گران‌ترین', value: 'expensive' },
+];
+
 export interface Brand {
   id: number;
   name: string;
@@ -32,7 +51,9 @@ export interface Category {
   name: string;
   slug: string;
   icon?: string;
-  seoText?: string;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  seoText?: string | null;
   parentId?: number | null;
   parent?: Category | null;
   children?: Category[];
@@ -53,6 +74,8 @@ export interface CreateCategoryPayload {
   name: string;
   slug?: string;
   parentId?: number | null;
+  seoTitle?: string;
+  seoDescription?: string;
   seoText?: string;
 }
 
@@ -117,6 +140,7 @@ export interface ProductVariant {
   sku: string;
   price: number;
   priceDiscount?: number;
+  discountPercent?: number;
   stock: number;
   isAvailable?: boolean;
   images?: string[];
@@ -158,6 +182,7 @@ export interface Product {
   type?: ProductType;
   price: number;
   priceDiscount?: number;
+  discountPercent?: number;
   stock: number;
   isAvailable: boolean;
   isAmazingOffer?: boolean;

@@ -1,5 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString, IsNumber, MaxLength } from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({
@@ -9,21 +9,44 @@ export class CreateCategoryDto {
   @IsString()
   name!: string;
 
-  @ApiProperty({
-    example: 'makeup',
-    description: 'slug برای استفاده در آدرس‌ها',
-    required: false,
+  @ApiPropertyOptional({
+    example: 'لوازم-آرایشی',
+    description: 'slug یکتا برای استفاده در آدرس‌ها',
   })
   @IsOptional()
   @IsString()
   slug?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 1,
     description: 'شناسه دسته والد (در صورت وجود)',
-    required: false,
   })
   @IsOptional()
   @IsNumber()
   parentId?: number;
+
+  @ApiPropertyOptional({
+    example: 'خرید لوازم آرایشی اصل با بهترین قیمت | نیمورا',
+    description: 'عنوان سئو (Meta Title)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  seoTitle?: string;
+
+  @ApiPropertyOptional({
+    example: 'خرید آنلاین انواع لوازم آرایشی با ضمانت اصالت و ارسال سریع در نیمورا.',
+    description: 'توضیحات متا (Meta Description)',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  seoDescription?: string;
+
+  @ApiPropertyOptional({
+    description: 'متن HTML توضیحات سئو در پایین صفحه دسته‌بندی (شامل H1/H2/H3 و پاراگراف)',
+  })
+  @IsOptional()
+  @IsString()
+  seoText?: string;
 }

@@ -100,17 +100,32 @@ export class ProductFilterQueryDto extends PaginationQueryDto {
   @IsInt()
   brandId?: number;
 
+  @ApiPropertyOptional({ description: 'فیلتر بر اساس اسلاگ برند' })
+  @IsOptional()
+  @IsString()
+  brandSlug?: string;
+
   @ApiPropertyOptional({ description: 'فیلتر بر اساس دسته‌بندی' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   categoryId?: number;
 
+  @ApiPropertyOptional({ description: 'فیلتر بر اساس اسلاگ دسته‌بندی' })
+  @IsOptional()
+  @IsString()
+  categorySlug?: string;
+
   @ApiPropertyOptional({ description: 'فیلتر بر اساس زیربرند (ساب‌برند)' })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   subBrandId?: number;
+
+  @ApiPropertyOptional({ description: 'فیلتر بر اساس اسلاگ زیربرند (ساب‌برند)' })
+  @IsOptional()
+  @IsString()
+  subBrandSlug?: string;
 
   @ApiPropertyOptional({
     type: [Number],
@@ -133,4 +148,10 @@ export class ProductFilterQueryDto extends PaginationQueryDto {
   @Transform(toBool)
   @IsBoolean()
   inStock?: boolean;
+
+  @ApiPropertyOptional({ description: 'فقط کالاهای پیشنهاد شگفت‌انگیز' })
+  @IsOptional()
+  @Transform(toBool)
+  @IsBoolean()
+  amazing?: boolean;
 }

@@ -4,6 +4,13 @@ import IconsCategoryHaircare from '~/components/Icons/Category/Haircare.vue';
 import IconsCategoryPerfume from '~/components/Icons/Category/Perfume.vue';
 
 const ICON_MAP: Record<string, any> = {
+  cosmetics: IconsCategoryCosmetics,
+  makeup: IconsCategoryCosmetics,
+  skincare: IconsCategorySkincare,
+  haircare: IconsCategoryHaircare,
+  'personal-care': IconsCategoryPerfume,
+  perfume: IconsCategoryPerfume,
+  'perfume-and-body-care': IconsCategoryPerfume,
   'lwzm-arishi': IconsCategoryCosmetics,
   'mrghbt-pwsti': IconsCategorySkincare,
   'mrghbt-w-zibii-mw': IconsCategoryHaircare,

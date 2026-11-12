@@ -34,7 +34,47 @@
 
             <div v-if="suggestedSlug" class="text-xs text-gray-500 bg-gray-50 p-2.5 rounded-lg">
               پیش‌نمایش آدرس اینترنتی:
-              <span class="font-mono text-brand-600 font-semibold" dir="ltr">/categories/{{ props.categoryId || 'ID' }}/{{ suggestedSlug }}</span>
+              <span class="font-mono text-brand-600 font-semibold" dir="ltr">/categories/{{ suggestedSlug }}</span>
+            </div>
+          </CommonComponentCard>
+
+          <CommonComponentCard title="تنظیمات و محتوای سئو (SEO)">
+            <div class="space-y-1.5">
+              <CommonCustomInput
+                v-model="form.seoTitle"
+                label="عنوان سئو (Meta Title)"
+                placeholder="مثال: خرید انواع لوازم آرایشی اصل با بهترین قیمت | نیمورا"
+              />
+              <p class="text-[11px] text-gray-400">
+                طول پیشنهادی برای گوگل: ۵۰ تا ۶۰ کاراکتر (فعلی: {{ form.seoTitle.trim().length }} کاراکتر)
+              </p>
+            </div>
+
+            <div class="space-y-1.5">
+              <CommonTextArea
+                v-model="form.seoDescription"
+                label="توضیحات متا (Meta Description)"
+                placeholder="توضیح کوتاه و جذاب برای نمایش در نتایج جستجوی گوگل..."
+                :rows="3"
+                :maxlength="500"
+              />
+              <p class="text-[11px] text-gray-400">
+                طول پیشنهادی برای گوگل: ۱۲۰ تا ۱۶۰ کاراکتر (فعلی: {{ form.seoDescription.trim().length }} کاراکتر)
+              </p>
+            </div>
+
+            <div class="space-y-2 pt-1">
+              <CommonRichTextEditor
+                v-model="form.seoText"
+                label="توضیحات سئوی پایین صفحه‌ی دسته‌بندی"
+                placeholder="متن جامع درباره محصولات این دسته‌بندی همراه با هدینگ‌های H1 / H2 / H3 و لینک‌های داخلی برای کراول بهتر گوگل..."
+                :allow-h1="true"
+                owner-type="magazine_content_image"
+                min-height="260px"
+              />
+              <p class="text-[11px] text-gray-500 leading-relaxed">
+                این متن در انتهای صفحه‌ی دسته‌بندی (زیر لیست محصولات) نمایش داده می‌شود و به‌طور کامل در HTML سمت سرور برای ربات‌های گوگل رندر می‌گردد.
+              </p>
             </div>
           </CommonComponentCard>
         </main>
@@ -84,6 +124,9 @@ const form = reactive({
   name: '',
   slug: '',
   parentId: null as number | null,
+  seoTitle: '',
+  seoDescription: '',
+  seoText: '',
 });
 
 const parentOptions = ref<any[]>([]);
@@ -109,6 +152,9 @@ onMounted(async () => {
       form.name = existing.name || '';
       form.slug = existing.slug || '';
       form.parentId = existing.parent?.id || existing.parentId || null;
+      form.seoTitle = existing.seoTitle || '';
+      form.seoDescription = existing.seoDescription || '';
+      form.seoText = existing.seoText || '';
     }
   }
 });
@@ -119,10 +165,19 @@ async function submitForm() {
     return;
   }
 
+  const cleanSeoText =
+    form.seoText && form.seoText.replace(/<p>\s*<\/p>/g, '').trim()
+      ? form.seoText.trim()
+      : '';
+
   const payload: CreateCategoryPayload = {
     name: form.name.trim(),
     slug: form.slug?.trim() ? createSlug(form.slug) : undefined,
     parentId: form.parentId ? Number(form.parentId) : null,
+    seoTitle: form.seoTitle.trim() || (props.mode === 'update' ? '' : undefined),
+    seoDescription:
+      form.seoDescription.trim() || (props.mode === 'update' ? '' : undefined),
+    seoText: cleanSeoText || (props.mode === 'update' ? '' : undefined),
   };
 
   let success = false;

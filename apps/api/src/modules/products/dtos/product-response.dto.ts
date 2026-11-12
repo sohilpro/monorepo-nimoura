@@ -4,6 +4,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   BadgeSource,
   buildProductBadges,
+  getDiscountPercent,
   getStockStatus,
   ProductBadge,
   StockStatus,
@@ -36,6 +37,7 @@ interface TagSource {
 }
 
 interface ProductSource extends BadgeSource {
+  discountPercent?: number;
   stockStatus?: StockStatus;
   badges?: ProductBadge[];
   tags?: TagSource[];
@@ -216,6 +218,11 @@ export class ProductVariantResponseDto {
   percentageDiscount: number;
 
   @Expose()
+  @Transform(({ obj }: { obj: BadgeSource }) => getDiscountPercent(obj))
+  @ApiProperty()
+  discountPercent: number;
+
+  @Expose()
   @ApiProperty()
   stock: number;
 
@@ -333,6 +340,14 @@ export class ProductResponseDto {
   @Expose()
   @ApiProperty()
   percentageDiscount: number;
+
+  @Expose()
+  @Transform(
+    ({ obj }: { obj: ProductSource }) =>
+      obj.discountPercent ?? getDiscountPercent(obj),
+  )
+  @ApiProperty()
+  discountPercent: number;
 
   @Expose()
   @ApiProperty()

@@ -8,16 +8,22 @@ export default defineEventHandler(async (event) => {
   if (categoryId !== undefined && categoryId !== '') {
     query.categoryId = categoryId;
   }
+  if (q.categorySlug !== undefined && q.categorySlug !== '') {
+    query.categorySlug = q.categorySlug;
+  }
 
   const allowedKeys = [
     'search',
     'brandId',
+    'brandSlug',
     'subBrandId',
+    'subBrandSlug',
     'minPrice',
     'maxPrice',
     'inStock',
     'isAvailable',
     'onSale',
+    'amazing',
     'tags',
   ] as const;
 

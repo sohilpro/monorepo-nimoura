@@ -7,6 +7,7 @@ import {
   ParseIntPipe,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,15 +16,21 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
+import { JwtService } from '@nestjs/jwt';
+import type { Request } from 'express';
 import { CommentsService } from '../comments.service';
 import { CreateCommentDto } from '../dto/create-comment.dto';
 import { CurrentUser, Public } from 'src/common/auth/auth.decorators';
 import { PaginationQueryDto } from 'src/modules/products/dtos/product-query.dto';
+import type { JwtPayload } from 'src/common/auth/jwt.types';
 
 @ApiTags('Store - Comments')
 @Controller('comments') // مسیر نهایی: /api/v1/comments
 export class CommentsController {
-  constructor(private readonly commentsService: CommentsService) {}
+  constructor(
+    private readonly commentsService: CommentsService,
+    private readonly jwtService: JwtService,
+  ) {}
 
   @ApiBearerAuth()
   @Post()
@@ -58,8 +65,20 @@ export class CommentsController {
   async findByProduct(
     @Param('productId', ParseIntPipe) productId: number,
     @Query() query: PaginationQueryDto,
+    @Req() req: Request,
   ) {
-    return await this.commentsService.findByProduct(productId, query);
+    let userId: number | undefined;
+    const [type, token] = req.headers.authorization?.split(' ') ?? [];
+    if (type === 'Bearer' && token) {
+      try {
+        const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+        userId = payload.sub;
+      } catch {
+        // invalid or expired optional token — serve public view
+      }
+    }
+
+    return await this.commentsService.findByProduct(productId, query, userId);
   }
 
   @ApiBearerAuth()

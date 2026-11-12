@@ -20,6 +20,7 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p scripts/tsconfig.json",
     "seed": "npm run seed:products",
     "seed:products": "ts-node -P tsconfig.typeorm.json -r tsconfig-paths/register scripts/run-seeds.ts",
+    "seed:categories-seo": "ts-node -P tsconfig.typeorm.json -r tsconfig-paths/register scripts/seed-categories-seo.ts",
     "typeorm": "ts-node -P tsconfig.typeorm.json -r tsconfig-paths/register ../../node_modules/typeorm/cli.js -d ./src/common/database/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate ./src/common/database/migrations/fixedOrdersModule",
     "migration:run": "npm run typeorm -- migration:run",

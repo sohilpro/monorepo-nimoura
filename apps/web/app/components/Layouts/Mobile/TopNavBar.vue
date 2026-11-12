@@ -35,14 +35,16 @@
 
       <!-- آیکون سبد خرید (فقط صفحه‌ی تکی محصول) -->
       <NuxtLink
-        v-if="isProductPage"
         to="/cart"
         class="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-nimoura-text-600 transition-colors active:bg-gray-200"
         aria-label="سبد خرید"
       >
-        <i class="pi pi-shopping-cart text-sm" />
+        <i class="pi pi-shopping-cart text-sm!" />
 
-        <span v-if="cart.totalCount > 0" class="absolute -right-1 -top-1 flex h-4 w-4">
+        <span
+          v-if="cart.totalCount > 0"
+          class="absolute -right-1 -top-1 flex h-4 w-4"
+        >
           <span
             class="animate-ping absolute inline-flex h-full w-full rounded-full bg-nimoura-primary opacity-75"
           />
@@ -54,6 +56,13 @@
             </span>
           </ClientOnly>
         </span>
+      </NuxtLink>
+      <NuxtLink
+        to="/profile"
+        class="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-nimoura-text-600 transition-colors active:bg-gray-200"
+        aria-label="پروفایل"
+      >
+        <i class="pi pi-user text-sm!" />
       </NuxtLink>
     </div>
   </header>
@@ -69,7 +78,6 @@ const cart = useCartStore();
 const searchOpen = ref(false);
 
 const isHome = computed(() => route.path === "/");
-const isProductPage = computed(() => route.path.startsWith("/product/"));
 
 function goBack() {
   // اگه تاریخچه‌ی مرورگر وجود داره (کاربر واقعاً از یک صفحه‌ی دیگه‌ی همین سایت اومده)، برگرد

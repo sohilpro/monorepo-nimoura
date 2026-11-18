@@ -81,6 +81,91 @@
 
         <!-- Sidebar / Hierarchy Column -->
         <aside class="flex flex-col gap-5 basis-full lg:basis-4/12">
+          <!-- تصویر شاخص و هویت بصری -->
+          <CommonComponentCard title="تصویر شاخص و هویت بصری">
+            <UtilsFileUploader
+              label="تصویر شاخص دسته‌بندی"
+              name="image"
+              :multiple="false"
+              ownerType="category_image"
+              v-model="form.image"
+              :existing="form.image ? [{ url: form.image }] : []"
+              @remove-existing="form.image = ''"
+            />
+
+            <!-- راهنمای سایز و نسبت ابعاد بر اساس چیدمان‌ها -->
+            <div class="rounded-xl border border-brand-100 bg-brand-50/40 p-3.5 space-y-2 text-xs">
+              <div class="flex items-center gap-1.5 font-bold text-brand-700">
+                <i class="pi pi-info-circle text-sm" />
+                <span>راهنمای سایز و نسبت ابعاد:</span>
+              </div>
+              <ul class="space-y-1.5 text-gray-600 leading-5 list-disc list-inside pr-1">
+                <li>
+                  <strong class="text-gray-800">حالت شبکه‌ای (Grid) و اسکرول (Scroll):</strong> نسبت ۱:۱ مربعی (۶۰۰×۶۰۰ پیکسل). سوژه در مرکز تصویر باشد.
+                </li>
+                <li>
+                  <strong class="text-gray-800">حالت دایره‌ای (Circle):</strong> نسبت ۱:۱ مربعی با پس‌زمینه شفاف یا خنثی.
+                </li>
+                <li>
+                  <strong class="text-gray-800">حالت عریض (Hero-Cards):</strong> نسبت ۱۶:۹ افقی (۱۲۰۰×۶۷۵ پیکسل).
+                </li>
+              </ul>
+            </div>
+
+            <!-- برچسب متنی ویژه -->
+            <CommonCustomInput
+              v-model="form.badge"
+              label="برچسب متنی ویژه (Badge)"
+              placeholder="مثال: محبوب‌ترین، روتین پوستی، پرفروش، جدید"
+            />
+
+            <!-- اولویت ترتیب در شوکیس -->
+            <CommonCustomInput
+              v-model="form.sortOrder"
+              type="number"
+              label="ترتیب نمایش در ویترین"
+              placeholder="مثال: 1 (عدد کمتر = اولویت بالاتر)"
+            />
+
+            <!-- سوئیچ نمایش در شوکیس -->
+            <div class="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50/70 p-3">
+              <div>
+                <label class="text-xs font-bold text-gray-800 block">نمایش در ویترین صفحه اصلی</label>
+                <span class="text-[11px] text-gray-400">نمایش این دسته‌بندی در شوکیس‌های صفحه اصلی سایت</span>
+              </div>
+              <input
+                type="checkbox"
+                v-model="form.showInShowcase"
+                class="size-4.5 accent-brand-600 rounded cursor-pointer"
+              />
+            </div>
+
+            <!-- پیش‌نمایش کارت زنده در فرم -->
+            <div v-if="form.name.trim()" class="pt-2 border-t border-gray-100 space-y-2">
+              <span class="text-xs font-semibold text-gray-500 block">پیش‌نمایش کارت در فرانت:</span>
+              <div class="mx-auto w-40 rounded-2xl border border-gray-200 bg-white p-3 text-center shadow-xs">
+                <div class="relative aspect-square w-full rounded-xl overflow-hidden bg-gray-100 mb-2">
+                  <img
+                    v-if="form.image"
+                    :src="form.image"
+                    alt="پیش‌نمایش"
+                    class="h-full w-full object-cover"
+                  />
+                  <div v-else class="h-full w-full flex items-center justify-center text-gray-300">
+                    <i class="pi pi-image text-3xl" />
+                  </div>
+                  <span
+                    v-if="form.badge"
+                    class="absolute top-1.5 start-1.5 text-[9px] font-bold px-1.5 py-0.5 rounded bg-brand-600 text-white"
+                  >
+                    {{ form.badge }}
+                  </span>
+                </div>
+                <p class="font-bold text-xs text-gray-800 line-clamp-1">{{ form.name }}</p>
+              </div>
+            </div>
+          </CommonComponentCard>
+
           <CommonComponentCard title="ساختار درختی و والد">
             <CommonSelectInput
               v-model="form.parentId"
@@ -124,6 +209,10 @@ const form = reactive({
   name: '',
   slug: '',
   parentId: null as number | null,
+  image: '',
+  badge: '',
+  showInShowcase: true,
+  sortOrder: 0,
   seoTitle: '',
   seoDescription: '',
   seoText: '',
@@ -152,6 +241,10 @@ onMounted(async () => {
       form.name = existing.name || '';
       form.slug = existing.slug || '';
       form.parentId = existing.parent?.id || existing.parentId || null;
+      form.image = existing.image || '';
+      form.badge = existing.badge || '';
+      form.showInShowcase = existing.showInShowcase !== false;
+      form.sortOrder = Number(existing.sortOrder ?? 0);
       form.seoTitle = existing.seoTitle || '';
       form.seoDescription = existing.seoDescription || '';
       form.seoText = existing.seoText || '';
@@ -174,6 +267,10 @@ async function submitForm() {
     name: form.name.trim(),
     slug: form.slug?.trim() ? createSlug(form.slug) : undefined,
     parentId: form.parentId ? Number(form.parentId) : null,
+    image: form.image?.trim() || null,
+    badge: form.badge?.trim() || null,
+    showInShowcase: Boolean(form.showInShowcase),
+    sortOrder: Number(form.sortOrder) || 0,
     seoTitle: form.seoTitle.trim() || (props.mode === 'update' ? '' : undefined),
     seoDescription:
       form.seoDescription.trim() || (props.mode === 'update' ? '' : undefined),

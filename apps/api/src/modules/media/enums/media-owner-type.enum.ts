@@ -13,6 +13,8 @@ export enum MediaOwnerType {
   MAGAZINE_COVER = 'magazine_cover',
   MAGAZINE_CONTENT_IMAGE = 'magazine_content_image', // عکس‌های بین متن مقاله
   BANNER = 'banner', // بنرهای سایت
+  CATEGORY_IMAGE = 'category_image', // تصویر شاخص دسته‌بندی
+  CATEGORY_ICON = 'category_icon', // آیکون دسته‌بندی
 }
 
 /**
@@ -29,6 +31,8 @@ export const MEDIA_OWNER_TYPE_TO_FTP_DIR: Record<MediaOwnerType, string> = {
   [MediaOwnerType.MAGAZINE_COVER]: '/uploads/magazine/covers',
   [MediaOwnerType.MAGAZINE_CONTENT_IMAGE]: '/uploads/magazine/content',
   [MediaOwnerType.BANNER]: '/uploads/banners',
+  [MediaOwnerType.CATEGORY_IMAGE]: '/uploads/categories',
+  [MediaOwnerType.CATEGORY_ICON]: '/uploads/categories/icons',
 };
 
 /** محدودیت نوع فایل مجاز برای هر بخش (امنیت آپلود) */
@@ -60,6 +64,18 @@ export const MEDIA_OWNER_TYPE_ALLOWED_MIME: Record<MediaOwnerType, string[]> = {
     'image/webp',
     'image/svg+xml',
   ],
+  [MediaOwnerType.CATEGORY_IMAGE]: [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/svg+xml',
+  ],
+  [MediaOwnerType.CATEGORY_ICON]: [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/svg+xml',
+  ],
 };
 
 /** محدودیت حجم (بایت) برای هر بخش */
@@ -72,7 +88,9 @@ export const MEDIA_OWNER_TYPE_MAX_SIZE: Record<MediaOwnerType, number> = {
   [MediaOwnerType.EXPLORE_VIDEO]: 200 * 1024 * 1024, // 200MB
   [MediaOwnerType.MAGAZINE_COVER]: 6 * 1024 * 1024, // 6MB
   [MediaOwnerType.MAGAZINE_CONTENT_IMAGE]: 6 * 1024 * 1024, // 6MB
-  [MediaOwnerType.BANNER]: 10 * 1024 * 1024, // 10MB (حجم مناسب برای بنرهای عریض و باکیفیت)
+  [MediaOwnerType.BANNER]: 10 * 1024 * 1024, // 10MB
+  [MediaOwnerType.CATEGORY_IMAGE]: 4 * 1024 * 1024, // 4MB
+  [MediaOwnerType.CATEGORY_ICON]: 2 * 1024 * 1024, // 2MB
 };
 
 /**
@@ -90,6 +108,8 @@ export const MEDIA_OWNER_TYPE_OPTIMIZABLE: Record<MediaOwnerType, boolean> = {
   [MediaOwnerType.MAGAZINE_COVER]: true,
   [MediaOwnerType.MAGAZINE_CONTENT_IMAGE]: true,
   [MediaOwnerType.BANNER]: true,
+  [MediaOwnerType.CATEGORY_IMAGE]: true,
+  [MediaOwnerType.CATEGORY_ICON]: true,
 };
 
 /**
@@ -133,4 +153,14 @@ export const MEDIA_OWNER_TYPE_OPTIMIZE_OPTIONS: Record<
     quality: 78,
   },
   [MediaOwnerType.BANNER]: { maxWidth: 2000, maxHeight: 1200, quality: 85 }, // متناسب با نمایشگرهای عریض دسکتاپ
+  [MediaOwnerType.CATEGORY_IMAGE]: {
+    maxWidth: 1000,
+    maxHeight: 1000,
+    quality: 85,
+  },
+  [MediaOwnerType.CATEGORY_ICON]: {
+    maxWidth: 400,
+    maxHeight: 400,
+    quality: 90,
+  },
 };

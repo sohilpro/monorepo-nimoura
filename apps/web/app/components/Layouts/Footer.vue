@@ -15,7 +15,7 @@
           </p>
           <div class="flex items-center gap-x-4">
             <NuxtLink
-              href="https://www.instagram.com/nimoura.shop"
+              href="https://www.instagram.com/nimoura.ir"
               target="_blank"
               rel="noopener noreferrer"
               class="size-10 bg-nimoura-primary/10 rounded-xl flex-center"
@@ -31,7 +31,7 @@
               <i class="pi pi-whatsapp text-2xl! text-nimoura-text-600"></i>
             </NuxtLink>
             <NuxtLink
-              href="https://t.me/nimoura_shop"
+              href="https://t.me/nimoura_ir"
               target="_blank"
               rel="noopener noreferrer"
               class="size-10 bg-nimoura-primary/10 rounded-xl flex-center"
@@ -99,8 +99,8 @@
             </li>
             <li>
               <p>آدرس ایمیل :</p>
-              <NuxtLink to="mailto:info@nimoura.shop">
-                info@nimoura.shop
+              <NuxtLink to="mailto:info@nimoura.ir">
+                info@nimoura.ir
               </NuxtLink>
             </li>
           </ul>
@@ -116,7 +116,7 @@
                 class="w-max! h-20! lg:w-max! lg:h-24! flex-center rounded-xl overflow-hidden"
               >
                 <NuxtLink
-                  to="https://www.zarinpal.com/trustPage/nimoura.shop"
+                  to="https://www.zarinpal.com/trustPage/nimoura.ir"
                   referrerpolicy="origin"
                   target="_blank"
                   class="w-full h-full"

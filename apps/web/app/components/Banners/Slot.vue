@@ -63,10 +63,10 @@ if (props.lazy) {
     <!-- Header -->
     <header v-if="title" class="mb-3 flex items-center justify-between sm:mb-4">
       <h2
-        class="flex items-center gap-2 text-base font-extrabold text-vecaro-primary sm:text-lg"
+        class="flex items-center gap-2 text-base font-bold text-nimoura-text-800 sm:text-lg"
       >
         <span
-          class="h-5 w-1 rounded-full bg-vecaro-accent"
+          class="h-5 w-1 rounded-full bg-nimoura-primary"
           aria-hidden="true"
         />
         {{ title }}
@@ -74,7 +74,7 @@ if (props.lazy) {
       <NuxtLink
         v-if="viewAllLink"
         :to="viewAllLink"
-        class="text-xs font-medium text-vecaro-primary/70 transition-colors hover:text-vecaro-accent sm:text-sm"
+        class="text-xs font-medium text-nimoura-text-500 transition-colors hover:text-nimoura-primary sm:text-sm"
       >
         مشاهده همه
       </NuxtLink>
@@ -84,7 +84,7 @@ if (props.lazy) {
       <!-- 🟢 استفاده از همان heightClass برای لودینگ جهت جلوگیری از Layout Shift -->
       <div
         v-if="loading"
-        class="w-full animate-pulse rounded-2xl bg-vecaro-primary/10"
+        class="w-full animate-pulse rounded-2xl bg-nimoura-primary/10"
         :class="heightClass"
       />
       <BannersCarousel

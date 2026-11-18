@@ -57,7 +57,7 @@
                 <div
                   ref="contentRef"
                   v-html="resolvedProduct.introduce"
-                  class="leading-relaxed text-nimoura-text-700 text-sm"
+                  class="product-rich-text leading-relaxed text-nimoura-text-700 text-sm"
                 />
                 <div
                   class="absolute bottom-0 inset-x-0 h-24 bg-linear-to-t from-white pointer-events-none transition-opacity duration-300"
@@ -91,9 +91,9 @@
                   </AccordionHeader>
 
                   <AccordionContent>
-                    <p
+                    <div
                       v-html="resolvedProduct.howToUse"
-                      class="text-nimoura-text-700 text-sm leading-relaxed"
+                      class="product-rich-text text-nimoura-text-700 text-sm leading-relaxed"
                     />
                   </AccordionContent>
                 </AccordionPanel>
@@ -202,3 +202,71 @@ onMounted(() => {
   contentHeight.value = contentRef.value?.scrollHeight ?? 500;
 });
 </script>
+
+<style scoped>
+.product-rich-text :deep(h2) {
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.7;
+  color: var(--color-nimoura-text-800);
+}
+
+.product-rich-text :deep(h3),
+.product-rich-text :deep(h4) {
+  margin-top: 1rem;
+  margin-bottom: 0.4rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.7;
+  color: var(--color-nimoura-text-800);
+}
+
+.product-rich-text :deep(p) {
+  margin-bottom: 0.75rem;
+  text-align: justify;
+}
+
+.product-rich-text :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+.product-rich-text :deep(ul),
+.product-rich-text :deep(ol) {
+  margin-bottom: 0.75rem;
+  padding-inline-start: 1.25rem;
+}
+
+.product-rich-text :deep(ul) {
+  list-style-type: disc;
+}
+
+.product-rich-text :deep(ol) {
+  list-style-type: decimal;
+}
+
+.product-rich-text :deep(li) {
+  margin-bottom: 0.35rem;
+  line-height: 1.8;
+}
+
+.product-rich-text :deep(strong) {
+  font-weight: 600;
+  color: var(--color-nimoura-text-800);
+}
+
+.product-rich-text :deep(blockquote) {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-inline-start: 3px solid var(--color-nimoura-primary);
+  background-color: var(--color-nimoura-base);
+  border-radius: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.product-rich-text :deep(blockquote p) {
+  margin-bottom: 0;
+}
+</style>

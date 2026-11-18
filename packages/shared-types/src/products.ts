@@ -50,7 +50,11 @@ export interface Category {
   id: number;
   name: string;
   slug: string;
-  icon?: string;
+  image?: string | null;
+  icon?: string | null;
+  badge?: string | null;
+  showInShowcase?: boolean;
+  sortOrder?: number;
   seoTitle?: string | null;
   seoDescription?: string | null;
   seoText?: string | null;
@@ -66,6 +70,11 @@ export interface CategoryTreeItem {
   id: number;
   name: string;
   slug: string;
+  image?: string | null;
+  icon?: string | null;
+  badge?: string | null;
+  showInShowcase?: boolean;
+  sortOrder?: number;
   parentId: number | null;
   children: CategoryTreeItem[];
 }
@@ -74,6 +83,11 @@ export interface CreateCategoryPayload {
   name: string;
   slug?: string;
   parentId?: number | null;
+  image?: string | null;
+  icon?: string | null;
+  badge?: string | null;
+  showInShowcase?: boolean;
+  sortOrder?: number;
   seoTitle?: string;
   seoDescription?: string;
   seoText?: string;

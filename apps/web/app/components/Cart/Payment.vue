@@ -20,13 +20,6 @@ const methods = [
     icon: 'pi-credit-card',
   },
   {
-    id: 'snapp_pay',
-    title: 'اسنپ‌پی',
-    desc: 'خرید اعتباری، پرداخت در اقساط بدون کارمزد',
-    icon: 'pi-wallet',
-    badge: 'به‌زودی',
-  },
-  {
     id: 'torobpay',
     title: 'ترب‌پی',
     desc: 'پرداخت آنلاین از طریق درگاه ترب‌پی',
@@ -37,7 +30,7 @@ const methods = [
 // حذف کامل گزینه‌های ناسازگار با تخفیف از لیست، مثل نسخه‌ی قبلی
 const visibleMethods = computed(() =>
   methods.filter((m) => {
-    if (hasPromotion.value && (m.id === 'torobpay' || m.id === 'snapp_pay')) {
+    if (hasPromotion.value && (m.id === 'torobpay')) {
       return false;
     }
     return true;

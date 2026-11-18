@@ -17,10 +17,17 @@ interface CategorySeoEntry {
   seoTitle: string;
   seoDescription: string;
   seoText: string;
+  image?: string;
+  badge?: string;
+  sortOrder?: number;
 }
 
 const CURATED_CATEGORY_SEO: Record<string, CategorySeoEntry> = {
   'لوازم آرایشی': {
+    image:
+      'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=400&q=80',
+    badge: 'محبوب‌ترین',
+    sortOrder: 1,
     seoTitle: 'خرید لوازم آرایشی اصل با بهترین قیمت | فروشگاه نیمورا',
     seoDescription:
       'خرید اینترنتی انواع لوازم آرایشی صورت، چشم و لب از برندهای معتبر جهانی با ضمانت اصالت کالا، تاریخ مصرف معتبر و ارسال سریع در نیمورا.',
@@ -40,6 +47,10 @@ const CURATED_CATEGORY_SEO: Record<string, CategorySeoEntry> = {
   },
 
   'آرایش چشم': {
+    image:
+      'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=400&q=80',
+    badge: 'پرفروش',
+    sortOrder: 2,
     seoTitle: 'خرید محصولات آرایش چشم اصل | ریمل و خط چشم | نیمورا',
     seoDescription:
       'انواع محصولات آرایش چشم شامل ریمل حجم‌دهنده، خط چشم و سایه از برندهای اصل با ماندگاری بالا و فرمولاسیون ضد حساسیت در فروشگاه نیمورا.',
@@ -106,6 +117,10 @@ const CURATED_CATEGORY_SEO: Record<string, CategorySeoEntry> = {
   },
 
   'مراقبت پوستی': {
+    image:
+      'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=400&q=80',
+    badge: 'روتین پوستی',
+    sortOrder: 3,
     seoTitle: 'خرید محصولات مراقبت پوستی اصل | کرم و ضد آفتاب | نیمورا',
     seoDescription:
       'خرید اینترنتی بهترین محصولات مراقبت از پوست شامل ضد آفتاب، کرم آبرسان، ژل شستشو و سرم‌های تخصصی با ضمانت اصالت در نیمورا.',
@@ -165,6 +180,10 @@ const CURATED_CATEGORY_SEO: Record<string, CategorySeoEntry> = {
   },
 
   'مراقبت از مو': {
+    image:
+      'https://images.unsplash.com/photo-1527799820374-dcf8d9d4a388?auto=format&fit=crop&w=400&q=80',
+    badge: 'درمان و تقویت',
+    sortOrder: 4,
     seoTitle: 'خرید محصولات مراقبت از مو اصل | شامپو و تقویت‌کننده | نیمورا',
     seoDescription:
       'خرید آنلاین انواع محصولات مراقبت از مو شامل شامپو ضد ریزش، سرم و ماسک موی اصل برای تقویت ریشه و افزایش ضخامت تار مو در نیمورا.',
@@ -208,6 +227,10 @@ const CURATED_CATEGORY_SEO: Record<string, CategorySeoEntry> = {
   },
 
   'مراقبت شخصی': {
+    image:
+      'https://images.unsplash.com/photo-1608248597359-2e11894a4c6a?auto=format&fit=crop&w=400&q=80',
+    badge: 'بهداشت روزانه',
+    sortOrder: 5,
     seoTitle: 'خرید محصولات مراقبت شخصی و بهداشتی اصل | نیمورا',
     seoDescription:
       'خرید اینترنتی محصولات مراقبت شخصی شامل اسپری و مام ضد تعریق، محصولات بهداشت بدن و مراقبت روزانه از برندهای اصل در نیمورا.',
@@ -365,6 +388,21 @@ export async function seed(ds: DataSource): Promise<void> {
 
       if (force || !cat.seoText?.trim()) {
         cat.seoText = seo.seoText;
+        changed = true;
+      }
+
+      if (seo.image && (force || !cat.image?.trim())) {
+        cat.image = seo.image;
+        changed = true;
+      }
+
+      if (seo.badge && (force || !cat.badge?.trim())) {
+        cat.badge = seo.badge;
+        changed = true;
+      }
+
+      if (seo.sortOrder !== undefined && (force || !cat.sortOrder)) {
+        cat.sortOrder = seo.sortOrder;
         changed = true;
       }
 

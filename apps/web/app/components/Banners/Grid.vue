@@ -68,7 +68,7 @@ function cellClass(i: number) {
     <div
       v-for="(item, i) in items"
       :key="item?.id ?? `s${i}`"
-      class="overflow-hidden rounded-2xl border border-vecaro-primary/10 bg-white shadow-xs"
+      class="overflow-hidden rounded-2xl border border-nimoura-text-100 bg-white shadow-xs"
       :class="[
         itemAspectClass,
         cellClass(i),
@@ -83,7 +83,7 @@ function cellClass(i: number) {
         :show-title="showTitle"
         class="size-full"
       />
-      <div v-else class="size-full animate-pulse bg-vecaro-primary/10" />
+      <div v-else class="size-full animate-pulse bg-nimoura-primary/10" />
     </div>
   </div>
 </template>

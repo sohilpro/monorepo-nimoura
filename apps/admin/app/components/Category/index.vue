@@ -64,6 +64,15 @@ const columns = [
   {
     key: 'name',
     label: 'نام دسته‌بندی',
+    isCustom: true,
+    formatter: (val: string, row: any) => ({
+      image: row?.image || '',
+      text: val ?? '—',
+    }),
+  },
+  {
+    key: 'badge',
+    label: 'برچسب شوکیس',
     formatter: (val: string) => val || '—',
   },
   {

@@ -19,6 +19,11 @@ export interface CategoryTreeNode {
   id: number;
   name: string;
   slug: string;
+  image?: string | null;
+  icon?: string | null;
+  badge?: string | null;
+  showInShowcase?: boolean;
+  sortOrder?: number;
   parentId: number | null;
   products?: Array<{ id: number; name: string }>;
   children: CategoryTreeNode[];
@@ -49,6 +54,11 @@ export class CategoryService {
         id: true,
         name: true,
         slug: true,
+        image: true,
+        icon: true,
+        badge: true,
+        showInShowcase: true,
+        sortOrder: true,
         createdAt: true,
         updatedAt: true,
         parent: { id: true, name: true, slug: true },
@@ -88,6 +98,11 @@ export class CategoryService {
         id: true,
         name: true,
         slug: true,
+        image: true,
+        icon: true,
+        badge: true,
+        showInShowcase: true,
+        sortOrder: true,
         seoTitle: true,
         seoDescription: true,
         seoText: true,
@@ -128,6 +143,11 @@ export class CategoryService {
           id: true,
           name: true,
           slug: true,
+          image: true,
+          icon: true,
+          badge: true,
+          showInShowcase: true,
+          sortOrder: true,
           seoTitle: true,
           seoDescription: true,
           seoText: true,
@@ -153,18 +173,35 @@ export class CategoryService {
   async getCategoryTree(): Promise<CategoryTreeNode[]> {
     const rawCategories = await this.categoryRepo
       .createQueryBuilder('category')
-      .select(['category.id', 'category.name', 'category.slug', 'parent.id'])
+      .select([
+        'category.id',
+        'category.name',
+        'category.slug',
+        'category.image',
+        'category.icon',
+        'category.badge',
+        'category.showInShowcase',
+        'category.sortOrder',
+        'parent.id',
+      ])
       .leftJoin('category.parent', 'parent')
+      .orderBy('category.sortOrder', 'ASC')
+      .addOrderBy('category.id', 'ASC')
       .getMany();
 
     const map = new Map<number, CategoryTreeNode>();
     const roots: CategoryTreeNode[] = [];
 
     for (const cat of rawCategories) {
-      const item = {
+      const item: CategoryTreeNode = {
         id: cat.id,
         name: cat.name,
         slug: cat.slug,
+        image: cat.image ?? null,
+        icon: cat.icon ?? null,
+        badge: cat.badge ?? null,
+        showInShowcase: cat.showInShowcase ?? true,
+        sortOrder: cat.sortOrder ?? 0,
         parentId: cat.parent?.id || null,
         children: [],
       };
@@ -217,6 +254,11 @@ export class CategoryService {
     const category = this.categoryRepo.create({
       name: dto.name.trim(),
       slug,
+      image: dto.image?.trim() || null,
+      icon: dto.icon?.trim() || null,
+      badge: dto.badge?.trim() || null,
+      showInShowcase: dto.showInShowcase ?? true,
+      sortOrder: dto.sortOrder !== undefined ? Number(dto.sortOrder) : 0,
       seoTitle: dto.seoTitle?.trim() || null,
       seoDescription: dto.seoDescription?.trim() || null,
       seoText: dto.seoText?.trim() || null,
@@ -271,6 +313,26 @@ export class CategoryService {
 
     if (dto.seoText !== undefined) {
       category.seoText = dto.seoText?.trim() || null;
+    }
+
+    if (dto.image !== undefined) {
+      category.image = dto.image?.trim() || null;
+    }
+
+    if (dto.icon !== undefined) {
+      category.icon = dto.icon?.trim() || null;
+    }
+
+    if (dto.badge !== undefined) {
+      category.badge = dto.badge?.trim() || null;
+    }
+
+    if (dto.showInShowcase !== undefined) {
+      category.showInShowcase = Boolean(dto.showInShowcase);
+    }
+
+    if (dto.sortOrder !== undefined) {
+      category.sortOrder = Number(dto.sortOrder) || 0;
     }
 
     if (dto.parentId !== undefined) {

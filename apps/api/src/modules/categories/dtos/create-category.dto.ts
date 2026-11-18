@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsOptional, IsString, IsNumber, MaxLength } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  MaxLength,
+  IsBoolean,
+  IsInt,
+} from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({
@@ -49,4 +56,45 @@ export class CreateCategoryDto {
   @IsOptional()
   @IsString()
   seoText?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://vecaro.ir/uploads/categories/cosmetics.webp',
+    description: 'تصویر شاخص دسته‌بندی برای شوکیس و کارت‌ها',
+  })
+  @IsOptional()
+  @IsString()
+  image?: string;
+
+  @ApiPropertyOptional({
+    example: 'https://vecaro.ir/uploads/categories/icons/lipstick.svg',
+    description: 'آیکون دسته‌بندی برای منو و استوری',
+  })
+  @IsOptional()
+  @IsString()
+  icon?: string;
+
+  @ApiPropertyOptional({
+    example: 'محبوب‌ترین',
+    description: 'برچسب ویژه متنی برای شوکیس',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  badge?: string;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: 'آیا در ویترین و شوکیس صفحه اصلی نمایش داده شود؟',
+  })
+  @IsOptional()
+  @IsBoolean()
+  showInShowcase?: boolean;
+
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'ترتیب نمایش در شوکیس',
+  })
+  @IsOptional()
+  @IsInt()
+  sortOrder?: number;
 }

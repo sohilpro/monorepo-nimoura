@@ -59,7 +59,7 @@ const goTo = (i: number) => emblaApi.value?.scrollTo(i)
 const fa = (n: number) => n.toLocaleString('fa-IR')
 
 const arrowClass =
-  'hidden lg:flex absolute top-1/2 -translate-y-1/2 z-20 size-11 items-center justify-center rounded-full bg-vecaro-primary/70 text-white backdrop-blur-md border border-white/20 shadow-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition duration-300 hover:bg-vecaro-primary hover:text-vecaro-accent active:scale-95 cursor-pointer'
+  'hidden lg:flex absolute top-1/2 -translate-y-1/2 z-20 size-10 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md border border-white/20 shadow-md opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition duration-300 hover:bg-nimoura-primary hover:text-white active:scale-95 cursor-pointer'
 </script>
 
 <template>
@@ -68,7 +68,7 @@ const arrowClass =
     role="region"
     aria-roledescription="carousel"
     aria-label="بنرهای تبلیغاتی"
-    class="group relative overflow-hidden rounded-2xl border border-vecaro-primary/10 bg-white shadow-xs"
+    class="group relative overflow-hidden rounded-2xl border border-nimoura-text-100 bg-white shadow-xs"
     @keydown.left.prevent="next"
     @keydown.right.prevent="prev"
   >
@@ -104,23 +104,23 @@ const arrowClass =
     </template>
 
     <div
-  v-if="dots && multiple"
-  class="absolute bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/20 bg-black/30 px-2 py-1 backdrop-blur-md transition-all duration-300 sm:bottom-3.5 sm:gap-1.5 sm:px-2.5 sm:py-1"
->
-  <button
-    v-for="(b, i) in banners"
-    :key="b.id"
-    type="button"
-    class="h-1.5 cursor-pointer rounded-full transition-all duration-300 ease-out focus-visible:outline-none"
-    :class="
-      activeIndex === i
-        ? 'w-4.5 bg-vecaro-accent shadow-xs'
-        : 'w-1.5 bg-white/50 hover:bg-white/80'
-    "
-    :aria-label="`رفتن به اسلاید ${fa(i + 1)}`"
-    :aria-current="activeIndex === i"
-    @click="goTo(i)"
-  />
-</div> 
+      v-if="dots && multiple"
+      class="absolute bottom-2.5 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border border-white/20 bg-black/30 px-2 py-1 backdrop-blur-md transition-all duration-300 sm:bottom-3.5 sm:gap-1.5 sm:px-2.5 sm:py-1"
+    >
+      <button
+        v-for="(b, i) in banners"
+        :key="b.id"
+        type="button"
+        class="h-1.5 cursor-pointer rounded-full transition-all duration-300 ease-out focus-visible:outline-none"
+        :class="
+          activeIndex === i
+            ? 'w-4.5 bg-nimoura-primary shadow-xs'
+            : 'w-1.5 bg-white/50 hover:bg-white/80'
+        "
+        :aria-label="`رفتن به اسلاید ${fa(i + 1)}`"
+        :aria-current="activeIndex === i"
+        @click="goTo(i)"
+      />
+    </div> 
   </div>
 </template>

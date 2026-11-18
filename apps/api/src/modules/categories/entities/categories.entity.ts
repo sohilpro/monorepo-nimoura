@@ -32,4 +32,19 @@ export class Categories extends CustomBaseEntity {
 
   @Column({ type: 'text', nullable: true })
   seoText?: string | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  image?: string | null;
+
+  @Column({ type: 'varchar', length: 500, nullable: true })
+  icon?: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  badge?: string | null;
+
+  @Column({ type: 'boolean', default: true })
+  showInShowcase!: boolean;
+
+  @Column({ type: 'int', default: 0 })
+  sortOrder!: number;
 }

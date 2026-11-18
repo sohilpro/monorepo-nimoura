@@ -44,7 +44,7 @@ const onAuxClick = (e: MouseEvent) => e.button === 1 && onClick(); // کلیک �
     :is="banner.link ? NuxtLink : 'div'"
     ref="el"
     v-bind="banner.link ? { to: banner.link, target: banner.target } : {}"
-    class="group/banner relative block size-full overflow-hidden bg-vecaro-primary/5 outline-vecaro-accent focus-visible:outline-2 focus-visible:-outline-offset-4"
+    class="group/banner relative block size-full overflow-hidden bg-nimoura-base outline-nimoura-primary focus-visible:outline-2 focus-visible:-outline-offset-4"
     @click="onClick"
     @auxclick="onAuxClick"
   >

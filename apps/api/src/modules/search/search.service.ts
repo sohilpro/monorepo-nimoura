@@ -203,6 +203,7 @@ export class SearchService {
       .select([
         'product.id',
         'product.title',
+        'product.slug', // <--- اضافه شدن اسلاگ محصول
         'product.thumbnail',
         'product.price',
       ])

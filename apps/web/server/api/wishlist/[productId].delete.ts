@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const { apiBase } = useRuntimeConfig();
 
   try {
-    const response = await $fetch(`${apiBase}/wishlist/${productId}`, {
+    const response = await apiFetch(event, `/wishlist/${productId}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,

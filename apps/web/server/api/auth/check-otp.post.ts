@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
   try {
-    const data: any = await $fetch(`${apiBase}/auth/check-otp`, {
+    const data: any = await apiFetch(event, '/auth/check-otp', {
       method: "POST",
       body,
     });

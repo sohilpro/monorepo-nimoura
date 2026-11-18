@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const { apiBase } = useRuntimeConfig();
 
   try {
-    const response = await $fetch(`${apiBase}/wishlist/check/${productId}`, {
+    const response = await apiFetch(event, `/wishlist/check/${productId}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

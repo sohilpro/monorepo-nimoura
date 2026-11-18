@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const { apiBase } = useRuntimeConfig();
 
   try {
-    const response = await $fetch(`${apiBase}/search/quick`, {
+    const response = await apiFetch(event, '/search/quick', {
       method: "GET",
       query,
     });

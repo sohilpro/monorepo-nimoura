@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
   try {
-    const data = await $fetch(`${apiBase}/cart/sync`, {
+    const data = await apiFetch(event, '/cart/sync', {
       method: "POST",
       body,
       headers: {

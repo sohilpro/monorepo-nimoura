@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
   try {
-    const data = await $fetch(`${apiBase}/explore/videos/${id}/comments`, {
+    const data = await apiFetch(event, '/explore/videos/${id}/comments', {
       method: "POST",
       body,
       headers: {

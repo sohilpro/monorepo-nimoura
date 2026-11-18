@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
 
   try {
-    const data = await $fetch(`${apiBase}/addresses/my`, {
+    const data = await apiFetch(event, '/addresses/my', {
       headers: {
         Authorization: `Bearer ${token}`,
       },

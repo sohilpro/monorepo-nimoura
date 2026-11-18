@@ -1,20 +1,18 @@
 import type { SitemapUrlInput } from "#sitemap/types";
 import { createSlug } from "@nimoura/utils";
+import { apiFetch } from "../../utils/apiFetch";
+import { unwrapCollection, type SitemapProduct } from "../../types/sitemap";
 
-export default defineSitemapEventHandler(async () => {
-  const { apiBase } = useRuntimeConfig();
-
-  const response: any = await $fetch(`${apiBase}/products/catalog`, {
-    query: {
-      limit: 100,
-    },
+export default defineSitemapEventHandler(async (event) => {
+  const response = await apiFetch(event, "/products/catalog", {
+    query: { limit: 100 },
   });
 
-  const products = response?.data?.products ?? response?.products ?? [];
+  const products = unwrapCollection<SitemapProduct>(response as never);
 
-  return products.map((p: any) => ({
-    loc: `/product/${p.slug || createSlug(p.title)}`,
-    lastmod: new Date(p.updatedAt || Date.now()).toISOString(),
+  return products.map((product) => ({
+    loc: `/product/${product.slug || createSlug(product.title)}`,
+    lastmod: new Date(product.updatedAt || Date.now()).toISOString(),
     changefreq: "daily",
     priority: 0.9,
   })) satisfies SitemapUrlInput[];

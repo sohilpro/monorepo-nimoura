@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    return await $fetch(`${apiBase}/products/catalog/facets`, {
+    return await apiFetch(event, '/products/catalog/facets', {
       query,
     });
   } catch (error: any) {

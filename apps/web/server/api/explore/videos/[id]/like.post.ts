@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, "id");
 
   try {
-    const data = await $fetch(`${apiBase}/explore/videos/${id}/like`, {
+    const data = await apiFetch(event, '/explore/videos/${id}/like', {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

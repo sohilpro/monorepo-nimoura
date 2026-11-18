@@ -1,36 +1,36 @@
 import type { SitemapUrlInput } from "#sitemap/types";
 import { createSlug } from "@nimoura/utils";
+import { apiFetch } from "../../utils/apiFetch";
+import { unwrapCollection, type SitemapBrand } from "../../types/sitemap";
 
-export default defineSitemapEventHandler(async () => {
-  const { apiBase } = useRuntimeConfig();
-
-  const response: any = await $fetch(`${apiBase}/brands`, {
+export default defineSitemapEventHandler(async (event) => {
+  const response = await apiFetch(event, "/brands", {
     query: { limit: 100 },
   });
 
-  const brands = response?.data?.brands ?? response?.brands ?? [];
+  const brands = unwrapCollection<SitemapBrand>(response as never);
   const entries: SitemapUrlInput[] = [];
   const now = new Date().toISOString();
 
-  for (const b of brands) {
-    const brandSlug = b.slug || createSlug(b.name);
+  for (const brand of brands) {
+    const brandSlug = brand.slug || createSlug(brand.name);
     if (!brandSlug) continue;
 
     entries.push({
       loc: `/brand/${brandSlug}`,
       changefreq: "weekly",
       priority: 0.7,
-      lastmod: b.updatedAt || now,
+      lastmod: brand.updatedAt || now,
     });
 
-    for (const sb of b.subBrands ?? []) {
-      const subSlug = sb.slug || createSlug(sb.name);
+    for (const subBrand of brand.subBrands ?? []) {
+      const subSlug = subBrand.slug || createSlug(subBrand.name);
       if (!subSlug) continue;
       entries.push({
         loc: `/brand/${brandSlug}/${subSlug}`,
         changefreq: "weekly",
         priority: 0.6,
-        lastmod: b.updatedAt || now,
+        lastmod: brand.updatedAt || now,
       });
     }
   }

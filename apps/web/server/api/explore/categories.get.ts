@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
   const token = getCookie(event, "accesstoken");
 
   try {
-    const data = await $fetch(`${apiBase}/explore/videos/categories`, {
+    const data = await apiFetch(event, '/explore/videos/categories', {
       headers: {
         Authorization: `Bearer ${token}`,
       },

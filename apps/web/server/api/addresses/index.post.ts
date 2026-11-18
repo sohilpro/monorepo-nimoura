@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
   try {
-    const data = await $fetch(`${apiBase}/addresses`, {
+    const data = await apiFetch(event, '/addresses', {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,

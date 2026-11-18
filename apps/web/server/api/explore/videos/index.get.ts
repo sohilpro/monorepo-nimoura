@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
 
   try {
-    const data = await $fetch(`${apiBase}/explore/videos`, {
+    const data = await apiFetch(event, '/explore/videos', {
       query,
       headers: {
         Authorization: `Bearer ${token}`,

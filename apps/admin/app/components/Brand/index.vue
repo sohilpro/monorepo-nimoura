@@ -45,7 +45,7 @@ const {
   onSort,
 } = useTableQuery({ defaultSortBy: 'id' });
 
-const { data: rawBrands, refresh } = await useFetch('/api/brand/list', {
+const { data: rawBrands, refresh } = await useFetch('/api/brand', {
   query: queryParams,
   key: 'admin-brands-list',
 });

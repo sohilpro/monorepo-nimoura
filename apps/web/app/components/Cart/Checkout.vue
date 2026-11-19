@@ -7,8 +7,69 @@ const checkout = useCheckout();
 const { addresses, loading, fetchAddresses } = useAddresses();
 const auth = useAuth();
 const { balanceAmount, refresh: refreshLoyalty } = useLoyalty();
+const { validateCode } = useReferral();
 const showAddDialog = ref(false);
 const isSelfRecipient = ref(false);
+
+const inputReferralCode = ref('');
+const referralDiscount = ref(0);
+const validatingReferral = ref(false);
+
+const applyReferral = async () => {
+  const code = (inputReferralCode.value || checkout.value.referralCode || '').trim();
+  if (!code) return;
+  validatingReferral.value = true;
+
+  try {
+    const promoRes: any = await $fetch('/api/promotions/apply', {
+      method: 'POST',
+      body: { promoCode: code, cartTotal: cart.totalPrice.value },
+    });
+    const pData = promoRes?.data || promoRes;
+    if (pData?.discountAmount) {
+      validatingReferral.value = false;
+      checkout.value.promotionId = pData.promotionId;
+      checkout.value.referralCode = code.toUpperCase();
+      referralDiscount.value = pData.discountAmount;
+      toast.add({
+        severity: 'success',
+        summary: 'کد تخفیف اعمال شد',
+        detail: `${numberFormat(pData.discountAmount)} تومان تخفیف روی سفارش شما محاسبه شد`,
+        life: 3000,
+      });
+      return;
+    }
+  } catch {
+    // If not a promotion coupon, fallback to referral code check
+  }
+
+  const result = await validateCode(code, cart.totalPrice.value);
+  validatingReferral.value = false;
+  if (result.valid) {
+    checkout.value.referralCode = code.toUpperCase();
+    referralDiscount.value = result.data.discount || 50000;
+    toast.add({
+      severity: 'success',
+      summary: 'کد معرف اعمال شد',
+      detail: '۵۰٬۰۰۰ تومان تخفیف روی سفارش شما محاسبه شد',
+      life: 3000,
+    });
+  } else {
+    toast.add({
+      severity: 'error',
+      summary: 'کد نامعتبر است',
+      detail: result.message,
+      life: 4000,
+    });
+  }
+};
+
+const removeReferralCode = () => {
+  checkout.value.referralCode = '';
+  checkout.value.promotionId = null;
+  inputReferralCode.value = '';
+  referralDiscount.value = 0;
+};
 
 const inputClass =
   "w-full border border-nimoura-text-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-nimoura-primary/30 focus:border-nimoura-primary";
@@ -45,6 +106,14 @@ function goToPayment() {
 
 onMounted(async () => {
   await Promise.all([fetchAddresses(), cart.refresh(), refreshLoyalty()]);
+  const cookieRef = useCookie('nimoura_ref').value;
+  if (cookieRef && !checkout.value.referralCode) {
+    inputReferralCode.value = cookieRef;
+    await applyReferral();
+  } else if (checkout.value.referralCode) {
+    inputReferralCode.value = checkout.value.referralCode;
+    await applyReferral();
+  }
 });
 </script>
 
@@ -243,15 +312,57 @@ onMounted(async () => {
 
           <Divider />
 
+          <!-- فیلد کد معرف -->
+          <div class="mb-4">
+            <div
+              v-if="referralDiscount > 0"
+              class="flex items-center justify-between rounded-xl bg-emerald-50 border border-emerald-200 p-2.5 text-xs text-emerald-800"
+            >
+              <div class="flex items-center gap-1.5">
+                <i class="pi pi-check-circle text-emerald-600" />
+                <span>کد معرف <b>{{ checkout.referralCode }}</b> (۵۰ هزار تومان تخفیف)</span>
+              </div>
+              <button
+                type="button"
+                class="text-emerald-700 hover:text-red-600 transition-colors"
+                title="حذف کد"
+                @click="removeReferralCode"
+              >
+                <i class="pi pi-times text-xs" />
+              </button>
+            </div>
+            <div v-else class="flex gap-2">
+              <input
+                v-model="inputReferralCode"
+                type="text"
+                placeholder="کد معرف / دعوت دوستان"
+                class="w-full text-xs border border-nimoura-text-200 rounded-xl px-3 py-2 uppercase placeholder:normal-case focus:outline-none focus:ring-1 focus:ring-nimoura-primary"
+                @keyup.enter="applyReferral"
+              />
+              <button
+                type="button"
+                :disabled="validatingReferral || !inputReferralCode.trim()"
+                class="shrink-0 rounded-xl bg-nimoura-primary/10 px-3 py-2 text-xs font-semibold text-nimoura-primary hover:bg-nimoura-primary hover:text-white transition-colors disabled:opacity-40"
+                @click="applyReferral"
+              >
+                {{ validatingReferral ? 'بررسی...' : 'اعمال' }}
+              </button>
+            </div>
+          </div>
+
           <div class="flex justify-between items-center mb-2">
             <span class="font-display text-nimoura-text-800">جمع کل</span>
             <span class="font-display text-xl text-nimoura-primary font-semibold">
               {{ numberFormat(cart.totalPrice.value) }}
             </span>
           </div>
+          <div v-if="referralDiscount > 0" class="flex justify-between items-center mb-2 text-sm text-emerald-700">
+            <span>تخفیف کد معرف</span>
+            <span class="font-modam">-{{ numberFormat(referralDiscount) }}</span>
+          </div>
           <div v-if="balanceAmount > 0" class="flex justify-between items-center mb-6 text-sm text-emerald-700">
             <span>اعتبار باشگاه مشتریان</span>
-            <span class="font-modam">-{{ numberFormat(Math.min(balanceAmount, cart.totalPrice.value)) }}</span>
+            <span class="font-modam">-{{ numberFormat(Math.min(balanceAmount, Math.max(0, cart.totalPrice.value - referralDiscount))) }}</span>
           </div>
           <div v-else class="mb-6" />
 

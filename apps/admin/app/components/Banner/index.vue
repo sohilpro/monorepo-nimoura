@@ -48,7 +48,7 @@ const {
   onSort,
 } = useTableQuery({ defaultSortBy: 'sortOrder' });
 
-const { data: rawBanners, refresh } = await useFetch('/api/banner/list', {
+const { data: rawBanners, refresh } = await useFetch('/api/banner', {
   query: queryParams,
   key: 'admin-banners-list',
 });

@@ -46,7 +46,7 @@ const toast = useAppToast();
 async function submitForm() {
   isLoading.value = true;
   try {
-    const data: any = await $fetch("/api/promotion/create", {
+    const data: any = await $fetch("/api/promo-codes", {
       method: "POST",
       body,
     });

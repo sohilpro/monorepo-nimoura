@@ -43,7 +43,7 @@ export function useAdminBanners() {
   async function createBanner(payload: CreateBannerPayload): Promise<boolean> {
     isLoading.value = true;
     try {
-      const response = await $fetch<any>('/api/banner/create', {
+      const response = await $fetch<any>('/api/banner', {
         method: 'POST',
         body: payload,
       });

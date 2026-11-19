@@ -156,12 +156,9 @@ const route = useRoute();
 const shouldSelfFetch = computed(
   () => props.productData === undefined && props.pending === undefined,
 );
+const targetIdentifier = computed(() => route.params.slug || route.params.id);
 const { data: fetchedProduct, pending: selfPending }: any = shouldSelfFetch.value
-  ? await useFetch("/api/products/findOne", {
-      query: route.params.slug
-        ? { slug: route.params.slug }
-        : { id: route.params.id },
-    })
+  ? await useFetch(() => `/api/products/${encodeURIComponent(String(targetIdentifier.value || ''))}`)
   : { data: ref(null), pending: ref(false) };
 
 const resolvedProduct = computed(

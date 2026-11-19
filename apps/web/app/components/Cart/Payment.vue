@@ -75,6 +75,9 @@ function buildOrderPayload() {
     ...(checkout.value.promotionId
       ? { promotionId: checkout.value.promotionId }
       : {}),
+    ...(checkout.value.referralCode
+      ? { referralCode: checkout.value.referralCode }
+      : {}),
     ...(checkout.value.shippingCost !== undefined &&
     checkout.value.shippingCost !== null
       ? { shippingCost: String(checkout.value.shippingCost) }
@@ -119,7 +122,7 @@ async function payWithTorob(orderId: number) {
 // ============================================================
 async function payWithGateway(orderId: number) {
   
-  const data: any = await $fetch('/api/payment/create', {
+  const data: any = await $fetch('/api/payment', {
     method: 'POST',
     body: {
       orderId,

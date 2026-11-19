@@ -82,6 +82,24 @@ export function usePaymentResult() {
   }
 
   async function verify() {
+    if (route.query.free === "true") {
+      result.gateway = null;
+      result.status = "success";
+      result.refId = (route.query.refId as string) || null;
+      result.message =
+        "سفارش شما با استفاده از اعتبار باشگاه مشتریان با موفقیت ثبت و تسویه شد.";
+
+      toast.add({
+        severity: "success",
+        summary: "پرداخت موفق",
+        detail: result.message,
+        life: 4000,
+      });
+
+      resetCartOnSuccess();
+      return;
+    }
+
     // زرین‌پال همیشه Authority/Status رو در URL برمی‌گردونه — این تشخیص قطعیه
     const isZarinpalCallback = !!route.query.Authority || !!route.query.Status;
 

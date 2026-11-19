@@ -58,6 +58,7 @@ export class AdminCommentsController {
   }
 
   @Put(':id')
+  @Patch(':id')
   @ApiOperation({
     summary: 'ویرایش یک نظر',
     description: 'ویرایش اطلاعات کامنت ثبت‌شده توسط ادمین.',

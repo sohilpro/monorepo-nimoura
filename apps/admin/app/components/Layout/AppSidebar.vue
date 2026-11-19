@@ -1,34 +1,32 @@
 <template>
   <aside
+    dir="rtl"
     :class="[
-      'fixed mt-16 flex flex-col lg:mt-0 top-0 px-5 right-0 bg-white text-gray-900 h-screen transition-all duration-300 ease-in-out z-50 border-l border-gray-200',
+      'fixed top-0 right-0 z-50 mt-16 flex h-screen flex-col border-l border-gray-200 bg-white px-4 text-gray-900 transition-all duration-300 ease-in-out lg:mt-0 lg:translate-x-0',
       {
-        'lg:w-[290px]': isExpanded || isMobileOpen || isHovered,
-        'lg:w-[90px]': !isExpanded && !isHovered,
-        'translate-x-0 w-[290px]': isMobileOpen,
+        'lg:w-[290px]': showFull,
+        'lg:w-[90px]': !showFull,
+        'w-[290px] translate-x-0': isMobileOpen,
         'translate-x-full': !isMobileOpen,
-        'lg:translate-x-0': true,
       },
     ]"
     @mouseenter="!isExpanded && (isHovered = true)"
     @mouseleave="isHovered = false"
   >
+    <!-- لوگو و عنوان پنل -->
     <div
       :class="[
-        'py-8 flex',
-        !isExpanded && !isHovered ? 'lg:justify-center' : 'justify-start',
+        'flex py-6 transition-all',
+        showFull ? 'justify-start' : 'lg:justify-center',
       ]"
     >
-      <NuxtLink to="/" class="flex items-center gap-2.5">
+      <NuxtLink to="/" class="flex items-center gap-2.5" @click="closeMobile">
         <span
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-lg font-bold text-white shadow-theme-xs"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-500 text-lg font-bold text-white shadow-sm"
         >
           ن
         </span>
-        <div
-          v-if="isExpanded || isHovered || isMobileOpen"
-          class="flex flex-col leading-tight"
-        >
+        <div v-if="showFull" class="flex flex-col leading-tight">
           <span class="text-xl font-extrabold tracking-tight text-brand-500">
             نیمورا
           </span>
@@ -38,338 +36,319 @@
         </div>
       </NuxtLink>
     </div>
+
+    <Divider class="!my-0 !mb-4" />
+
+    <!-- عنوان گروه منو -->
     <div
-      class="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar"
+      :class="[
+        'mb-3 flex items-center text-xs font-semibold text-gray-400',
+        showFull ? 'justify-start px-2' : 'lg:justify-center',
+      ]"
     >
-      <nav class="mb-6">
-        <div class="flex flex-col gap-4">
-          <div v-for="(menuGroup, groupIndex) in menuGroups" :key="groupIndex">
-            <h2
-              :class="[
-                'mb-4 text-xs uppercase flex leading-[20px] text-gray-400',
-                !isExpanded && !isHovered
-                  ? 'lg:justify-center'
-                  : 'justify-start',
-              ]"
-            >
-              <template v-if="isExpanded || isHovered || isMobileOpen">
-                {{ menuGroup.title }}
-              </template>
-              <HorizontalDots v-else />
-            </h2>
-            <ul class="flex flex-col gap-4">
-              <li v-for="(item, index) in menuGroup.items" :key="item.name">
-                <button
-                  v-if="item.subItems"
-                  @click="toggleSubmenu(groupIndex, index)"
-                  :class="[
-                    'menu-item group w-full',
-                    {
-                      'menu-item-active': isSubmenuOpen(groupIndex, index),
-                      'menu-item-inactive': !isSubmenuOpen(groupIndex, index),
-                    },
-                    !isExpanded && !isHovered
-                      ? 'lg:justify-center'
-                      : 'lg:justify-start',
-                  ]"
-                >
-                  <span
-                    :class="[
-                      isSubmenuOpen(groupIndex, index)
-                        ? 'menu-item-icon-active'
-                        : 'menu-item-icon-inactive',
-                    ]"
-                  >
-                    <component :is="item.icon" />
-                  </span>
-                  <span
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    class="menu-item-text"
-                    >{{ item.name }}</span
-                  >
-                  <ChevronDownIcon
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    :class="[
-                      'mr-auto w-5 h-5 transition-transform duration-200',
-                      {
-                        'rotate-180 text-brand-500': isSubmenuOpen(
-                          groupIndex,
-                          index
-                        ),
-                      },
-                    ]"
-                  />
-                </button>
-                <NuxtLink
-                  v-else-if="item.path"
-                  :to="item.path"
-                  :class="[
-                    'menu-item group',
-                    {
-                      'menu-item-active': isActive(item.path),
-                      'menu-item-inactive': !isActive(item.path),
-                    },
-                  ]"
-                >
-                  <span
-                    :class="[
-                      isActive(item.path)
-                        ? 'menu-item-icon-active'
-                        : 'menu-item-icon-inactive',
-                    ]"
-                  >
-                    <component :is="item.icon" />
-                  </span>
-                  <span
-                    v-if="isExpanded || isHovered || isMobileOpen"
-                    class="menu-item-text"
-                    >{{ item.name }}</span
-                  >
-                </NuxtLink>
-                <Transition
-                  @enter="startTransition"
-                  @after-enter="endTransition"
-                  @before-leave="startTransition"
-                  @after-leave="endTransition"
-                >
-                  <div
-                    v-show="
-                      isSubmenuOpen(groupIndex, index) &&
-                      (isExpanded || isHovered || isMobileOpen)
-                    "
-                  >
-                    <ul class="mt-2 space-y-1 mr-9">
-                      <li v-for="subItem in item.subItems" :key="subItem.name">
-                        <NuxtLink
-                          :to="subItem.path"
-                          :class="[
-                            'menu-dropdown-item',
-                            {
-                              'menu-dropdown-item-active': isActive(
-                                subItem.path
-                              ),
-                              'menu-dropdown-item-inactive': !isActive(
-                                subItem.path
-                              ),
-                            },
-                          ]"
-                        >
-                          {{ subItem.name }}
-                          <span class="flex items-center gap-1 mr-auto">
-                            <span
-                              v-if="subItem.new"
-                              :class="[
-                                'menu-dropdown-badge',
-                                {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
-                                },
-                              ]"
-                            >
-                              new
-                            </span>
-                            <span
-                              v-if="subItem.pro"
-                              :class="[
-                                'menu-dropdown-badge',
-                                {
-                                  'menu-dropdown-badge-active': isActive(
-                                    subItem.path
-                                  ),
-                                  'menu-dropdown-badge-inactive': !isActive(
-                                    subItem.path
-                                  ),
-                                },
-                              ]"
-                            >
-                              pro
-                            </span>
-                          </span>
-                        </NuxtLink>
-                      </li>
-                    </ul>
-                  </div>
-                </Transition>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </nav>
+      <span v-if="showFull">منوی مدیریت</span>
+      <i v-else class="pi pi-ellipsis-h text-sm" />
     </div>
+
+    <!-- بدنه منو با PrimeVue PanelMenu -->
+    <nav class="no-scrollbar flex-1 overflow-y-auto pb-6">
+      <PanelMenu
+        v-model:expandedKeys="expandedKeys"
+        :model="sortedMenuItems"
+        class="nimoura-sidebar-menu w-full"
+        :pt="panelMenuPt"
+      >
+        <template #item="{ item, root }">
+          <!-- آیتم دارای مسیر مستقیم (بدون زیرمجموعه یا زیرآیتم) -->
+          <NuxtLink
+            v-if="item.route"
+            v-ripple
+            :to="item.route"
+            v-tooltip.left="!showFull && root ? item.label : undefined"
+            :class="[
+              'p-ripple flex w-full items-center gap-3 rounded-xl transition-colors duration-200',
+              root ? 'px-3 py-2.5 text-sm font-medium' : 'px-3 py-2 text-[13px]',
+              !showFull && root ? 'lg:justify-center lg:px-0' : '',
+              isActive(item.route)
+                ? 'bg-brand-50 font-semibold text-brand-600'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
+            ]"
+            @click="closeMobile"
+          >
+            <i
+              :class="[
+                item.icon,
+                root ? 'text-base' : 'text-xs',
+                isActive(item.route) ? 'text-brand-500' : 'text-gray-400',
+              ]"
+            />
+
+            <span v-if="showFull || !root" class="truncate">
+              {{ item.label }}
+            </span>
+
+            <span
+              v-if="(showFull || !root) && (item.isNew || item.pro)"
+              class="mr-auto flex items-center gap-1"
+            >
+              <Tag
+                v-if="item.isNew"
+                value="جدید"
+                severity="success"
+                rounded
+                class="!px-2 !py-0.5 !text-[10px]"
+              />
+              <Tag
+                v-if="item.pro"
+                value="pro"
+                severity="warn"
+                rounded
+                class="!px-2 !py-0.5 !text-[10px]"
+              />
+            </span>
+          </NuxtLink>
+
+          <!-- آیتم والد (دارای زیرمجموعه) -->
+          <div
+            v-else
+            v-ripple
+            v-tooltip.left="!showFull ? item.label : undefined"
+            :class="[
+              'p-ripple flex w-full cursor-pointer select-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200',
+              !showFull ? 'lg:justify-center lg:px-0' : '',
+              isParentActive(item) || isGroupExpanded(item.key)
+                ? 'bg-brand-50 text-brand-600'
+                : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
+            ]"
+          >
+            <i
+              :class="[
+                item.icon,
+                'text-base',
+                isParentActive(item) || isGroupExpanded(item.key)
+                  ? 'text-brand-500'
+                  : 'text-gray-400',
+              ]"
+            />
+
+            <span v-if="showFull" class="truncate">
+              {{ item.label }}
+            </span>
+
+            <i
+              v-if="showFull && item.items?.length"
+              :class="[
+                'pi pi-chevron-down mr-auto text-xs transition-transform duration-200',
+                isGroupExpanded(item.key)
+                  ? 'rotate-180 text-brand-500'
+                  : 'text-gray-400',
+              ]"
+            />
+          </div>
+        </template>
+      </PanelMenu>
+    </nav>
   </aside>
 </template>
 
 <script setup>
-import {
-  GridIcon,
-  CalenderIcon,
-  UserCircleIcon,
-  ChatIcon,
-  MailIcon,
-  DocsIcon,
-  PieChartIcon,
-  ChevronDownIcon,
-  HorizontalDots,
-  PageIcon,
-  TableIcon,
-  ListIcon,
-  PlugInIcon,
-  BoxCubeIcon,
-} from "../Icons_TMP";
 const route = useRoute();
+const { isExpanded, isMobileOpen, isHovered } = useSidebar();
 
-const { isExpanded, isMobileOpen, isHovered, openSubmenu } = useSidebar();
+const showFull = computed(
+  () => isExpanded.value || isHovered.value || isMobileOpen.value
+);
 
-const menuGroups = [
+const expandedKeys = ref({});
+
+const rawMenuItems = [
   {
-    title: "منو",
+    key: "dashboard",
+    label: "داشبورد",
+    icon: "pi pi-home",
     items: [
-      {
-        icon: GridIcon,
-        name: "داشبورد",
-        subItems: [{ name: "فروشگاه", path: "/", pro: false }],
-      },
-      {
-        name: "محصولات",
-        icon: PageIcon,
-        subItems: [
-          { name: "همه", path: "/product", pro: false },
-          { name: "ایجاد محصول جدید", path: "/product/create", pro: false },
-        ],
-      },
-
-      {
-        icon: CalenderIcon,
-        name: "سفارشات",
-   
-         subItems: [
-          { name: "همه", path: "/order", pro: false },
-          { name: "سفارشات ارسال نشده", path: "/order/no-sending", pro: false },
-        ],
-      },
-      {
-        icon: CalenderIcon,
-        name: "خبر نامه",
-        path: "/news-letter",
-      },
-      {
-        icon: UserCircleIcon,
-        name: "مشتری ها",
-        subItems: [
-          { name: "همه", path: "/customers", pro: false },
-          { name: "ایجاد مشتری جدید", path: "/customers/create", pro: false },
-        ],
-      },
-
-      {
-        name: "دسته بندی ها",
-        icon: ListIcon,
-        subItems: [
-          { name: "همه", path: "/category", pro: false },
-          { name: "ایجاد دسته بندی", path: "/category/create", pro: false },
-        ],
-      },
-      {
-        name: "برند ها",
-        icon: TableIcon,
-        subItems: [
-          { name: "همه", path: "/brand", pro: false },
-          { name: "ایحاد برند", path: "/brand/create", pro: false },
-        ],
-      },
-      {
-        name: "تگ های محصول",
-        icon: TableIcon,
-        subItems: [{ name: "مدیریت تگ ها", path: "/tag", pro: false }],
-      },
-      {
-        name: "باشگاه مشتریان",
-        icon: TableIcon,
-        subItems: [
-          { name: "تنظیمات باشگاه", path: "/loyalty", pro: false },
-        ],
-      },
-      {
-        name: "تخفیف ها",
-        icon: TableIcon,
-        subItems: [
-          { name: "کد های تخفیف", path: "/promotion", pro: false },
-          { name: "کد تخفیف جدید", path: "/promotion/create", pro: false },
-        ],
-      },
-      {
-        icon: CalenderIcon,
-        name: "دیدگاه کاربران",
-        subItems: [
-          { name: "همه", path: "/comments", pro: false },
-          { name: "تایید شده", path: "/comments/approve", pro: false },
-          { name: "تایید نشده", path: "/comments/reject", pro: false },
-        ],
-      },
-      {
-        icon: CalenderIcon,
-        name: "بنر ها",
-        subItems: [
-          { name: "همه", path: "/banners", pro: false },
-          { name: "بنر جدید", path: "/banners/create", pro: false },
-        ],
-      },
-      {
-        icon: CalenderIcon,
-        name: "مجله زیبایی",
-        subItems: [
-          { name: "مقالات", path: "/magazine/articles", pro: false },
-          { name: "دسته‌بندی‌ها", path: "/magazine/categories", pro: false },
-          { name: "برچسب‌ها", path: "/magazine/tags", pro: false },
-          { name: "نویسندگان", path: "/magazine/authors", pro: false },
-          { name: "نظرات", path: "/magazine/comments", pro: false },
-          // { name: "مقاله جدید", path: "/magazine/articles/create", pro: false },
-        ],
-      },
+      { key: "dashboard-shop", label: "فروشگاه", icon: "pi pi-chart-bar", route: "/" },
     ],
+  },
+  {
+    key: "products",
+    label: "محصولات",
+    icon: "pi pi-box",
+    items: [
+      { key: "products-all", label: "همه", icon: "pi pi-list", route: "/product" },
+      { key: "products-create", label: "ایجاد محصول جدید", icon: "pi pi-plus-circle", route: "/product/create" },
+    ],
+  },
+  {
+    key: "orders",
+    label: "سفارشات",
+    icon: "pi pi-shopping-bag",
+    items: [
+      { key: "orders-all", label: "همه", icon: "pi pi-list", route: "/order" },
+      { key: "orders-pending", label: "سفارشات ارسال نشده", icon: "pi pi-truck", route: "/order/no-sending" },
+    ],
+  },
+  {
+    key: "customers",
+    label: "مشتری‌ها",
+    icon: "pi pi-users",
+    items: [
+      { key: "customers-all", label: "همه", icon: "pi pi-list", route: "/customers" },
+      { key: "customers-create", label: "ایجاد مشتری جدید", icon: "pi pi-user-plus", route: "/customers/create" },
+    ],
+  },
+  {
+    key: "categories",
+    label: "دسته‌بندی‌ها",
+    icon: "pi pi-sitemap",
+    items: [
+      { key: "categories-all", label: "همه", icon: "pi pi-list", route: "/category" },
+      { key: "categories-create", label: "ایجاد دسته‌بندی", icon: "pi pi-plus-circle", route: "/category/create" },
+    ],
+  },
+  {
+    key: "brands",
+    label: "برندها",
+    icon: "pi pi-verified",
+    items: [
+      { key: "brands-all", label: "همه", icon: "pi pi-list", route: "/brand" },
+      { key: "brands-create", label: "ایجاد برند", icon: "pi pi-plus-circle", route: "/brand/create" },
+    ],
+  },
+  {
+    key: "tags",
+    label: "تگ‌های محصول",
+    icon: "pi pi-tags",
+    items: [
+      { key: "tags-manage", label: "مدیریت تگ‌ها", icon: "pi pi-tag", route: "/tag" },
+    ],
+  },
+  {
+    key: "loyalty",
+    label: "باشگاه مشتریان",
+    icon: "pi pi-gift",
+    items: [
+      { key: "loyalty-settings", label: "تنظیمات باشگاه", icon: "pi pi-sliders-h", route: "/loyalty" },
+    ],
+  },
+  {
+    key: "promotions",
+    label: "تخفیف‌ها",
+    icon: "pi pi-percentage",
+    items: [
+      { key: "promotions-all", label: "کدهای تخفیف", icon: "pi pi-list", route: "/promotion" },
+      { key: "promotions-create", label: "کد تخفیف جدید", icon: "pi pi-plus-circle", route: "/promotion/create" },
+    ],
+  },
+  {
+    key: "comments",
+    label: "دیدگاه کاربران",
+    icon: "pi pi-comments",
+    items: [
+      { key: "comments-all", label: "همه", icon: "pi pi-list", route: "/comments" },
+      { key: "comments-approve", label: "تایید شده", icon: "pi pi-check-circle", route: "/comments/approve" },
+      { key: "comments-reject", label: "تایید نشده", icon: "pi pi-times-circle", route: "/comments/reject" },
+    ],
+  },
+  {
+    key: "banners",
+    label: "بنرها",
+    icon: "pi pi-images",
+    items: [
+      { key: "banners-all", label: "همه", icon: "pi pi-image", route: "/banners" },
+      { key: "banners-create", label: "بنر جدید", icon: "pi pi-plus-circle", route: "/banners/create" },
+    ],
+  },
+  {
+    key: "magazine",
+    label: "مجله زیبایی",
+    icon: "pi pi-book",
+    items: [
+      { key: "magazine-articles", label: "مقالات", icon: "pi pi-file-edit", route: "/magazine/articles" },
+      { key: "magazine-categories", label: "دسته‌بندی‌ها", icon: "pi pi-folder", route: "/magazine/categories" },
+      { key: "magazine-tags", label: "برچسب‌ها", icon: "pi pi-hashtag", route: "/magazine/tags" },
+      { key: "magazine-authors", label: "نویسندگان", icon: "pi pi-user-edit", route: "/magazine/authors" },
+      { key: "magazine-comments", label: "نظرات", icon: "pi pi-comment", route: "/magazine/comments" },
+    ],
+  },
+
+  // گزینه‌های بدون زیرمجموعه (همیشه در انتهای منو)
+  {
+    key: "tickets",
+    label: "پشتیبانی و تیکت‌ها",
+    icon: "pi pi-ticket",
+    route: "/tickets",
+  },
+  {
+    key: "newsletter",
+    label: "خبرنامه",
+    icon: "pi pi-envelope",
+    route: "/news-letter",
   },
 ];
 
-const isActive = (path) => route.path === path;
-
-const toggleSubmenu = (groupIndex, itemIndex) => {
-  const key = `${groupIndex}-${itemIndex}`;
-  openSubmenu.value = openSubmenu.value === key ? null : key;
-};
-
-const isAnySubmenuRouteActive = computed(() => {
-  return menuGroups.some((group) =>
-    group.items.some(
-      (item) =>
-        item.subItems && item.subItems.some((subItem) => isActive(subItem.path))
-    )
-  );
+// تضمین قرارگیری همیشگی آیتم‌های بدون زیرمجموعه در انتهای لیست
+const sortedMenuItems = computed(() => {
+  const withSubmenu = rawMenuItems.filter((item) => item.items?.length);
+  const withoutSubmenu = rawMenuItems.filter((item) => !item.items?.length);
+  return [...withSubmenu, ...withoutSubmenu];
 });
 
-const isSubmenuOpen = (groupIndex, itemIndex) => {
-  const key = `${groupIndex}-${itemIndex}`;
-  return (
-    openSubmenu.value === key ||
-    (isAnySubmenuRouteActive.value &&
-      menuGroups[groupIndex].items[itemIndex].subItems?.some((subItem) =>
-        isActive(subItem.path)
-      ))
-  );
+const panelMenuPt = computed(() => ({
+  root: { class: "flex flex-col gap-1.5 border-0 bg-transparent p-0" },
+  panel: { class: "border-0 bg-transparent p-0 shadow-none" },
+  header: { class: "border-0 bg-transparent p-0" },
+  headerContent: { class: "border-0 bg-transparent p-0 rounded-xl" },
+  contentContainer: { class: showFull.value ? "" : "hidden" },
+  content: { class: "border-0 bg-transparent p-0" },
+  rootList: { class: "mt-1 mr-4 space-y-1 border-r border-gray-200 pr-2" },
+  itemContent: { class: "bg-transparent rounded-xl" },
+}));
+
+const isActive = (path) => route.path === path;
+
+const isParentActive = (item) =>
+  Boolean(item.items?.some((sub) => isActive(sub.route)));
+
+const isGroupExpanded = (key) => Boolean(expandedKeys.value[key]);
+
+const closeMobile = () => {
+  if (isMobileOpen.value) {
+    isMobileOpen.value = false;
+  }
 };
 
-const startTransition = (el) => {
-  el.style.height = "auto";
-  const height = el.scrollHeight;
-  el.style.height = "0px";
-  el.offsetHeight; // force reflow
-  el.style.height = height + "px";
-};
-
-const endTransition = (el) => {
-  el.style.height = "";
-};
+// باز کردن خودکار زیرمنوی مرتبط با مسیر فعلی
+watch(
+  () => route.path,
+  () => {
+    const activeParent = sortedMenuItems.value.find((item) =>
+      item.items?.some((sub) => isActive(sub.route))
+    );
+    if (activeParent) {
+      expandedKeys.value = { [activeParent.key]: true };
+    }
+  },
+  { immediate: true }
+);
 </script>
+
+<style scoped>
+/* سازگاری کامل استایل در هر دو نسخه PrimeVue 3 و 4 */
+:deep(.p-panelmenu-panel) {
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+
+:deep(.p-panelmenu-header-content),
+:deep(.p-panelmenu-item-content) {
+  border: none;
+  background: transparent;
+}
+
+:deep(.p-panelmenu-header-content:hover),
+:deep(.p-panelmenu-item-content:hover) {
+  background: transparent;
+}
+</style>

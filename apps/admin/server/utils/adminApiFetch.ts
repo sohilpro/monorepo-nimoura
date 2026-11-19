@@ -1,7 +1,4 @@
 // server/utils/adminApiFetch.ts
-// نسخه ادمین apiFetch: توکن احراز هویت ادمین را از کوکی گرفته و به بک‌اند NestJS پاس می‌دهد.
-// فرض بر این است که پروژه نیمورا از قبل یک سیستم لاگین ادمین/JWT دارد که توکن آن
-// در کوکی httpOnly به نام "nimoura_admin_token" ذخیره می‌شود — نام کوکی را مطابق پروژه خودتان تغییر دهید.
 import type { H3Event } from "h3";
 
 export async function adminApiFetch<T>(
@@ -29,9 +26,24 @@ export async function adminApiFetch<T>(
       },
     });
   } catch (error: any) {
+    const statusCode = error?.response?.status || error?.statusCode || 502;
+    const rawMessage =
+      error?.data?.message ||
+      error?.response?._data?.message ||
+      error?.statusMessage ||
+      error?.message ||
+      "خطا در برقراری ارتباط با سرور نیمورا";
+    const statusMessage =
+      Array.isArray(rawMessage)
+        ? rawMessage.join(" - ")
+        : typeof rawMessage === "string"
+        ? rawMessage
+        : JSON.stringify(rawMessage);
+
     throw createError({
-      statusCode: error?.response?.status || 502,
-      statusMessage: error?.data?.message || "خطا در برقراری ارتباط با سرور نیمورا",
+      statusCode,
+      statusMessage,
+      data: error?.data || error?.response?._data,
     });
   }
 }

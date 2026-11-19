@@ -89,7 +89,7 @@ const requestQuery = computed(() => ({
   status: currentStatus.value || undefined,
 }));
 
-const { data: rawOrders, refresh } = await useFetch('/api/orders/list', {
+const { data: rawOrders, refresh } = await useFetch('/api/orders', {
   query: requestQuery,
   key: 'admin-orders-list',
 });

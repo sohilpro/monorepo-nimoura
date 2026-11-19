@@ -23,7 +23,7 @@
       :sortOrder="sortOrder"
       :searchQuery="search"
       url-edit="promotion"
-      api-delete-base="/api/promotion/remove"
+      api-delete-base="/api/promo-codes"
       :on-refresh="refresh"
       itemNameKey="promoCode"
     />
@@ -46,7 +46,7 @@ const {
 const fetchUrl = computed(() => {
   const q = queryParams.value;
 
-  return `/api/promotion/list?page=${q.page}&limit=${q.limit}&search=${q.search}&sortBy=${q.sortBy}&sortOrder=${q.sortOrder}`;
+  return `/api/promo-codes?page=${q.page}&limit=${q.limit}&search=${q.search}&sortBy=${q.sortBy}&sortOrder=${q.sortOrder}`;
 });
 
 const { data: promotions, refresh } = await useFetch(fetchUrl);

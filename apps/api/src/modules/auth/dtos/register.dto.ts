@@ -40,4 +40,13 @@ export class RegisterDto {
   @TrimString()
   @MinLength(6, { message: AuthMessage.PassMinLength })
   password!: string;
+
+  @ApiProperty({
+    type: String,
+    description: 'کد معرف اختیاری',
+    example: 'REF-NM7X9K',
+    required: false,
+  })
+  @TrimString()
+  referralCode?: string;
 }

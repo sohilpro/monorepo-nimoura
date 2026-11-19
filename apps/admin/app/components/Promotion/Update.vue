@@ -31,19 +31,17 @@ const route = useRoute();
 const id = route.params.slug;
 const { isLoading } = useLoading();
 
-const { data: promotion }: any = await useFetch(`/api/promotion/getOne`, {
-  query: { id },
-});
+const { data: promotion }: any = await useFetch(`/api/promo-codes/${id}`);
 
 const body = reactive({
-  title: promotion.value.data.title || "",
-  description: promotion.value.data.description || "",
-  type: promotion.value.data.type || "",
-  amount: promotion.value.data.amount || "",
-  promoCode: promotion.value.data.promoCode || "",
-  startDate: promotion.value.data.startDate || "",
-  endDate: promotion.value.data.endDate || "",
-  isPublic: promotion.value.data.isPublic || false,
+  title: promotion.value?.data?.title || "",
+  description: promotion.value?.data?.description || "",
+  type: promotion.value?.data?.type || "",
+  amount: promotion.value?.data?.amount || "",
+  promoCode: promotion.value?.data?.promoCode || "",
+  startDate: promotion.value?.data?.startDate || "",
+  endDate: promotion.value?.data?.endDate || "",
+  isPublic: promotion.value?.data?.isPublic || false,
   // "productIds": ,
   // "categoryIds":
 });
@@ -53,10 +51,9 @@ const toast = useAppToast();
 async function submitForm() {
   isLoading.value = true;
   try {
-    const data: any = await $fetch(`/api/promotion/update`, {
-      method: "PUT",
+    const data: any = await $fetch(`/api/promo-codes/${id}`, {
+      method: "PATCH",
       body,
-      query: { id },
     });
 
     toast.info(data?.data?.message || "کد تخفیف با موفقیت ویرایش شد");

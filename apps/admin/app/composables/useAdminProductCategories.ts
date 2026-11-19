@@ -40,7 +40,7 @@ export function useAdminProductCategories() {
   async function createCategory(payload: CreateCategoryPayload): Promise<boolean> {
     isLoading.value = true;
     try {
-      const response = await $fetch<any>('/api/category/create', {
+      const response = await $fetch<any>('/api/category', {
         method: 'POST',
         body: payload,
       });
@@ -110,7 +110,7 @@ export function useAdminProductCategories() {
    */
   async function fetchParentOptions(excludeId?: number | string): Promise<Category[]> {
     try {
-      const response = await $fetch<any>('/api/category/list', {
+      const response = await $fetch<any>('/api/category', {
         query: { limit: 200 },
       });
       const data = response?.data ?? response;

@@ -73,8 +73,25 @@
             <p class="text-sm font-semibold text-nimoura-text-800">باشگاه مشتریان</p>
             <p class="mt-1 text-xs text-nimoura-text-500 font-vazir">{{ visitCount }} از ۷ روز این هفته</p>
           </div>
+          <div class="flex items-center gap-2 sm:gap-3">
             <p class="font-modam text-lg font-bold text-nimoura-primary">{{ numberFormat(balanceAmount) }} تومان اعتبار</p>
-
+            <button
+              type="button"
+              class="rounded-xl border border-nimoura-primary/30 bg-nimoura-primary/10 px-3 py-1.5 text-xs font-semibold text-nimoura-primary transition-colors hover:bg-nimoura-primary hover:text-white cursor-pointer inline-flex items-center gap-1"
+              @click="activeTab = 'referral'"
+            >
+              <i class="pi pi-gift text-xs" />
+              <span>دعوت از دوستان</span>
+            </button>
+            <button
+              v-if="balanceAmount >= 500000"
+              type="button"
+              class="rounded-xl border border-emerald-600/30 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white cursor-pointer"
+              @click="showWithdrawalDialog = true"
+            >
+              درخواست تسویه
+            </button>
+          </div>
         </div>
         <div class="mt-3 h-2 overflow-hidden rounded-full bg-nimoura-text-100">
           <div class="h-full rounded-full bg-nimoura-primary transition-all" :style="{ width: `${(visitCount / 7) * 100}%` }" />
@@ -118,11 +135,27 @@
          <ProfileWishlist />
         </div>
 
+        <!-- ▸ REFERRAL ──────────────────────────────── -->
+        <div v-else-if="activeTab === 'referral'" key="referral" class="space-y-3">
+         <ProfileReferralCard />
+        </div>
+
+        <!-- ▸ TICKETS & SUPPORT ────────────────────── -->
+        <div v-else-if="activeTab === 'tickets'" key="tickets" class="space-y-3">
+          <ProfileTicketsTicketList />
+        </div>
+
       </Transition>
     </div>
 
     <!-- ══ LOGOUT CONFIRM MODAL ══ -->
     <AuthLogoutConfirm v-model="showConfirmLogOut" />
+
+    <!-- ══ WITHDRAWAL DIALOG ══ -->
+    <ProfileLoyaltyWithdrawalDialog
+      v-model:visible="showWithdrawalDialog"
+      :balance="balanceAmount"
+    />
 
   </div>
 </template>
@@ -133,18 +166,23 @@ const auth = useAuth()
 const { stats, pending: statsPending } = useProfileStats();
 const { balance: loyalty, balanceAmount, visitCount, refresh: refreshLoyalty } = useLoyalty();
 
+const showWithdrawalDialog = ref(false);
 onMounted(() => refreshLoyalty());
 
 const showConfirmLogOut = ref(false)
 
 // ─── Tabs ─────────────────────────────────────
+const route = useRoute();
 const tabs = [
   { key: 'orders',    label: 'سفارشات',  icon: 'pi-shopping-bag' },
+  { key: 'tickets',   label: 'پشتیبانی و تیکت‌ها', icon: 'pi-comments' },
   { key: 'account',   label: 'حساب من',   icon: 'pi-user' },
+  { key: 'referral',  label: 'دعوت از دوستان', icon: 'pi-gift' },
   { key: 'addresses', label: 'آدرس‌ها',   icon: 'pi-map-marker' },
-   { key: 'wishlist',  label: 'علاقه‌مندی',    icon: 'pi-heart' },
-]
-const activeTab = ref('orders')
+  { key: 'wishlist',  label: 'علاقه‌مندی',    icon: 'pi-heart' },
+];
+const initialTab = (route.query.tab as string) || 'orders';
+const activeTab = ref(tabs.some((t) => t.key === initialTab) ? initialTab : 'orders');
 
 // ─── Computed ─────────────────────────────────
 const initials = computed(() => {

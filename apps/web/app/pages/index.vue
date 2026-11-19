@@ -36,7 +36,7 @@
       title="جدیدترین"
       sub-title="محصولات"
       description="تازه‌ترین محصولات آرایشی و مراقبتی اضافه شده به نیمورا"
-      endpoint="/api/products/list?sort=newest&limit=15"
+      endpoint="/api/products?sort=newest&limit=15"
       href="/products/newest"
     />
 
@@ -69,7 +69,7 @@
       title="پرفروش‌ترین"
       sub-title="محصولات"
       description="محبوب‌ترین و پرطرفدارترین انتخاب‌های خریداران"
-      endpoint="/api/products/list?sort=popular&limit=15"
+      endpoint="/api/products?sort=popular&limit=15"
       href="/products/best-seller"
     />
 

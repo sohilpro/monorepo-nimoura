@@ -227,8 +227,8 @@ const linkTargetOptions = [
 onMounted(async () => {
   const [pos, catRes, brandRes] = await Promise.all([
     fetchBannerPositions(),
-    $fetch<any>('/api/category/list', { query: { limit: 100 } }).catch(() => null),
-    $fetch<any>('/api/product/brand/list', { query: { limit: 100 } }).catch(() => null),
+    $fetch<any>('/api/category', { query: { limit: 100 } }).catch(() => null),
+    $fetch<any>('/api/product/brand', { query: { limit: 100 } }).catch(() => null),
   ]);
 
   if (pos.length) {

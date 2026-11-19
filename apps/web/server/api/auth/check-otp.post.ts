@@ -3,6 +3,12 @@ export default defineEventHandler(async (event) => {
      apiBase ,
   } = useRuntimeConfig();
   const body = await readBody(event);
+  if (!body?.referralCode) {
+    const cookieRef = getCookie(event, 'nimoura_ref');
+    if (cookieRef) {
+      body.referralCode = cookieRef;
+    }
+  }
 
   try {
     const data: any = await apiFetch(event, '/auth/check-otp', {

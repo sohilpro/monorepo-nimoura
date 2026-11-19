@@ -44,6 +44,8 @@ import { validateEnv } from './config/env.validation';
 import { HealthModule } from './modules/health/health.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
+import { TicketsModule } from './modules/tickets/tickets.module';
+import { NewsletterModule } from './modules/newsletter/newsletter.module';
 
 @Module({
   imports: [
@@ -108,6 +110,8 @@ import { LoyaltyModule } from './modules/loyalty/loyalty.module';
     HealthModule,
     DashboardModule,
     LoyaltyModule,
+    TicketsModule,
+    NewsletterModule,
   ],
   providers: [
     {

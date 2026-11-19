@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import MelipayamakApi from 'melipayamak';
 
 @Injectable()
 export class SmsService {
+  private readonly logger = new Logger(SmsService.name);
+
   async sendOtpViaMeliSms(phone: string, code: string) {
     await this.sendPattern(phone, code, 'MELI_SMS_PATTERN_CODE');
   }
@@ -11,10 +13,50 @@ export class SmsService {
     await this.sendPattern(phone, code, 'MELI_SMS_PATTERN_ORDER');
   }
 
+  async sendReferralSuccessViaMeliSms(phone: string, token: string) {
+    const patternKey = 'MELI_SMS_PATTERN_REFERRAL';
+    const bodyId = process.env[patternKey];
+    if (!bodyId || !bodyId.trim()) {
+      this.logger.debug(
+        'MELI_SMS_PATTERN_REFERRAL is not configured yet. Skipping SMS.',
+      );
+      return;
+    }
+    try {
+      await this.sendPattern(phone, token, patternKey);
+    } catch (err: any) {
+      this.logger.warn(
+        `Failed to send referral SMS to ${phone}: ${err?.message}`,
+      );
+    }
+  }
+
+  async sendNewsletterPromoViaMeliSms(phone: string, token: string) {
+    const patternKey = 'MELI_SMS_PATTERN_NEWSLETTER';
+    const bodyId = process.env[patternKey];
+    if (!bodyId || !bodyId.trim()) {
+      this.logger.debug(
+        'MELI_SMS_PATTERN_NEWSLETTER is not configured yet. Skipping SMS.',
+      );
+      return;
+    }
+    try {
+      await this.sendPattern(phone, token, patternKey);
+    } catch (err: any) {
+      this.logger.warn(
+        `Failed to send newsletter SMS to ${phone}: ${err?.message}`,
+      );
+    }
+  }
+
   private async sendPattern(
     phone: string,
     code: string,
-    patternEnvKey: 'MELI_SMS_PATTERN_CODE' | 'MELI_SMS_PATTERN_ORDER',
+    patternEnvKey:
+      | 'MELI_SMS_PATTERN_CODE'
+      | 'MELI_SMS_PATTERN_ORDER'
+      | 'MELI_SMS_PATTERN_REFERRAL'
+      | 'MELI_SMS_PATTERN_NEWSLETTER',
   ) {
     const username = process.env.MELI_SMS_USER;
     const password = process.env.MELI_SMS_PASS;

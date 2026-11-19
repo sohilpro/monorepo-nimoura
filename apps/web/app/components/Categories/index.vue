@@ -294,7 +294,7 @@ const apiUrl = isCategoryRoute
       ? "/api/search/products"
       : isAmazingRoute
         ? "/api/products/amazing"
-        : "/api/products/list";
+        : "/api/products";
 
 function buildQuery(page: number) {
   return {

@@ -22,6 +22,6 @@ import { OrderModule } from '../orders/order.module';
 
   providers: [PaymentService, SmsService],
 
-  exports: [PaymentService],
+  exports: [PaymentService, SmsService],
 })
 export class PaymentModule {}

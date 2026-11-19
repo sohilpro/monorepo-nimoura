@@ -40,7 +40,7 @@ export function useAdminBrands() {
   async function createBrand(payload: CreateBrandPayload): Promise<boolean> {
     isLoading.value = true;
     try {
-      const response = await $fetch<any>('/api/brand/create', {
+      const response = await $fetch<any>('/api/brand', {
         method: 'POST',
         body: payload,
       });

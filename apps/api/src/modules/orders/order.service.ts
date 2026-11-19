@@ -141,6 +141,7 @@ const ORDER_INTERNAL_LINES_SELECT: FindOptionsSelect<Orders> = {
   discount: true,
   finalTotal: true,
   torobClid: true,
+  user: { id: true },
   items: {
     id: true,
     quantity: true,
@@ -204,6 +205,7 @@ export class OrderService {
             pending.items.map((i) => i.id),
           );
         }
+        await this.loyaltyService.releaseForOrder(userId, pending.id, em);
       }
 
       const address = await this.resolveCustomerAddress(
@@ -219,7 +221,30 @@ export class OrderService {
       await this.adjustStock(em, lines, 'reserve');
 
       const shippingCost = 0;
-      const discount = 0;
+      let discount = 0;
+      const subtotalBeforeDiscount = lines.reduce(
+        (acc, l) => acc + l.quantity * l.unitPrice,
+        0,
+      );
+
+      if (dto.referralCode?.trim()) {
+        try {
+          const refResult =
+            await this.loyaltyService.validateReferralCodeForOrder(
+              dto.referralCode.trim(),
+              userId,
+              subtotalBeforeDiscount,
+            );
+          discount += refResult.discount;
+          await this.loyaltyService.registerReferral(
+            dto.referralCode.trim(),
+            userId,
+          );
+        } catch (e: any) {
+          throw new BadRequestException(e.message);
+        }
+      }
+
       const totals = calcTotals(lines, shippingCost, discount);
       const shippingInfo = Object.assign(
         pending?.shippingInfo ?? em.create(ShippingInfo),
@@ -351,6 +376,9 @@ export class OrderService {
       await this.dataSource.transaction(async (em) => {
         await this.adjustStock(em, toLines(order.items), 'release');
         await em.update(Orders, order.id, { status: OrderStatus.CANCELLED });
+        if (order.user?.id) {
+          await this.loyaltyService.releaseForOrder(order.user.id, order.id, em);
+        }
       });
       throw new BadRequestException(
         'مهلت پرداخت این سفارش (۳۰ دقیقه) به پایان رسیده است',
@@ -434,7 +462,20 @@ export class OrderService {
 
       await this.persistOrderState(em, order);
       await this.recordPromotionUsage(em, order);
-      if (order.user?.id) await this.loyaltyService.awardCashback(order.user.id, order.id, Number(order.finalTotal), em);
+      if (order.user?.id) {
+        const eligibleAmount = Number(order.subtotal ?? order.finalTotal);
+        await this.loyaltyService.awardCashback(
+          order.user.id,
+          order.id,
+          eligibleAmount,
+          em,
+        );
+        await this.loyaltyService.completeReferralOnFirstOrder(
+          order.user.id,
+          order.id,
+          em,
+        );
+      }
 
       return { message: 'پرداخت با موفقیت ثبت شد', orderId };
     });
@@ -451,6 +492,7 @@ export class OrderService {
         relations: {
           items: { product: true, variant: true },
           paymentInfo: true,
+          user: true,
         },
         loadEagerRelations: false,
       });
@@ -468,6 +510,9 @@ export class OrderService {
       }
 
       await this.persistOrderState(em, order);
+      if (order.user?.id) {
+        await this.loyaltyService.releaseForOrder(order.user.id, order.id, em);
+      }
       return { message: 'سفارش لغو و موجودی آزاد شد', orderId };
     });
   }

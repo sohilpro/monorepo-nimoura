@@ -316,22 +316,47 @@ export class CommentsService {
 
   //  Admin
 
-  async findAll(query: ListQuery) {
+  async findAll(query: ListQuery & { status?: string }) {
     const {
       page = 1,
       limit = 10,
       search = '',
       sortOrder = 'DESC',
       sortBy = 'id',
-    } = query;
-    const searchableFields = ['subject'];
-    const where = buildSearchWhereClause(search, searchableFields);
+      status = '',
+    } = query as any;
+
+    const searchableFields = ['subject', 'description'];
+    const searchWhere = buildSearchWhereClause(search, searchableFields);
+
+    let statusCondition: Record<string, boolean> = {};
+    if (status === 'approved' || (query as any)?.isApproved === 'true' || (query as any)?.isApproved === true) {
+      statusCondition = { isApproved: true };
+    } else if (status === 'rejected' || (query as any)?.isRejected === 'true' || (query as any)?.isRejected === true) {
+      statusCondition = { isRejected: true };
+    } else if (status === 'pending') {
+      statusCondition = { isApproved: false, isRejected: false };
+    }
+
+    let where: any;
+    if (Array.isArray(searchWhere) && searchWhere.length > 0) {
+      where = searchWhere.map((clause) => ({
+        ...clause,
+        ...statusCondition,
+      }));
+    } else if (Object.keys(statusCondition).length > 0) {
+      where = statusCondition;
+    } else {
+      where = searchWhere;
+    }
+
     const [data, total] = await this.commentRepo.findAndCount({
       select: {
         id: true,
         subject: true,
         description: true,
         rating: true,
+        images: true,
         isApproved: true,
         isRejected: true,
         isVerifiedBuyer: true,
@@ -344,9 +369,15 @@ export class CommentsService {
           last_name: true,
           mobile: true,
         },
+        product: {
+          id: true,
+          title: true,
+          slug: true,
+        },
       },
       relations: {
         user: true,
+        product: true,
       },
       where,
       take: +limit,
@@ -373,6 +404,21 @@ export class CommentsService {
         likesCount: true,
         dislikesCount: true,
         createdAt: true,
+        user: {
+          id: true,
+          first_name: true,
+          last_name: true,
+          mobile: true,
+        },
+        product: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
+      relations: {
+        user: true,
+        product: true,
       },
       loadEagerRelations: false,
     });
@@ -380,13 +426,22 @@ export class CommentsService {
     return comment;
   }
 
-  async update(id: number, dto: UpdateCommentDto): Promise<Comments> {
+  async update(id: number, dto: UpdateCommentDto) {
     const comment = await this.findOne(id);
     Object.assign(comment, dto);
-    return this.commentRepo.save(comment);
+    const saved = await this.commentRepo.save(comment);
+
+    if (comment.product?.id) {
+      await this.updateProductRating(comment.product.id);
+    }
+
+    return {
+      message: 'دیدگاه با موفقیت ویرایش شد',
+      comment: saved,
+    };
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(id: number) {
     const comment = await this.commentRepo.findOne({
       where: { id },
       select: { id: true, product: { id: true } },
@@ -405,6 +460,10 @@ export class CommentsService {
     if (comment.product?.id) {
       await this.updateProductRating(comment.product.id);
     }
+
+    return {
+      message: 'دیدگاه با موفقیت حذف شد',
+    };
   }
 
   async findPublic(): Promise<Comments[]> {
@@ -431,7 +490,7 @@ export class CommentsService {
     });
   }
 
-  async reject(id: number): Promise<Comments> {
+  async reject(id: number) {
     const comment = await this.commentRepo.findOne({
       where: { id },
       select: {
@@ -452,10 +511,13 @@ export class CommentsService {
     if (comment.product?.id) {
       await this.updateProductRating(comment.product.id);
     }
-    return saved;
+    return {
+      message: 'دیدگاه با موفقیت رد شد',
+      comment: saved,
+    };
   }
 
-  async approve(id: number): Promise<void> {
+  async approve(id: number) {
     const comment = await this.commentRepo.findOne({
       where: { id },
       select: {
@@ -472,10 +534,15 @@ export class CommentsService {
 
     comment.isApproved = true;
     comment.isRejected = false;
-    await this.commentRepo.save(comment);
+    const saved = await this.commentRepo.save(comment);
 
     if (comment.product?.id) {
       await this.updateProductRating(comment.product.id);
     }
+
+    return {
+      message: 'دیدگاه با موفقیت تایید شد',
+      comment: saved,
+    };
   }
 }

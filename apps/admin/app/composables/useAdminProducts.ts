@@ -28,7 +28,7 @@ export function useAdminProducts() {
    */
   async function getProductsList(params: ProductQueryParams = {}): Promise<PaginatedResponse<AdminProductListItem>> {
     try {
-      const response = await $fetch<any>('/api/product/list', {
+      const response = await $fetch<any>('/api/product', {
         method: 'GET',
         query: {
           page: params.page || 1,
@@ -106,7 +106,7 @@ export function useAdminProducts() {
   async function createProduct(payload: CreateProductPayload): Promise<boolean> {
     isLoading.value = true;
     try {
-      const response = await $fetch<any>('/api/product/create', {
+      const response = await $fetch<any>('/api/product', {
         method: 'POST',
         body: payload,
       });
@@ -169,7 +169,7 @@ export function useAdminProducts() {
    */
   async function fetchCategoryOptions(): Promise<Category[]> {
     try {
-      const res = await $fetch<any>('/api/category/list', { query: { limit: 200 } });
+      const res = await $fetch<any>('/api/category', { query: { limit: 200 } });
       const data = res?.data ?? res;
       return data?.categories || data?.items || [];
     } catch {

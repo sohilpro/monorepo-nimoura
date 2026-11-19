@@ -17,10 +17,12 @@ const siteUrl = config.public?.baseURL || 'https://nimoura.shop';
 
 const rawSlug = computed(() => String(route.params.slug || ''));
 
-const asyncProduct = useLazyFetch<any>('/api/products/findOne', {
-  query: { slug: rawSlug.value },
-  key: `product-detail-${rawSlug.value}`,
-});
+const asyncProduct = useLazyFetch<any>(
+  () => `/api/products/${encodeURIComponent(rawSlug.value)}`,
+  {
+    key: `product-detail-${rawSlug.value}`,
+  },
+);
 
 if (import.meta.server) {
   await asyncProduct;

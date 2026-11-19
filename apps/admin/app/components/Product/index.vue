@@ -51,7 +51,7 @@ const {
   onSort,
 } = useTableQuery({ defaultSortBy: 'createdAt' });
 
-const { data: rawData, refresh } = await useFetch('/api/product/list', {
+const { data: rawData, refresh } = await useFetch('/api/product', {
   query: queryParams,
   key: 'admin-products-list',
 });

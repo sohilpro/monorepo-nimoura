@@ -7,11 +7,13 @@ import { AuthService } from './auth.service';
 import { TokensService } from './tokens.service';
 import { SmsService } from 'src/modules/payments/sms.service';
 import { Users } from 'src/modules/users/entities/users.entity';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Users, OtpEntity]),
     JwtModule.register({}),
+    LoyaltyModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, TokensService, SmsService],

@@ -35,6 +35,14 @@ export class Users extends CustomBaseEntity {
   @Column({ unique: true, nullable: true })
   identity_card!: string;
 
+  @Column({ name: 'referral_code', unique: true, nullable: true, length: 32 })
+  @Index()
+  referral_code?: string;
+
+  @Column({ name: 'referred_by_id', type: 'int', nullable: true })
+  @Index()
+  referred_by_id?: number;
+
   @OneToMany(() => Addresses, (address) => address.user)
   addresses!: Addresses[];
 

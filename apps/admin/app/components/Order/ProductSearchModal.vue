@@ -255,7 +255,7 @@ const handleSearch = () => {
   loading.value = true;
   debounceTimer = setTimeout(async () => {
     try {
-      const response: any = await $fetch('/api/product/list', {
+      const response: any = await $fetch('/api/product', {
         query: { search: query.value, limit: 20 },
       });
       const d = response?.data ?? response;

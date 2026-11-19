@@ -15,6 +15,7 @@ export enum MediaOwnerType {
   BANNER = 'banner', // بنرهای سایت
   CATEGORY_IMAGE = 'category_image', // تصویر شاخص دسته‌بندی
   CATEGORY_ICON = 'category_icon', // آیکون دسته‌بندی
+  TICKET_ATTACHMENT = 'ticket_attachment', // فایل و تصویر ضمیمه تیکت
 }
 
 /**
@@ -33,6 +34,7 @@ export const MEDIA_OWNER_TYPE_TO_FTP_DIR: Record<MediaOwnerType, string> = {
   [MediaOwnerType.BANNER]: '/uploads/banners',
   [MediaOwnerType.CATEGORY_IMAGE]: '/uploads/categories',
   [MediaOwnerType.CATEGORY_ICON]: '/uploads/categories/icons',
+  [MediaOwnerType.TICKET_ATTACHMENT]: '/uploads/tickets',
 };
 
 /** محدودیت نوع فایل مجاز برای هر بخش (امنیت آپلود) */
@@ -76,6 +78,12 @@ export const MEDIA_OWNER_TYPE_ALLOWED_MIME: Record<MediaOwnerType, string[]> = {
     'image/webp',
     'image/svg+xml',
   ],
+  [MediaOwnerType.TICKET_ATTACHMENT]: [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'application/pdf',
+  ],
 };
 
 /** محدودیت حجم (بایت) برای هر بخش */
@@ -91,6 +99,7 @@ export const MEDIA_OWNER_TYPE_MAX_SIZE: Record<MediaOwnerType, number> = {
   [MediaOwnerType.BANNER]: 10 * 1024 * 1024, // 10MB
   [MediaOwnerType.CATEGORY_IMAGE]: 4 * 1024 * 1024, // 4MB
   [MediaOwnerType.CATEGORY_ICON]: 2 * 1024 * 1024, // 2MB
+  [MediaOwnerType.TICKET_ATTACHMENT]: 10 * 1024 * 1024, // 10MB
 };
 
 /**
@@ -110,6 +119,7 @@ export const MEDIA_OWNER_TYPE_OPTIMIZABLE: Record<MediaOwnerType, boolean> = {
   [MediaOwnerType.BANNER]: true,
   [MediaOwnerType.CATEGORY_IMAGE]: true,
   [MediaOwnerType.CATEGORY_ICON]: true,
+  [MediaOwnerType.TICKET_ATTACHMENT]: false, // فایل‌ها و pdfها نباید شارپ شوند
 };
 
 /**
@@ -162,5 +172,10 @@ export const MEDIA_OWNER_TYPE_OPTIMIZE_OPTIONS: Record<
     maxWidth: 400,
     maxHeight: 400,
     quality: 90,
+  },
+  [MediaOwnerType.TICKET_ATTACHMENT]: {
+    maxWidth: 1600,
+    maxHeight: 1600,
+    quality: 85,
   },
 };

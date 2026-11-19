@@ -49,6 +49,7 @@ import { ShippingInfo } from './entities/shipping-info.entity';
 import { OrderStatus } from './enums/order-status.enum';
 import { PaymentMethod } from './enums/payment-method.enum';
 import { OrderService } from './order.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 
 const ORDER_RELATIONS_WITH_OWNER: FindOptionsRelations<Orders> = {
   items: { product: true, variant: { attributeValues: { attribute: true } } },
@@ -68,6 +69,7 @@ export class OrdersAdminService {
     @InjectDataSource()
     private readonly dataSource: DataSource,
     private readonly orderService: OrderService,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   /**
@@ -557,6 +559,9 @@ export class OrdersAdminService {
             'release',
           );
         }
+        if (order.user?.id) {
+          await this.loyaltyService.releaseForOrder(order.user.id, order.id, em);
+        }
 
         const shippingId = order.shippingInfo?.id;
         const paymentId = order.paymentInfo?.id;
@@ -608,6 +613,9 @@ export class OrdersAdminService {
 
     if (prev !== OrderStatus.CANCELLED && next === OrderStatus.CANCELLED) {
       await this.orderService.adjustStock(em, lines, 'release');
+      if (order.user?.id) {
+        await this.loyaltyService.releaseForOrder(order.user.id, order.id, em);
+      }
     }
     if (prev === OrderStatus.CANCELLED && next !== OrderStatus.CANCELLED) {
       await this.orderService.adjustStock(em, lines, 'reserve');
@@ -627,6 +635,20 @@ export class OrdersAdminService {
       if (!payment.isPaid) {
         payment.isPaid = true;
         payment.paidAt = payment.paidAt ?? new Date();
+      }
+      if (order.user?.id) {
+        const eligibleAmount = Number(order.subtotal ?? order.finalTotal);
+        await this.loyaltyService.awardCashback(
+          order.user.id,
+          order.id,
+          eligibleAmount,
+          em,
+        );
+        await this.loyaltyService.completeReferralOnFirstOrder(
+          order.user.id,
+          order.id,
+          em,
+        );
       }
     }
 
@@ -658,6 +680,7 @@ export class OrdersAdminService {
         purchasedAt: true,
         postalBarcode: true,
         paymentRefId: true,
+        user: { id: true },
         items: {
           id: true,
           quantity: true,
@@ -681,6 +704,7 @@ export class OrdersAdminService {
         items: { product: true, variant: true },
         shippingInfo: { address: true },
         paymentInfo: true,
+        user: true,
       },
       loadEagerRelations: false,
     });

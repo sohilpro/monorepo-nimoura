@@ -16,6 +16,7 @@ import { compareSync, genSaltSync, hashSync } from 'bcrypt';
 import { Users } from 'src/modules/users/entities/users.entity';
 import { TokensService } from './tokens.service';
 import { SmsService } from 'src/modules/payments/sms.service';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import { SendOtpDto } from './dtos/send-otp.dto';
@@ -35,6 +36,7 @@ export class AuthService {
 
     private readonly tokensService: TokensService,
     private readonly smsService: SmsService,
+    private readonly loyaltyService: LoyaltyService,
     // private readonly emailService: EmailService
   ) {}
 
@@ -72,6 +74,12 @@ export class AuthService {
       password: hashedPassword,
     });
     user = await this.userRepository.save(user);
+
+    if (registerDto.referralCode?.trim()) {
+      await this.loyaltyService
+        .registerReferral(registerDto.referralCode.trim(), user.id)
+        .catch(() => null);
+    }
 
     const accessToken = this.tokensService.genAccessToken(user);
     return {
@@ -212,6 +220,12 @@ export class AuthService {
         verify_mobile: type === UsernameEnum.Mobile,
       });
       user = await this.userRepository.save(user);
+
+      if (checkOtpDto.referralCode?.trim()) {
+        await this.loyaltyService
+          .registerReferral(checkOtpDto.referralCode.trim(), user.id)
+          .catch(() => null);
+      }
     }
 
     await this.otpRepository.delete({ id: otp.id });

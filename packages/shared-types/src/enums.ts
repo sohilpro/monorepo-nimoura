@@ -50,3 +50,32 @@ export enum CommentStatus {
   APPROVED = 'approved',
   REJECTED = 'rejected',
 }
+
+export enum TicketStatus {
+  OPEN = 'open',
+  IN_PROGRESS = 'in_progress',
+  WAITING_USER = 'waiting_user',
+  RESOLVED = 'resolved',
+  CLOSED = 'closed',
+}
+
+export enum TicketPriority {
+  LOW = 'low',
+  MEDIUM = 'medium',
+  HIGH = 'high',
+  URGENT = 'urgent',
+}
+
+export enum TicketDepartment {
+  TECHNICAL = 'technical',
+  FINANCIAL = 'financial',
+  ORDERS = 'orders',
+  SALES = 'sales',
+  GENERAL = 'general',
+}
+
+export enum TicketSenderRole {
+  USER = 'user',
+  ADMIN = 'admin',
+}
+

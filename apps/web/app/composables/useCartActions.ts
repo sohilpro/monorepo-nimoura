@@ -80,9 +80,8 @@ export const useCartActions = () => {
       try {
         await withLoading(
           async () =>
-            await $fetch("/api/cart/remove", {
+            await $fetch(`/api/cart/${productId}`, {
               method: "DELETE",
-              query: { id: productId },
               body: { variant },
             }),
         );
@@ -111,7 +110,7 @@ export const useCartActions = () => {
       try {
         await withLoading(
           async () =>
-            await $fetch("/api/cart/update", {
+            await $fetch(`/api/cart/${productId}`, {
               method: "PATCH",
               body: { productId, quantity, variant },
             }),

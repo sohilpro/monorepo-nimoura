@@ -5,6 +5,8 @@ export type CheckoutState = {
   phone: string;
   note: string;
   paymentMethod: 'zarinpal' | 'snapppay' | 'torobpay' | null;
+  referralCode?: string;
+  promotionId?: number | null;
 };
 
 export function useCheckout() {
@@ -15,5 +17,7 @@ export function useCheckout() {
     phone: '',
     note: '',
     paymentMethod: null,
+    referralCode: '',
+    promotionId: null,
   }));
 }

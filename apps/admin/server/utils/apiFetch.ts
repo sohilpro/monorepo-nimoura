@@ -1,6 +1,4 @@
 // server/utils/apiFetch.ts
-// یک fetch wrapper برای صدا زدن بک‌اند NestJS از سمت سرور Nuxt (Nitro).
-// آدرس واقعی API هرگز به کلاینت لو نمی‌رود چون فقط در سمت سرور استفاده می‌شود.
 import type { H3Event } from "h3";
 
 export async function apiFetch<T>(
@@ -16,9 +14,24 @@ export async function apiFetch<T>(
       ...options,
     });
   } catch (error: any) {
+    const statusCode = error?.response?.status || error?.statusCode || 502;
+    const rawMessage =
+      error?.data?.message ||
+      error?.response?._data?.message ||
+      error?.statusMessage ||
+      error?.message ||
+      "خطا در برقراری ارتباط با سرور نیمورا";
+    const statusMessage =
+      Array.isArray(rawMessage)
+        ? rawMessage.join(" - ")
+        : typeof rawMessage === "string"
+        ? rawMessage
+        : JSON.stringify(rawMessage);
+
     throw createError({
-      statusCode: error?.response?.status || 502,
-      statusMessage: error?.data?.message || "خطا در برقراری ارتباط با سرور نیمورا",
+      statusCode,
+      statusMessage,
+      data: error?.data || error?.response?._data,
     });
   }
 }

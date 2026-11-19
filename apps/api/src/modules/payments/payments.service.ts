@@ -63,6 +63,22 @@ export class PaymentService {
     const order = await this.ordersService.getPayableOrder(dto.orderId, userId);
     const amount = Number(order.finalTotal);
 
+    // سفارش با پوشش کامل تخفیف یا اعتبار (مبلغ صفر)
+    if (amount <= 0) {
+      const refId = `LOYALTY-${order.orderCode}`;
+      await this.ordersService.markAsPaid(
+        order.id,
+        refId,
+        order.paymentInfo?.method ?? PaymentMethod.ZARINPAL,
+      );
+      this.runSideEffects(order);
+      return {
+        success: true,
+        authority: refId,
+        url: `/payment/result?free=true&orderCode=${order.orderCode}&refId=${refId}`,
+      };
+    }
+
     const email = order.user?.email;
     const response = await this.gateway.PaymentRequest({
       Amount: amount,

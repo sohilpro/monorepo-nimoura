@@ -97,4 +97,13 @@ export class CreateOrderDto {
   @IsString()
   @Matches(/^[A-Za-z0-9_-]{8,100}$/, { message: 'torobClid نامعتبر است' })
   torobClid?: string;
+
+  @ApiPropertyOptional({
+    type: String,
+    description: 'کد معرفی یا تخفیف رفرال',
+    example: 'REF-NM7X9K',
+  })
+  @IsOptional()
+  @IsString()
+  referralCode?: string;
 }

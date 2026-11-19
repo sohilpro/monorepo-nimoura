@@ -26,8 +26,16 @@ const { registerVisit } = useLoyalty();
 // Register at most once per browser day; the API remains idempotent as a safeguard.
 onMounted(() => {
   if (!auth.value) return;
-  const key = `nimoura-loyalty-visit:${new Date().toISOString().slice(0, 10)}`;
+  const tehranDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Tehran',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  const key = `nimoura-loyalty-visit:${tehranDate}`;
   if (localStorage.getItem(key)) return;
-  registerVisit().then(() => localStorage.setItem(key, '1'));
+  registerVisit().then((res) => {
+    if (res) localStorage.setItem(key, '1');
+  });
 });
 </script>

@@ -53,7 +53,7 @@ const requestQuery = computed(() => ({
   status: OrderStatus.PAID,
 }));
 
-const { data: rawOrders, refresh } = await useFetch('/api/orders/list', {
+const { data: rawOrders, refresh } = await useFetch('/api/orders', {
   query: requestQuery,
   key: 'admin-orders-no-sending',
 });

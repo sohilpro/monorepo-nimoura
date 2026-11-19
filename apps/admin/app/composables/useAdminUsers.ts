@@ -48,7 +48,7 @@ export function useAdminUsers() {
   async function getUsersList(
     query: AdminUsersQuery = {},
   ): Promise<UsersListResponse> {
-    const response = await $fetch<any>('/api/user/list', {
+    const response = await $fetch<any>('/api/user', {
       method: 'GET',
       query: {
         page: query.page ?? 1,
@@ -128,7 +128,7 @@ export function useAdminUsers() {
   ): Promise<UserProfile | null> {
     isLoading.value = true;
     try {
-      const response = await $fetch<any>('/api/user/create', {
+      const response = await $fetch<any>('/api/user', {
         method: 'POST',
         body: payload,
       });

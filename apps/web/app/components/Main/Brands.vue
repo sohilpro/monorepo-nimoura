@@ -127,7 +127,7 @@ const FALLBACK_BRANDS = [
 ];
 
 // دریافت ۱۰ برند برتر از API
-const { data: apiResponse, pending } = await useFetch<any>("/api/brand/list", {
+const { data: apiResponse, pending } = await useFetch<any>("/api/brands", {
   query: { limit: 10 },
   key: "home-brands-showcase-10",
   lazy: true,

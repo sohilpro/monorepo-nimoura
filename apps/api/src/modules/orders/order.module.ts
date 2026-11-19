@@ -18,6 +18,7 @@ import { InvoiceService } from './invoice.service';
 import { OrderService } from './order.service';
 import { OrdersAdminService } from './orders-admin.service';
 import { PendingOrdersExpiryTask } from './tasks/pending-orders-expiry.task';
+import { LoyaltyModule } from '../loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -35,6 +36,7 @@ import { PendingOrdersExpiryTask } from './tasks/pending-orders-expiry.task';
       PromotionUsages,
     ]),
     PromotionModule,
+    LoyaltyModule,
   ],
   controllers: [OrdersController, AdminOrdersController],
   providers: [

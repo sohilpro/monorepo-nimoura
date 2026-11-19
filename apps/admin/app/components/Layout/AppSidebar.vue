@@ -287,6 +287,13 @@ const menuGroups = [
         subItems: [{ name: "مدیریت تگ ها", path: "/tag", pro: false }],
       },
       {
+        name: "باشگاه مشتریان",
+        icon: TableIcon,
+        subItems: [
+          { name: "تنظیمات باشگاه", path: "/loyalty", pro: false },
+        ],
+      },
+      {
         name: "تخفیف ها",
         icon: TableIcon,
         subItems: [

@@ -67,6 +67,19 @@
 
     <!-- ══ BODY ══ -->
     <div class="mx-auto max-w-5xl px-4 pb-20 pt-6">
+      <div v-if="loyalty" class="mb-6 rounded-2xl border border-nimoura-primary/20 bg-white p-5 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p class="text-sm font-semibold text-nimoura-text-800">باشگاه مشتریان</p>
+            <p class="mt-1 text-xs text-nimoura-text-500 font-vazir">{{ visitCount }} از ۷ روز این هفته</p>
+          </div>
+            <p class="font-modam text-lg font-bold text-nimoura-primary">{{ numberFormat(balanceAmount) }} تومان اعتبار</p>
+
+        </div>
+        <div class="mt-3 h-2 overflow-hidden rounded-full bg-nimoura-text-100">
+          <div class="h-full rounded-full bg-nimoura-primary transition-all" :style="{ width: `${(visitCount / 7) * 100}%` }" />
+        </div>
+      </div>
 
       <!-- ── Tab nav ── -->
       <div class="hide-scrollbar mb-6 flex gap-1 overflow-x-auto rounded-2xl p-1.5" style="background:#fff; box-shadow:0 2px 16px rgba(183,110,121,0.07)">
@@ -118,6 +131,9 @@
 const auth = useAuth()
 
 const { stats, pending: statsPending } = useProfileStats();
+const { balance: loyalty, balanceAmount, visitCount, refresh: refreshLoyalty } = useLoyalty();
+
+onMounted(() => refreshLoyalty());
 
 const showConfirmLogOut = ref(false)
 

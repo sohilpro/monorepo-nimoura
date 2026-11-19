@@ -1,55 +1,37 @@
 ## Context
-`apps/web/server` currently contains about 80 Nitro handlers across catalog, auth, cart, orders, payment, content, Torob, uploads, and sitemap. Internal backend transport is inconsistent: roughly 30 handlers use `apiFetch`, while roughly 45 call `$fetch` directly. Authenticated handlers repeatedly read `accesstoken` and construct `Authorization` headers; several handlers catch errors and return the error object as a successful response. Naming and response-envelope handling are also inconsistent. The goal is to make the BFF modular and consistent without changing the public `/api/...` routes or breaking backend contracts. The request to remove the system instruction is not part of the implementation and will not be performed.
+صفحات دسته‌بندی، برند و amazing از کامپوننت مشترک `apps/web/app/components/Categories/index.vue` استفاده می‌کنند و فیلتر، مرتب‌سازی، pagination/infinite scroll، facet، حالت‌های loading/empty و sync با URL را همان‌جا مدیریت می‌کنند. API جستجوی کامل نیز از قبل در `apps/web/server/api/search/products.get.ts` به endpoint بک‌اند `/search/products` متصل است و پارامتر `q` را می‌پذیرد. هدف، ساخت صفحه‌ی `/search?q=` با همان رفتار کامل بدون ایجاد یک listing مستقل و تکراری است.
 
-## Recommended implementation
+## Implementation plan
 
-1. **Harden the shared internal transport boundary**
-   - Refactor `apps/web/server/utils/apiFetch.ts` into the single internal backend client.
-   - Add an authenticated helper or option that forwards the incoming `accesstoken` cookie automatically, while still allowing explicit headers for special cases.
-   - Preserve caller-supplied headers, query, body, method, and request-specific options.
-   - Normalize upstream errors into one Nitro error shape, preserving backend status codes and useful Persian messages; never return caught errors as successful JSON responses.
-   - Add small request helpers for common extraction (`readBody`, query, route params) only where they reduce duplication without hiding route intent.
+1. **افزودن صفحه‌ی `/search`**
+   - ایجاد `apps/web/app/pages/search.vue` با `definePageMeta({ key: route => route.fullPath })`.
+   - خواندن query پارامتر `q` از URL و نمایش عنوانی مثل «نتایج جستجو برای «…»».
+   - افزودن SEO title/description، canonical و JSON-LD مناسب صفحه‌ی SearchResultsPage/CollectionPage.
+   - برای `q` خالی یا نبودن آن، API را صدا نزنیم و حالت راهنمای جستجو/empty مناسب نشان دهیم؛ برای عبارت معتبر، کامپوننت `Categories` را رندر کنیم.
 
-2. **Introduce typed server contracts**
-   - Add `apps/web/server/types/api.ts` for generic API envelopes, pagination, and normalized error payloads.
-   - Add focused domain types under `apps/web/server/types/` for auth, catalog/products, cart, orders/payment, comments/content, and sitemap records.
-   - Replace the highest-impact `any` usages in auth, products/search, sitemap, and Torob response mapping with `unknown` plus narrow interfaces/type guards.
-   - Keep types aligned with `@nimoura/shared-types` where existing shared contracts are sufficient; define server-only response shapes only for backend envelopes and BFF transformations.
+2. **توسعه‌ی `Categories/index.vue` برای حالت جستجو**
+   - اضافه کردن `isSearchRoute = route.path === '/search'` و branch انتخاب API روی `/api/search/products`.
+   - در `buildQuery()` حفظ `q` و انتقال همه‌ی queryهای مشترک موجود: `page`, `limit`, `sort`, `sortOrder`, `tags`, `minPrice`, `maxPrice`, `onSale`, `isAvailable` و سایر فیلترها.
+   - استفاده از sort canonical فعلی (`newest`, `cheapest`, `expensive`, `popular`, `title`, `stock`) و حفظ reset صفحه هنگام تغییر فیلتر/مرتب‌سازی.
+   - اضافه کردن heading جستجو و breadcrumb «خانه ← جستجو» با عبارت جستجو، بدون تغییر رفتار routeهای category/brand/amazing.
+   - تنظیم `seoSectionTarget` و sub-brand/category logic برای search به null تا SEO متن نامربوط نمایش داده نشود.
+   - اطمینان از اینکه response search با هر دو شکل envelope (`data.products` یا `products`) خوانده می‌شود؛ در صورت نیاز یک helper کوچک برای unwrap listing اضافه می‌شود.
 
-3. **Add modular backend client/service modules**
-   - Create `apps/web/server/services/` with domain clients such as `catalog.client.ts`, `auth.client.ts`, `cart.client.ts`, `orders.client.ts`, `content.client.ts`, and `magazine.client.ts`.
-   - Each client receives the H3 event and calls `apiFetch`; it owns backend paths, request methods, and response typing.
-   - Add explicit external adapters for Torob, remote image proxy, and multipart upload so direct `$fetch` remains only for genuinely external/non-standard transports.
-   - Add a sitemap client/mapper that centralizes catalog/brand/category/page fetching and removes repeated `any` casts.
+3. **اتصال facetها برای جستجو**
+   - در `facetQuery` وقتی `isSearchRoute` فعال است، `q` را به کلید مورد انتظار endpoint facets یعنی `search` map کنیم، درحالی‌که `q` برای خود endpoint جستجو حفظ شود.
+   - صفحه، همان `SideFilterBox`, `FilterModal`, `ActiveFilters`, `SortedBy`, `SortModal`, `Pagination`, `ProductGridSkeleton` و `ProductItem` را استفاده کند.
+   - query مربوط به search را هنگام تغییر facetها حفظ کنیم تا facet و نتیجه روی همان عبارت باقی بمانند.
 
-4. **Migrate route families incrementally while preserving public behavior**
-   - Refactor public catalog routes first: `products`, `categories`, `brands`, `brand`, `banners`, `search`, and `explore`.
-   - Refactor authenticated identity and commerce routes next: `auth`, `addresses`, `user`, `cart`, `wishlist`, `orders`, `payment`, and `promotions`.
-   - Refactor content routes: comments, magazine, and videos.
-   - Keep current client-facing filenames and HTTP methods unless a rename is strictly internal; do not break existing frontend callers.
-   - Normalize handler style to: parse input → call domain client → return typed backend result. Remove duplicated `try/catch` blocks where the shared client already handles errors.
-   - Correct invalid behavior such as `return error` in `addresses/index.post.ts` and similar handlers.
+4. **بهبود proxy جستجو در صورت نیاز**
+   - `apps/web/server/api/search/products.get.ts` را سبک و یکپارچه نگه داریم: `assertMethod`، `getQuery`، `apiFetch` و return مستقیم؛ حذف catch تکراری چون `apiFetch` خطاها را استاندارد می‌کند.
+   - `apps/web/server/api/products/facets.get.ts` را بررسی و فقط mapping موردنیاز search را اضافه کنیم؛ public route و قرارداد فعلی تغییر نکند.
 
-5. **Standardize naming and file organization without risky route changes**
-   - Use consistent service/client names and backend operation names internally.
-   - Keep route aliases such as `cart/getCart.get.ts` and `brand/list.get.ts` for compatibility unless a route inventory confirms they are unused; if renaming is beneficial, retain compatibility wrappers rather than deleting endpoints.
-   - Group only internal helpers/services by domain; avoid moving public Nitro route files in a way that changes generated route paths.
-
-6. **Verification and regression checks**
-   - Run a static audit proving all internal backend calls use `apiFetch` or a domain client, with direct `$fetch` limited to the explicit external adapters and health/proxy exceptions.
-   - Run `@nimoura/web` typecheck, lint, and production build.
-   - Run API/server route smoke tests against the local backend for representative public, authenticated, mutation, error, multipart, Torob, and sitemap handlers.
-   - Verify auth cookie forwarding, 401/4xx/5xx propagation, response envelopes, pagination/query forwarding, and unchanged public route paths.
-   - Report any existing failures separately from regressions introduced by the refactor.
-
-## Critical files/directories
-- `apps/web/server/utils/apiFetch.ts`
-- `apps/web/server/types/` (new)
-- `apps/web/server/services/` (new)
-- `apps/web/server/api/products/`, `categories/`, `brands/`, `search/`
-- `apps/web/server/api/auth/`, `addresses/`, `cart/`, `orders/`, `payment/`, `wishlist/`
-- `apps/web/server/api/magazine/`, `explore/videos/`, `comments/`
-- `apps/web/server/api/__sitemap__/`
-- `apps/web/server/api/torob/`, `upload/`, and `shop-img.get.ts` as explicit external adapters
-
-No files will be edited until this plan is approved.
+5. **Regression safety**
+   - مسیرهای موجود category، brand، amazing، newest و best-seller را دست‌نخورده از نظر URL و API نگه داریم.
+   - با queryهای نمونه تست کنیم:
+     - `/search?q=ریمل`
+     - `/search?q=ریمل&sort=cheapest`
+     - `/search?q=ریمل&tags=...&minPrice=...&maxPrice=...`
+     - `/search?q=ریمل&page=2`
+     - `/search` و `/search?q=` برای حالت خالی.
+   - اجرای `git diff --check`، typecheck/lint web و بررسی static route/API contract؛ خطاهای قدیمی خارج از این تغییر جدا گزارش می‌شوند.

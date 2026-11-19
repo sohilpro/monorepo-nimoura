@@ -6,6 +6,7 @@ const checkout = useCheckout();
 
 const { addresses, loading, fetchAddresses } = useAddresses();
 const auth = useAuth();
+const { balanceAmount, refresh: refreshLoyalty } = useLoyalty();
 const showAddDialog = ref(false);
 const isSelfRecipient = ref(false);
 
@@ -43,7 +44,7 @@ function goToPayment() {
 }
 
 onMounted(async () => {
-  await Promise.all([fetchAddresses(), cart.refresh()]);
+  await Promise.all([fetchAddresses(), cart.refresh(), refreshLoyalty()]);
 });
 </script>
 
@@ -242,14 +243,17 @@ onMounted(async () => {
 
           <Divider />
 
-          <div class="flex justify-between items-center mb-6">
+          <div class="flex justify-between items-center mb-2">
             <span class="font-display text-nimoura-text-800">جمع کل</span>
-            <span
-              class="font-display text-xl text-nimoura-primary font-semibold"
-            >
+            <span class="font-display text-xl text-nimoura-primary font-semibold">
               {{ numberFormat(cart.totalPrice.value) }}
             </span>
           </div>
+          <div v-if="balanceAmount > 0" class="flex justify-between items-center mb-6 text-sm text-emerald-700">
+            <span>اعتبار باشگاه مشتریان</span>
+            <span class="font-modam">-{{ numberFormat(Math.min(balanceAmount, cart.totalPrice.value)) }}</span>
+          </div>
+          <div v-else class="mb-6" />
 
           <Button
             label="ادامه به پرداخت"

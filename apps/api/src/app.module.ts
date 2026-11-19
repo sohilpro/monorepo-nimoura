@@ -43,6 +43,7 @@ import { TorobModule } from './modules/torob/torob.module';
 import { validateEnv } from './config/env.validation';
 import { HealthModule } from './modules/health/health.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 
 @Module({
   imports: [
@@ -106,6 +107,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     TorobModule,
     HealthModule,
     DashboardModule,
+    LoyaltyModule,
   ],
   providers: [
     {

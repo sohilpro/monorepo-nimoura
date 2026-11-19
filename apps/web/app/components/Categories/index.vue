@@ -248,6 +248,7 @@ const PAGE_SIZE = 9;
 
 const isCategoryRoute = route.path.includes("/categories");
 const isBrandRoute = route.path.includes("/brand");
+const isSearchRoute = route.path === "/search";
 const isAmazingRoute = route.path.includes("/amazing");
 const isNewestRoute = route.path.includes("/products/newest");
 const isBestSellerRoute = route.path.includes("/products/best-seller");
@@ -289,9 +290,11 @@ const apiUrl = isCategoryRoute
   ? "/api/products/category"
   : isBrandRoute
     ? "/api/products/brand"
-    : isAmazingRoute
-      ? "/api/products/amazing"
-      : "/api/products/list";
+    : isSearchRoute
+      ? "/api/search/products"
+      : isAmazingRoute
+        ? "/api/products/amazing"
+        : "/api/products/list";
 
 function buildQuery(page: number) {
   return {
@@ -310,7 +313,9 @@ function buildQuery(page: number) {
             ...(slug ? { slug } : id ? { id } : {}),
             ...(subSlug ? { subBrandSlug: subSlug } : {}),
           }
-        : {}),
+        : isSearchRoute
+          ? { q: route.query.q }
+          : {}),
   };
 }
 
@@ -353,6 +358,10 @@ const pageHeading = computed(() => {
   if (isBestSellerRoute) {
     return "پرفروش‌ترین محصولات";
   }
+  if (isSearchRoute) {
+    const query = String(route.query.q ?? "").trim();
+    return query ? `نتایج جستجو برای «${query}»` : "جستجوی محصولات";
+  }
   if (isBrandRoute && activeBrand.value) {
     return activeBrand.value.subBrand
       ? `${activeBrand.value.name} — ${activeBrand.value.subBrand.name}`
@@ -362,6 +371,7 @@ const pageHeading = computed(() => {
 });
 
 const seoSectionTarget = computed(() => {
+  if (isSearchRoute) return null;
   if (isBrandRoute && activeBrand.value?.description) {
     return {
       name: activeBrand.value.name,
@@ -380,10 +390,11 @@ const { activeCount: activeFilterCount } = useProductFilters();
 const hasActiveFilters = computed(() => activeFilterCount.value > 0);
 
 const facetQuery = computed(() => {
-  const { page: _page, sort: _sort, ...filters } = route.query;
+  const { page: _page, sort: _sort, q, ...filters } = route.query;
   const resolvedCategoryId = activeCategory.value?.id;
   return {
     ...filters,
+    ...(isSearchRoute && q ? { search: q } : {}),
     ...(isCategoryRoute
       ? resolvedCategoryId
         ? { categoryId: resolvedCategoryId }
@@ -409,6 +420,7 @@ const facetQuery = computed(() => {
               : {}),
         }
       : {}),
+    ...(isSearchRoute ? { search: route.query.q } : {}),
     ...(isAmazingRoute ? { amazing: "true" } : {}),
   };
 });
@@ -446,6 +458,13 @@ const breadcrumbItems = computed(() => {
     return [
       { label: "خانه", href: "/" },
       { label: "پرفروش‌ترین محصولات" },
+    ];
+  }
+  if (isSearchRoute) {
+    const query = String(route.query.q ?? "").trim();
+    return [
+      { label: "خانه", href: "/" },
+      { label: query ? `جستجو: ${query}` : "جستجوی محصولات" },
     ];
   }
   if (isBrandRoute && activeBrand.value) {
@@ -487,6 +506,7 @@ useHead({
         if (
           (!isCategoryRoute &&
             !isBrandRoute &&
+            !isSearchRoute &&
             !isAmazingRoute &&
             !isNewestRoute &&
             !isBestSellerRoute) ||

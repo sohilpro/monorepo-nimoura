@@ -48,6 +48,7 @@ import { PaymentInfo } from './entities/payment-info.entity';
 import { ShippingInfo } from './entities/shipping-info.entity';
 import { OrderStatus } from './enums/order-status.enum';
 import { PaymentMethod } from './enums/payment-method.enum';
+import { LoyaltyService } from '../loyalty/loyalty.service';
 
 export type StockMode = 'reserve' | 'release';
 
@@ -181,6 +182,7 @@ export class OrderService {
     private readonly orderRepo: Repository<Orders>,
     @InjectDataSource()
     private readonly dataSource: DataSource,
+    private readonly loyaltyService: LoyaltyService,
   ) {}
 
   // ===========================================================================
@@ -219,7 +221,6 @@ export class OrderService {
       const shippingCost = 0;
       const discount = 0;
       const totals = calcTotals(lines, shippingCost, discount);
-
       const shippingInfo = Object.assign(
         pending?.shippingInfo ?? em.create(ShippingInfo),
         {
@@ -264,6 +265,12 @@ export class OrderService {
       }
 
       const saved = await em.save(Orders, order);
+      const creditDiscount = await this.loyaltyService.redeemForOrder(userId, saved.id, saved.finalTotal, em);
+      if (creditDiscount > 0) {
+        saved.discount += creditDiscount;
+        saved.finalTotal = Math.max(0, saved.finalTotal - creditDiscount);
+        await em.save(Orders, saved);
+      }
       return {
         message: 'سفارش ثبت شد و در انتظار پرداخت است',
         orderId: saved.id,
@@ -427,6 +434,7 @@ export class OrderService {
 
       await this.persistOrderState(em, order);
       await this.recordPromotionUsage(em, order);
+      if (order.user?.id) await this.loyaltyService.awardCashback(order.user.id, order.id, Number(order.finalTotal), em);
 
       return { message: 'پرداخت با موفقیت ثبت شد', orderId };
     });

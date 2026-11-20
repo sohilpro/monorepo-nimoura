@@ -1,9 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import Aura from "@primeuix/themes/aura";
 import { definePreset } from "@primeuix/themes";
 import { nimouraThemePreset } from "../../packages/ui/src";
+import { config as dotenvConfig } from "dotenv";
+
+// بارگذاری فایل .env از ریشه مونو‌ریپو
+dotenvConfig({ path: resolve(process.cwd(), "../../.env") });
+dotenvConfig({ path: resolve(process.cwd(), ".env") });
 
 const MyCustomTheme = definePreset(Aura, nimouraThemePreset);
 

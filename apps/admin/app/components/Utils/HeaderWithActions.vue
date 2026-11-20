@@ -32,7 +32,9 @@
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex gap-2">
+    <div class="flex items-center gap-2">
+      <slot name="actions" />
+      <slot />
       <button
         v-if="discardLabel"
         type="button"

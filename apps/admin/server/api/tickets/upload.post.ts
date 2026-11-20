@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   );
 
   try {
-    const response: any = await $fetch('/admin/tickets/upload', {
+    const response: any = await $fetch('/tickets/upload', {
       baseURL: config.apiBase,
       method: 'POST',
       body: formData,

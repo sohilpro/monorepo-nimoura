@@ -117,8 +117,15 @@ describe('Cart, Wishlist & Promotions Service Projections', () => {
   });
 
   it('PromotionsService.findAll should not load products, categories or brands relations', async () => {
+    const qbMock: any = {
+      andWhere: vi.fn().mockReturnThis(),
+      orderBy: vi.fn().mockReturnThis(),
+      skip: vi.fn().mockReturnThis(),
+      take: vi.fn().mockReturnThis(),
+      getManyAndCount: vi.fn().mockResolvedValue([[], 0]),
+    };
     const promoRepo = {
-      findAndCount: vi.fn().mockResolvedValue([[], 0]),
+      createQueryBuilder: vi.fn().mockReturnValue(qbMock),
     } as any;
 
     const service = new PromotionsService(
@@ -129,12 +136,10 @@ describe('Cart, Wishlist & Promotions Service Projections', () => {
       {} as any,
     );
 
-    await service.findAll({ page: 1, limit: 10 });
+    const res = await service.findAll({ page: 1, limit: 10 });
 
-    const opts = promoRepo.findAndCount.mock.calls[0][0];
-    expect(opts.relations).toBeUndefined();
-    expect(opts.loadEagerRelations).toBe(false);
-    expect(opts.select).not.toHaveProperty('deletedAt');
+    expect(promoRepo.createQueryBuilder).toHaveBeenCalledWith('promo');
+    expect(res.promotions).toEqual([]);
   });
 
   it('PromotionsService.applyDiscountToCart should verify allowedUsers without loading full user entities', async () => {

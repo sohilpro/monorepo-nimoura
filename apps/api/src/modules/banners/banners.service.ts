@@ -58,9 +58,12 @@ export class BannersService {
       search,
       page = 1,
       limit = 20,
-      sortBy = 'sortOrder',
-      sortDir = 'ASC',
     } = query;
+
+    const validSortFields = ['sortOrder', 'createdAt', 'views', 'clicks', 'title'];
+    const rawSort = query.sortBy || query.sort || 'sortOrder';
+    const sortBy = validSortFields.includes(rawSort) ? rawSort : 'sortOrder';
+    const sortDir = String(query.sortDir || query.sortOrder || 'ASC').toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
     const qb = this.bannerRepo
       .createQueryBuilder('banner')

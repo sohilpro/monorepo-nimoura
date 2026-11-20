@@ -17,7 +17,10 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from 'src/common/auth/auth.decorators';
 import { PaginationQueryDto } from 'src/modules/products/dtos/product-query.dto';
-import { PaymentFailureDto } from 'src/modules/payments/dtos/payment-result.dto';
+import {
+  PaymentFailureDto,
+  PaymentSuccessDto,
+} from 'src/modules/payments/dtos/payment-result.dto';
 import { CreateOrderDto } from '../dtos/create-order.dto';
 import { InvoiceService } from '../invoice.service';
 import { OrderService } from '../order.service';
@@ -91,11 +94,20 @@ export class OrdersController {
     return await this.orderService.getUserOrderById(id, userId);
   }
 
-  /**
-   * تأیید پرداخت عمداً از این کنترلر حذف شده است: هر کاربر لاگین‌کرده می‌توانست
-   * سفارش را بدون پرداخت «پرداخت‌شده» کند. تأیید باید فقط از ماژول پرداخت و پس از
-   * verify با درگاه، با OrderService.markAsPaid انجام شود.
-   */
+  @Post(':id/payment/success')
+  @ApiOperation({
+    summary: 'ثبت موفقیت پرداخت سفارش',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'شناسه سفارش' })
+  async paymentSuccess(
+    @Param('id', ParseIntPipe) orderId: number,
+    @CurrentUser('id') userId: number,
+    @Body() body: PaymentSuccessDto,
+  ) {
+    const order = await this.orderService.getUserOrderById(orderId, userId);
+    return await this.orderService.markAsPaid(order.id, body.refId, body.method);
+  }
+
   @Post(':id/payment/failure')
   @ApiOperation({
     summary: 'ثبت شکست/انصراف پرداخت (لغو سفارش در انتظار خود کاربر)',

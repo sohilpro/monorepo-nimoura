@@ -39,7 +39,7 @@
           </span>
         </div>
         <p class="mt-3 text-2xl font-bold font-modam text-purple-700">
-          {{ statsData?.total ?? 0 }} <span class="text-xs font-normal text-gray-400">عضو</span>
+          {{ stats?.total ?? 0 }} <span class="text-xs font-normal text-gray-400">عضو</span>
         </p>
       </div>
 
@@ -51,7 +51,7 @@
           </span>
         </div>
         <p class="mt-3 text-2xl font-bold font-modam text-emerald-700">
-          {{ statsData?.withMobile ?? 0 }} <span class="text-xs font-normal text-gray-400">شماره</span>
+          {{ stats?.withMobile ?? 0 }} <span class="text-xs font-normal text-gray-400">شماره</span>
         </p>
       </div>
 
@@ -63,7 +63,7 @@
           </span>
         </div>
         <p class="mt-3 text-2xl font-bold font-modam text-blue-700">
-          {{ statsData?.withEmail ?? 0 }} <span class="text-xs font-normal text-gray-400">ایمیل</span>
+          {{ stats?.withEmail ?? 0 }} <span class="text-xs font-normal text-gray-400">ایمیل</span>
         </p>
       </div>
 
@@ -75,7 +75,7 @@
           </span>
         </div>
         <p class="mt-3 text-2xl font-bold font-modam text-amber-700">
-          {{ statsData?.active ?? 0 }} <span class="text-xs font-normal text-gray-400">عضو فعال</span>
+          {{ stats?.active ?? 0 }} <span class="text-xs font-normal text-gray-400">عضو فعال</span>
         </p>
       </div>
     </div>
@@ -115,7 +115,7 @@
             <span>اطلاعیه ارسال همگانی</span>
           </div>
           <p class="text-amber-800 leading-relaxed">
-            این پیامک برای کلیه مخاطبان فعال خبرنامه (حدود <strong>{{ statsData?.withMobile ?? 0 }} شماره تماس</strong>) از طریق الگوی پیامکی پنل ارسال خواهد شد.
+            این پیامک برای کلیه مخاطبان فعال خبرنامه (حدود <strong>{{ stats?.withMobile ?? 0 }} شماره تماس</strong>) از طریق الگوی پیامکی پنل ارسال خواهد شد.
           </p>
         </div>
 
@@ -179,11 +179,22 @@ const {
 
 const fetchUrl = computed(() => {
   const q = queryParams.value;
-  return `/api/newsletter?page=${q.page}&limit=${q.limit}&search=${q.search}&sortBy=${q.sortBy}&sortOrder=${q.sortOrder}`;
+  const params = new URLSearchParams();
+  if (q.page) params.set('page', String(q.page));
+  if (q.limit) params.set('limit', String(q.limit));
+  if (q.search) params.set('search', String(q.search));
+  if (q.sortBy && q.sortBy !== 'undefined') params.set('sortBy', String(q.sortBy));
+  if (q.sortOrder && q.sortOrder !== 'undefined') params.set('sortOrder', String(q.sortOrder));
+  return `/api/newsletter?${params.toString()}`;
 });
 
 const { data: newsletter, refresh } = await useFetch(fetchUrl);
 const { data: statsData, refresh: refreshStats } = await useFetch('/api/newsletter/stats');
+
+const stats = computed(() => {
+  const d = statsData.value;
+  return d?.data ?? d ?? {};
+});
 
 async function refreshBoth() {
   await Promise.all([refresh(), refreshStats()]);

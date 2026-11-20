@@ -747,8 +747,10 @@ export class LoyaltyService {
     const referralCode = await this.getOrCreateUserReferralCode(userId);
     const settings = await this.getSettings();
 
-    const baseUrl = process.env.APP_URL || '';
-    const referralLink = `${baseUrl}/register?ref=${referralCode}`;
+    const baseUrl = (process.env.APP_URL || '').trim().replace(/\/+$/, '');
+    const referralLink = baseUrl
+      ? `${baseUrl}/auth?ref=${referralCode}`
+      : `/auth?ref=${referralCode}`;
 
     const totalInvited = await this.referrals.count({
       where: { referrerId: userId },

@@ -31,6 +31,7 @@ function makeService(productQb: any, overrides: Record<string, any> = {}) {
   };
   const subBrandRepo = {
     findOne: vi.fn().mockResolvedValue(null),
+    find: vi.fn().mockResolvedValue([]),
   };
   const categoryRepo = {
     findOne: vi

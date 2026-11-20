@@ -32,6 +32,17 @@ export function useReferral() {
   const error = ref<string | null>(null);
   const toast = useAppToast();
 
+  const resolveReferralLink = (rawLink?: string, code?: string) => {
+    let link = (rawLink || '').trim();
+    if (link.includes('/register?ref=')) {
+      link = link.replace('/register?ref=', '/auth?ref=');
+    }
+    if (!link && code && typeof window !== 'undefined') {
+      link = `${window.location.origin}/auth?ref=${code}`;
+    }
+    return link;
+  };
+
   const fetchReferralInfo = async () => {
     loading.value = true;
     error.value = null;
@@ -41,7 +52,7 @@ export function useReferral() {
       if (raw) {
         info.value = {
           referralCode: raw.referralCode,
-          referralLink: raw.referralLink,
+          referralLink: resolveReferralLink(raw.referralLink, raw.referralCode),
           rewardAmount: raw.rewardAmount,
           discountAmount: raw.discountAmount,
           minOrderAmount: raw.minOrderAmount,
@@ -92,11 +103,7 @@ export function useReferral() {
 
   const copyLink = async () => {
     if (!info.value) return;
-    const link =
-      info.value.referralLink ||
-      (typeof window !== 'undefined'
-        ? `${window.location.origin}/?ref=${info.value.referralCode}`
-        : '');
+    const link = resolveReferralLink(info.value.referralLink, info.value.referralCode);
     try {
       await navigator.clipboard.writeText(link);
       toast.add({
@@ -117,11 +124,7 @@ export function useReferral() {
 
   const share = async () => {
     if (!info.value) return;
-    const link =
-      info.value.referralLink ||
-      (typeof window !== 'undefined'
-        ? `${window.location.origin}/?ref=${info.value.referralCode}`
-        : '');
+    const link = resolveReferralLink(info.value.referralLink, info.value.referralCode);
     const text = `سلام! با لینک من از نیمورا خرید کن و ۵۰٬۰۰۰ تومان تخفیف روی اولین سفارشت بگیر:\n${link}`;
     if (typeof navigator !== 'undefined' && (navigator as any).share) {
       try {

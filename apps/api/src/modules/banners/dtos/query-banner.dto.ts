@@ -53,8 +53,16 @@ export class QueryBannerDto {
   @IsIn(['sortOrder', 'createdAt', 'views', 'clicks', 'title'])
   sortBy?: string = 'sortOrder';
 
+  @IsOptional()
+  @IsIn(['sortOrder', 'createdAt', 'views', 'clicks', 'title'])
+  sort?: string;
+
   @ApiPropertyOptional({ default: 'ASC', enum: ['ASC', 'DESC'] })
   @IsOptional()
   @IsIn(['ASC', 'DESC'])
   sortDir?: 'ASC' | 'DESC' = 'ASC';
+
+  @IsOptional()
+  @IsIn(['ASC', 'DESC'])
+  sortOrder?: 'ASC' | 'DESC';
 }

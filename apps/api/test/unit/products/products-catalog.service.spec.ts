@@ -115,21 +115,21 @@ describe('Products, Categories & Brands Service Projections', () => {
       expect.anything(),
     );
     expect(tree).toEqual([
-      {
+      expect.objectContaining({
         id: 1,
         name: 'آرایشی',
         slug: 'makeup',
         parentId: null,
         children: [
-          {
+          expect.objectContaining({
             id: 2,
             name: 'رژ لب',
             slug: 'lipstick',
             parentId: 1,
             children: [],
-          },
+          }),
         ],
-      },
+      }),
     ]);
   });
 

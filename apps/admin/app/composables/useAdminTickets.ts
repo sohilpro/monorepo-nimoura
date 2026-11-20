@@ -237,6 +237,24 @@ export const useAdminTickets = () => {
     }
   };
 
+  const deleteTicket = async (ticketId: number) => {
+    try {
+      const res = await $fetch<any>(`/api/tickets/${ticketId}`, {
+        method: 'DELETE',
+      });
+      tickets.value = tickets.value.filter((t) => t.id !== ticketId);
+      if (activeTicket.value?.id === ticketId) {
+        activeTicket.value = null;
+      }
+      total.value = Math.max(0, total.value - 1);
+      fetchStats().catch(() => null);
+      return res;
+    } catch (err: any) {
+      console.error('Failed to delete ticket:', err);
+      throw err;
+    }
+  };
+
   return {
     tickets,
     total,
@@ -252,6 +270,7 @@ export const useAdminTickets = () => {
     replyAdmin,
     updateTicketStatus,
     uploadAttachment,
+    deleteTicket,
     getStatusBadge,
     getPriorityBadge,
     getDepartmentLabel,

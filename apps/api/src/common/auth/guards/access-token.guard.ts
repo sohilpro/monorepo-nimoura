@@ -24,7 +24,25 @@ export class AccessTokenGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    if (isPublic) return true;
+    if (isPublic) {
+      const request = context.switchToHttp().getRequest<Request>();
+      const token = this.extractTokenFromHeader(request);
+      if (token) {
+        try {
+          const payload = await this.jwtService.verifyAsync<JwtPayload>(token);
+          const user: AuthenticatedUser = {
+            id: payload.sub,
+            email: payload.email,
+            phone: payload.phone,
+            role: payload.role,
+          };
+          request['user'] = user;
+        } catch {
+          // برای روت‌های پابلیک در صورت معتبر نبودن توکن، خطا پرتاب نمی‌شود
+        }
+      }
+      return true;
+    }
 
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractTokenFromHeader(request);

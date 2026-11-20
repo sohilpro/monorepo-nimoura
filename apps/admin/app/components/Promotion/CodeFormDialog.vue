@@ -89,8 +89,13 @@ function validate(): boolean {
   if (form.value.discountType === DiscountType.PERCENTAGE && (form.value.discountValue ?? 0) > 100)
     e.discountValue = 'درصد تخفیف نمی‌تواند بیشتر از ۱۰۰ باشد';
   if (!form.value.startDate) e.startDate = 'تاریخ شروع الزامی است';
-  if (form.value.endDate && form.value.startDate && form.value.endDate <= form.value.startDate)
-    e.endDate = 'تاریخ پایان باید بعد از تاریخ شروع باشد';
+  if (form.value.endDate && form.value.startDate) {
+    const startMs = new Date(form.value.startDate).getTime();
+    const endMs = new Date(form.value.endDate).getTime();
+    if (endMs <= startMs) {
+      e.endDate = 'تاریخ پایان باید بعد از تاریخ شروع باشد';
+    }
+  }
   errors.value = e;
   return Object.keys(e).length === 0;
 }
@@ -198,14 +203,28 @@ async function handleSubmit() {
 
       <div class="grid grid-cols-2 gap-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">تاریخ شروع</label>
-          <DatePicker v-model="form.startDate" show-time class="w-full" :invalid="!!errors.startDate" />
-          <small v-if="errors.startDate" class="text-red-500">{{ errors.startDate }}</small>
+          <CommonPersianDatePicker
+            v-model="form.startDate"
+            label="تاریخ شروع"
+            type="datetime"
+            format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
+            display-format="jYYYY/jMM/jDD HH:mm"
+            placeholder="انتخاب تاریخ و ساعت شروع"
+            :invalid="!!errors.startDate"
+            :error-message="errors.startDate"
+          />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">تاریخ پایان (اختیاری)</label>
-          <DatePicker v-model="form.endDate" show-time class="w-full" :invalid="!!errors.endDate" />
-          <small v-if="errors.endDate" class="text-red-500">{{ errors.endDate }}</small>
+          <CommonPersianDatePicker
+            v-model="form.endDate"
+            label="تاریخ پایان (اختیاری)"
+            type="datetime"
+            format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
+            display-format="jYYYY/jMM/jDD HH:mm"
+            placeholder="انتخاب تاریخ و ساعت پایان"
+            :invalid="!!errors.endDate"
+            :error-message="errors.endDate"
+          />
         </div>
       </div>
 

@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const query = getQuery(event);
 
   try {
-    const data = await apiFetch(event, '/orders/${query.id}/invoice', {
+    const data = await apiFetch(event, `/orders/${query.id}/invoice`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

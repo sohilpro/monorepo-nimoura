@@ -1,18 +1,151 @@
 <template>
   <div
-    class="flex text-neutral-500 items-center justify-center w-full flex-col gap-5"
+    dir="rtl"
+    class="flex w-full flex-col items-center justify-center rounded-3xl border border-dashed border-gray-200/90 bg-gradient-to-b from-gray-50/60 via-white to-gray-50/30 px-6 py-12 text-center transition-all duration-300 sm:py-16"
   >
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-    class="w-40 h-40"
-      viewBox="0 0 16 16"
-    >
-      <path
-        fill="currentColor"
-        d="M4.358.877a8 8 0 0 1 4.47-.834a.75.75 0 0 1-.155 1.492a6.5 6.5 0 0 0-3.632.678l-.222.118A6.5 6.5 0 0 0 2.244 4.98l-.112.225a6.5 6.5 0 0 0 1.272 7.392l.18.174a6.5 6.5 0 0 0 3.314 1.636l.248.037a6.5 6.5 0 0 0 3.65-.576l.224-.112a6.5 6.5 0 0 0 3.445-6.43l.746-.077l.746-.078a8 8 0 0 1-4.24 7.913l-.276.138a8 8 0 0 1-4.492.709l-.306-.047a8 8 0 0 1-4.077-2.012l-.222-.214A8 8 0 0 1 .777 4.56l.139-.276a8 8 0 0 1 3.17-3.26zM12.22.22a.75.75 0 0 1 1.28.53V2.5h1.75l.112.01a.75.75 0 0 1 .491 1.186l-.073.085l-3 3a.75.75 0 0 1-.53.22h-.38a4 4 0 0 1 .11 1.404l-.044.305a4 4 0 0 1-2.982 3.175l-.303.062a4 4 0 0 1-2.111-.223l-.283-.123a4 4 0 0 1-1.597-1.4l-.16-.264a4 4 0 0 1-.477-2.371l.046-.306a4 4 0 0 1 .933-1.907l.213-.224a4 4 0 0 1 1.861-1.02l.076-.015a.75.75 0 0 1 .27 1.474l-.185.051a2.5 2.5 0 0 0-.978.587l-.133.139c-.3.338-.5.751-.583 1.192l-.029.192a2.5 2.5 0 0 0 .298 1.482l.1.165a2.5 2.5 0 0 0 .998.874l.177.078a2.5 2.5 0 0 0 1.32.14l.189-.04a2.5 2.5 0 0 0 1.864-1.984l.027-.19A2.5 2.5 0 0 0 10.29 7h-.23L8.53 8.53a.75.75 0 1 1-1.06-1.06L9 5.94V3.75c0-.199.079-.39.22-.53zm2.913 6.283a.75.75 0 0 1 .824.668l-1.492.155a.75.75 0 0 1 .668-.823M10.5 4.061V5.5h1.44l1.5-1.5H12V2.56z"
+    <!-- آیکون و بج چندلایه شیک -->
+    <div class="relative mb-5 flex items-center justify-center">
+      <!-- هاله نور پشت آیکون -->
+      <div
+        class="absolute -inset-1.5 animate-pulse rounded-full opacity-60 blur-lg transition-all"
+        :class="isSearch ? 'bg-amber-200/50' : 'bg-brand-200/50'"
       />
-    </svg>
 
-    <span class="lg:text-lg"> آیتمی برای نمایش وجود ندارد. </span>
+      <!-- باکس آیکون اصلی -->
+      <div
+        class="relative flex h-20 w-20 items-center justify-center rounded-2xl border shadow-sm transition-transform duration-300 hover:scale-105 sm:h-24 sm:w-24"
+        :class="
+          isSearch
+            ? 'border-amber-200 bg-gradient-to-tr from-amber-50 to-orange-100/60 text-amber-600'
+            : 'border-brand-200 bg-gradient-to-tr from-brand-50 to-rose-100/60 text-brand-600'
+        "
+      >
+        <i
+          :class="[
+            displayIcon,
+            'text-3xl sm:text-4xl transition-transform duration-300',
+          ]"
+        />
+
+        <!-- نشانگر کوچک تزیینی گوشه -->
+        <span
+          class="absolute -bottom-1 -left-1 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white shadow-2xs"
+          :class="isSearch ? 'bg-amber-500 text-white' : 'bg-brand-500 text-white'"
+        >
+          <i
+            :class="isSearch ? 'pi pi-search' : 'pi pi-inbox'"
+            class="text-[10px]"
+          />
+        </span>
+      </div>
+    </div>
+
+    <!-- عنوان اصلی پیام -->
+    <h3 class="text-base font-bold text-gray-800 sm:text-lg">
+      {{ displayTitle }}
+    </h3>
+
+    <!-- توضیحات و راهنما -->
+    <p
+      class="mt-2 max-w-md text-xs leading-relaxed text-gray-500 sm:text-sm"
+    >
+      {{ displaySubtitle }}
+    </p>
+
+    <!-- کادر اطلاعات جستجو (در صورت وجود کوئری) -->
+    <div
+      v-if="isSearch && searchQuery"
+      class="mt-3 inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1 text-xs text-gray-600 shadow-2xs"
+    >
+      <span class="text-gray-400">جستجو برای:</span>
+      <span class="font-bold text-gray-800 font-mono">"{{ searchQuery }}"</span>
+    </div>
+
+    <!-- دکمه‌های عملیاتی -->
+    <div class="mt-6 flex flex-wrap items-center justify-center gap-2.5">
+      <!-- دکمه پاکسازی فیلتر / سرچ -->
+      <button
+        v-if="isSearch"
+        type="button"
+        @click="$emit('clear-search')"
+        class="inline-flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow-2xs transition-colors hover:border-gray-400 hover:bg-gray-50"
+      >
+        <i class="pi pi-times text-xs text-gray-500" />
+        <span>{{ clearSearchLabel || 'پاک کردن فیلترها' }}</span>
+      </button>
+
+      <!-- دکمه ایجاد آیتم جدید (در صورت ارسال لینک) -->
+      <NuxtLink
+        v-if="createUrl"
+        :to="createUrl"
+        class="inline-flex items-center gap-2 rounded-xl bg-brand-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-brand-600"
+      >
+        <i class="pi pi-plus text-xs" />
+        <span>{{ createLabel || 'افزودن مورد جدید' }}</span>
+      </NuxtLink>
+
+      <!-- دکمه بروزرسانی مجدد -->
+      <button
+        v-if="showRefresh"
+        type="button"
+        @click="$emit('refresh')"
+        class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-xs font-semibold text-gray-600 shadow-2xs transition-colors hover:border-brand-300 hover:text-brand-600"
+      >
+        <i class="pi pi-refresh text-xs" />
+        <span>بارگذاری مجدد</span>
+      </button>
+    </div>
   </div>
 </template>
+
+<script setup lang="ts">
+const props = withDefaults(
+  defineProps<{
+    title?: string;
+    subtitle?: string;
+    icon?: string;
+    isSearch?: boolean;
+    searchQuery?: string;
+    createUrl?: string;
+    createLabel?: string;
+    clearSearchLabel?: string;
+    showRefresh?: boolean;
+  }>(),
+  {
+    title: '',
+    subtitle: '',
+    icon: '',
+    isSearch: false,
+    searchQuery: '',
+    createUrl: '',
+    createLabel: '',
+    clearSearchLabel: 'پاک کردن فیلترها',
+    showRefresh: true,
+  }
+);
+
+defineEmits<{
+  (e: 'clear-search'): void;
+  (e: 'refresh'): void;
+}>();
+
+const displayIcon = computed(() => {
+  if (props.icon) return props.icon;
+  if (props.isSearch) return 'pi pi-search-minus';
+  return 'pi pi-box';
+});
+
+const displayTitle = computed(() => {
+  if (props.title) return props.title;
+  if (props.isSearch) return 'نتیجه‌ای برای جستجوی شما یافت نشد!';
+  return 'هیچ آیتمی برای نمایش وجود ندارد';
+});
+
+const displaySubtitle = computed(() => {
+  if (props.subtitle) return props.subtitle;
+  if (props.isSearch) {
+    return 'عبارت دیگری را جستجو کنید یا فیلترهای اعمال‌شده را پاک نمایید تا نتایج بیشتری مشاهده کنید.';
+  }
+  return 'در حال حاضر داده‌ای در این بخش ثبت نشده است. می‌توانید با استفاده از گزینه‌های موجود، اولین رکورد را ایجاد نمایید.';
+});
+</script>

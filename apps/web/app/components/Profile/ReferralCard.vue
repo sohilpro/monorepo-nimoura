@@ -301,11 +301,13 @@ onMounted(async () => {
 });
 
 const displayLink = computed(() => {
-  if (info.value?.referralLink) return info.value.referralLink;
-  if (typeof window !== 'undefined' && info.value?.referralCode) {
-    return `${window.location.origin}/?ref=${info.value.referralCode}`;
+  if (info.value?.referralLink) {
+    return info.value.referralLink.replace('/register?ref=', '/auth?ref=');
   }
-  return 'https://nimoura.com/?ref=...';
+  if (typeof window !== 'undefined' && info.value?.referralCode) {
+    return `${window.location.origin}/auth?ref=${info.value.referralCode}`;
+  }
+  return 'https://nimoura.ir/auth?ref=...';
 });
 
 const earnedDiscountCodes = computed(() => {

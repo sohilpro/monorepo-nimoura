@@ -93,6 +93,15 @@ function discountLabel(row: PromoCode) {
     : `${Number(row.discountValue).toLocaleString('fa-IR')} تومان`;
 }
 
+function formatDate(d: string | null | undefined) {
+  if (!d) return '—';
+  try {
+    return new Date(d).toLocaleDateString('fa-IR');
+  } catch {
+    return '—';
+  }
+}
+
 function onFormSaved() {
   formDialogOpen.value = false;
   load();
@@ -158,6 +167,14 @@ function onFormSaved() {
 
         <Column header="حداقل سفارش">
           <template #body="{ data }">{{ formatMoney(data.minOrderAmount) }}</template>
+        </Column>
+
+        <Column header="بازه زمانی">
+          <template #body="{ data }">
+            <span class="text-xs text-gray-600">
+              {{ formatDate(data.startDate) }} تا {{ formatDate(data.endDate) }}
+            </span>
+          </template>
         </Column>
 
         <Column header="مصرف">

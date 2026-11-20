@@ -450,4 +450,21 @@ export class TicketsService {
       today,
     };
   }
+
+  /**
+   * ۱۱. حذف تیکت توسط مالک (فقط Owner)
+   */
+  async deleteTicket(ticketId: number): Promise<{ success: boolean; id: number; message: string }> {
+    const ticket = await this.ticketRepo.findOne({ where: { id: ticketId } });
+    if (!ticket) {
+      throw new NotFoundException('تیکت پشتیبانی مورد نظر یافت نشد');
+    }
+
+    await this.ticketRepo.softRemove(ticket);
+    return {
+      success: true,
+      id: ticketId,
+      message: 'تیکت پشتیبانی با موفقیت حذف گردید',
+    };
+  }
 }

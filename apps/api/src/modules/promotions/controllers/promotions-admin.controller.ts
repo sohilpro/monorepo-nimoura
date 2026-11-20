@@ -3,20 +3,22 @@ import {
   Get,
   Post,
   Put,
+  Patch,
   Delete,
   Body,
   Param,
   Query,
   ParseIntPipe,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { PromotionsService } from '../promotions.service';
 import { CreatePromotionDto } from '../dtos/create-promotion.dto';
 import { UpdatePromotionDto } from '../dtos/update-promotion.dto';
 import { AdminController } from 'src/common/auth/decorators/admin-controller.decorator';
-import { PaginationQueryDto } from 'src/modules/products/dtos/product-query.dto';
+import { QueryPromotionDto } from '../dtos/query-promotion.dto';
 
-@AdminController('promotions') // مسیر نهایی: /api/v1/admin/promotions
+@AdminController(['promotions', 'promo-codes']) // مسیر نهایی: /api/v1/admin/promotions و /api/v1/admin/promo-codes
 export class AdminPromotionsController {
   constructor(private readonly promotionService: PromotionsService) {}
 
@@ -39,8 +41,20 @@ export class AdminPromotionsController {
     status: 200,
     description: 'لیست تخفیف‌ها با موفقیت دریافت شد.',
   })
-  async findAll(@Query() query: PaginationQueryDto) {
+  async findAll(@Query() query: QueryPromotionDto) {
     return await this.promotionService.findAll(query);
+  }
+
+  @Post('generate-code')
+  @ApiOperation({ summary: 'تولید کد تخفیف تصادفی' })
+  generateCode(@Body() body?: { prefix?: string }) {
+    const prefix = (body?.prefix || 'OFF').toUpperCase().trim();
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let random = '';
+    for (let i = 0; i < 6; i++) {
+      random += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return { code: `${prefix}-${random}` };
   }
 
   @Get(':id')
@@ -76,6 +90,37 @@ export class AdminPromotionsController {
     @Body() dto: UpdatePromotionDto,
   ) {
     return await this.promotionService.update(id, dto);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'به‌روزرسانی جزیی تخفیف' })
+  async patch(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdatePromotionDto,
+  ) {
+    return await this.promotionService.update(id, dto);
+  }
+
+  @Patch(':id/toggle-active')
+  @ApiOperation({ summary: 'تغییر وضعیت فعال/غیرفعال تخفیف' })
+  async toggleActive(@Param('id', ParseIntPipe) id: number) {
+    const promo = await this.promotionService.findOne(id);
+    if (!promo) throw new NotFoundException('تخفیف یافت نشد');
+    return await this.promotionService.update(id, { isActive: !promo.isActive } as any);
+  }
+
+  @Get(':id/usages')
+  @ApiOperation({ summary: 'لیست دفعات استفاده از یک کد تخفیف' })
+  async getUsages(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
+  ) {
+    return await this.promotionService.getUsages(
+      id,
+      Number(page) || 1,
+      Number(limit) || 20,
+    );
   }
 
   @Delete(':id')

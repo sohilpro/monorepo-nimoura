@@ -5,7 +5,7 @@
       <div
         v-for="n in 8"
         :key="`skeleton-${n}`"
-        class="w-full aspect-[148/220] rounded-2xl border border-nimoura-border/30 p-3 animate-pulse"
+        class="w-full aspect-148/220 rounded-2xl border border-nimoura-border/30 p-3 animate-pulse"
       >
         <div class="h-27 w-full rounded-lg bg-nimoura-text-100"></div>
         <div class="mt-2 space-y-1.5">

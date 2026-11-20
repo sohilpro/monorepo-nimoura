@@ -15,7 +15,7 @@
         v-for="tab in statusTabs"
         :key="tab.value"
         type="button"
-        @click="activeStatus = tab.value"
+        @click="selectStatusTab(tab.value)"
         :class="[
           'px-4 py-2 text-sm font-medium rounded-xl transition',
           activeStatus === tab.value
@@ -77,11 +77,28 @@ const {
   onSort,
 } = useTableQuery({ defaultSortBy: "createdAt" });
 
+const selectStatusTab = (val) => {
+  activeStatus.value = val;
+  page.value = 1;
+};
+
 const fetchUrl = computed(() => {
   const q = queryParams.value;
-  const statusParam = activeStatus.value ? `&status=${activeStatus.value}` : "";
+  const params = new URLSearchParams();
 
-  return `/api/comments?page=${q.page}&limit=${q.limit}&search=${q.search}&sortBy=${q.sortBy}&sortOrder=${q.sortOrder}${statusParam}`;
+  if (q.page) params.set("page", String(q.page));
+  if (q.limit) params.set("limit", String(q.limit));
+  if (q.search && q.search.trim()) params.set("search", q.search.trim());
+
+  const sortVal = q.sortBy || q.sort || "createdAt";
+  if (sortVal && sortVal !== "undefined") params.set("sortBy", sortVal);
+
+  const orderVal = q.sortOrder || "DESC";
+  if (orderVal && orderVal !== "undefined") params.set("sortOrder", orderVal);
+
+  if (activeStatus.value) params.set("status", activeStatus.value);
+
+  return `/api/comments?${params.toString()}`;
 });
 
 const { data: comments, refresh } = await useFetch(fetchUrl);

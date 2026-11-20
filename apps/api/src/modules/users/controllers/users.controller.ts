@@ -5,6 +5,7 @@ import {
   HttpCode,
   HttpStatus,
   Patch,
+  Put,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -64,6 +65,19 @@ export class UsersController {
     description: 'دسترسی غیرمجاز.',
   })
   updateProfile(
+    @CurrentUser('id') userId: number,
+    @Body() updateProfileDto: UpdateProfileDto,
+  ) {
+    return this.userService.updateProfile(userId, updateProfileDto);
+  }
+
+  @Put('profile')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'ویرایش اطلاعات پروفایل (PUT)',
+  })
+  @ApiConsumes(Consumes.Form, Consumes.Json)
+  updateProfilePut(
     @CurrentUser('id') userId: number,
     @Body() updateProfileDto: UpdateProfileDto,
   ) {

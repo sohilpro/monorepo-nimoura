@@ -148,6 +148,9 @@
 <script setup lang="ts">
 import { DASHBOARD_RANGE_OPTIONS } from '~/composables/useAdminDashboard';
 
+const route = useRoute();
+const toast = useAppToast();
+
 const { dashboard, range, initialLoading, refetching, errorMessage, load } =
   useAdminDashboard();
 
@@ -161,6 +164,9 @@ const todayPersianDate = computed(() =>
 );
 
 onMounted(() => {
+  if (route.query.error === 'owner_required') {
+    toast.error('دسترسی محدود: بخش باشگاه مشتریان و تنظیمات مالی فقط در اختیار مالک فروشگاه قرار دارد.');
+  }
   load('30d');
 });
 </script>

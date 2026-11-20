@@ -1,3 +1,11 @@
+import { config as dotenvConfig } from 'dotenv';
+import { resolve } from 'path';
+
+// همیشه فایل .env ریشه پروژه مونو‌ریپو خوانده شود
+dotenvConfig({ path: resolve(process.cwd(), '.env') });
+dotenvConfig({ path: resolve(process.cwd(), '../../.env') });
+dotenvConfig({ path: resolve(__dirname, '../../../.env') });
+
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';

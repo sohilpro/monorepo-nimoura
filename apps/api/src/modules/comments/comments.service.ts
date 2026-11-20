@@ -322,9 +322,24 @@ export class CommentsService {
       limit = 10,
       search = '',
       sortOrder = 'DESC',
-      sortBy = 'id',
       status = '',
     } = query as any;
+
+    const validSortFields = [
+      'id',
+      'subject',
+      'rating',
+      'isApproved',
+      'isRejected',
+      'likesCount',
+      'dislikesCount',
+      'createdAt',
+      'updatedAt',
+    ];
+
+    const rawSort = String((query as any)?.sortBy || (query as any)?.sort || '').trim();
+    const safeSortBy = validSortFields.includes(rawSort) ? rawSort : 'createdAt';
+    const safeSortOrder = String(sortOrder || '').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
 
     const searchableFields = ['subject', 'description'];
     const searchWhere = buildSearchWhereClause(search, searchableFields);
@@ -382,7 +397,7 @@ export class CommentsService {
       where,
       take: +limit,
       skip: (+page - 1) * +limit,
-      order: { [sortBy]: toSortDirection(sortOrder) },
+      order: { [safeSortBy]: safeSortOrder },
       withDeleted: false,
       loadEagerRelations: false,
     });

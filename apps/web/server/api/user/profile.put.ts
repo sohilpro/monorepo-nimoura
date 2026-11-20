@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   }
   const body = await readBody(event);
   return await apiFetch(event, '/user/profile', {
-    method: 'PUT',
+    method: 'PATCH',
     body,
     headers: {
       Authorization: `Bearer ${token}`,

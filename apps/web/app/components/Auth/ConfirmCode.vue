@@ -119,9 +119,17 @@ async function onSubmit(code: string) {
   isLoading.value = true;
 
   try {
+    const cookieRef = useCookie<string | null>("nimoura_ref").value;
+    const queryRef = typeof route.query.ref === "string" ? route.query.ref.trim().toUpperCase() : "";
+    const referralCode = queryRef || (cookieRef ? String(cookieRef).trim().toUpperCase() : undefined);
+
     const data: any = await $fetch("/api/auth/check-otp", {
       method: "POST",
-      body: { username: identity, code },
+      body: {
+        username: identity,
+        code,
+        referralCode: referralCode || undefined,
+      },
     });
 
     const auth = useAuth();

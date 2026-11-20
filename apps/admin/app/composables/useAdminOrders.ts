@@ -1,11 +1,44 @@
 import {
   type UpdateOrderAdminPayload,
+  type CreateOrderAdminPayload,
   OrderStatus,
 } from '@nimoura/shared-types';
 
 export function useAdminOrders() {
   const toast = useAppToast();
   const { isLoading } = useLoading();
+
+  /**
+   * ایجاد سفارش دستی توسط ادمین
+   */
+  async function createOrder(payload: CreateOrderAdminPayload | any): Promise<any> {
+    isLoading.value = true;
+    try {
+      const response = await $fetch<any>('/api/orders', {
+        method: 'POST',
+        body: payload,
+      });
+
+      toast.add({
+        severity: 'success',
+        summary: 'موفقیت',
+        detail: response?.message || 'سفارش با موفقیت ایجاد شد',
+        life: 3000,
+      });
+
+      return response?.data || response;
+    } catch (error: any) {
+      toast.add({
+        severity: 'error',
+        summary: 'خطا',
+        detail: error?.data?.message || error?.statusMessage || 'خطا در ایجاد سفارش',
+        life: 4000,
+      });
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
 
   /**
    * به‌روزرسانی مشخصات سفارش (اقلام، مبالغ، گیرنده، وضعیت)
@@ -82,6 +115,7 @@ export function useAdminOrders() {
   }
 
   return {
+    createOrder,
     updateOrder,
     getStatusLabel,
     getStatusBadgeClass,

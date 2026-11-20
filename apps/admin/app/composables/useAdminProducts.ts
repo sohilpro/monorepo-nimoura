@@ -182,10 +182,11 @@ export function useAdminProducts() {
    */
   async function fetchBrandOptions(): Promise<Brand[]> {
     try {
-      const res = await $fetch<any>('/api/product/brand/list', { query: { limit: 200 } });
+      const res = await $fetch<any>('/api/product/brand', { query: { limit: 200 } });
       const data = res?.data ?? res;
-      return data?.brands || data?.items || [];
-    } catch {
+      return data?.brands || data?.items || (Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to fetch brand options:', err);
       return [];
     }
   }

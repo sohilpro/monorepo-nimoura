@@ -13,21 +13,21 @@
       />
 
       <div class="flex items-center gap-5">
-        <DatePicker
+        <CommonPersianDatePicker
           v-model="model.startDate"
           label="شروع"
           class="w-full"
           placeholder="YYYY/MM/DD"
           format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
-          display-format="jYYYY/jMM/jDD"
+          display-format="jYYYY/jMM/jDD HH:mm"
         />
-        <DatePicker
+        <CommonPersianDatePicker
           v-model="model.endDate"
           label="پایان"
           class="w-full"
           placeholder="YYYY/MM/DD"
           format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
-          display-format="jYYYY/jMM/jDD"
+          display-format="jYYYY/jMM/jDD HH:mm"
         />
       </div>
 

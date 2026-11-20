@@ -21,7 +21,7 @@ import { CurrentUser, Public } from 'src/common/auth/auth.decorators';
 import { VerifyPaymentDto } from './dtos/verify-payment.dto';
 
 @ApiTags('Payment')
-@Controller('payments') // مسیر نهایی: /api/v1/payment
+@Controller(['payments', 'payment']) // پشتیبانی از هر دو مسیر /api/v1/payments و /api/v1/payment
 export class PaymentsController {
   constructor(private readonly paymentService: PaymentService) {}
 

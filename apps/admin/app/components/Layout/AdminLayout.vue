@@ -1,19 +1,19 @@
 <template>
-  <div class="min-h-screen xl:flex">
+  <div class="min-h-screen bg-gray-50/60 xl:flex" dir="rtl">
     <LayoutAppSidebar />
     <LayoutBackdrop />
     <div
-      class="flex-1 transition-all duration-300 ease-in-out"
-      :class="[isExpanded || isHovered ? 'lg:mr-[290px]' : 'lg:mr-[90px]']"
+      class="flex min-w-0 flex-1 flex-col transition-all duration-300 ease-in-out"
+      :class="[isExpanded || isHovered ? 'lg:mr-[280px]' : 'lg:mr-[84px]']"
     >
       <LayoutAppHeader />
-      <div class="p-4 mx-auto max-w-(--breakpoint-2xl) md:p-6">
+      <main class="mx-auto w-full max-w-7xl flex-1 p-4 md:p-6">
         <slot />
-      </div>
+      </main>
     </div>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const { isExpanded, isHovered } = useSidebar();
 </script>

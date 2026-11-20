@@ -46,6 +46,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { LoyaltyModule } from './modules/loyalty/loyalty.module';
 import { TicketsModule } from './modules/tickets/tickets.module';
 import { NewsletterModule } from './modules/newsletter/newsletter.module';
+import { ExploreModule } from './modules/explore/explore.module';
 
 @Module({
   imports: [
@@ -112,6 +113,7 @@ import { NewsletterModule } from './modules/newsletter/newsletter.module';
     LoyaltyModule,
     TicketsModule,
     NewsletterModule,
+    ExploreModule,
   ],
   providers: [
     {

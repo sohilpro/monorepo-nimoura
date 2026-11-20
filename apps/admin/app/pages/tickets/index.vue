@@ -266,6 +266,18 @@
                   <option value="urgent">فوری</option>
                 </select>
               </div>
+
+              <!-- دکمه حذف تیکت فقط برای مالک فروشگاه -->
+              <button
+                v-if="isOwner"
+                type="button"
+                class="flex items-center gap-1.5 rounded-xl border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-xs font-semibold text-rose-600 transition hover:bg-rose-100 hover:border-rose-300"
+                title="حذف تیکت (ویژه مالک فروشگاه)"
+                @click="confirmDeleteTicket(activeTicket)"
+              >
+                <i class="pi pi-trash text-xs" />
+                <span class="hidden sm:inline">حذف تیکت</span>
+              </button>
             </div>
           </div>
 
@@ -447,11 +459,57 @@
         </template>
       </div>
     </div>
+
+    <!-- ══ DIALOGUE CONFIRM DELETE TICKET (EXCLUSIVE FOR OWNER) ══ -->
+    <Dialog
+      v-model:visible="showDeleteDialog"
+      modal
+      header="تایید حذف تیکت پشتیبانی"
+      :style="{ width: '90vw', maxWidth: '440px' }"
+      dir="rtl"
+    >
+      <div class="space-y-3 pt-2 text-xs text-gray-600">
+        <div class="flex items-center gap-2 text-rose-600 font-bold text-sm">
+          <i class="pi pi-exclamation-triangle text-lg" />
+          <span>هشدار حذف دائمی تیکت</span>
+        </div>
+        <p class="leading-relaxed">
+          آیا از حذف تیکت با کد رهگیری
+          <strong class="font-mono text-gray-900">{{ ticketToDelete?.trackingCode }}</strong>
+          (مربوط به {{ ticketToDelete?.user?.first_name ? `${ticketToDelete.user.first_name} ${ticketToDelete.user.last_name || ''}` : 'کاربر' }}) اطمینان دارید؟
+        </p>
+        <p class="text-[11px] text-gray-400">
+          این عملیات تنها توسط مالک فروشگاه قابل انجام است و تمام تاریخچه پیام‌ها و پیوست‌های این تیکت حذف خواهند شد.
+        </p>
+      </div>
+
+      <template #footer>
+        <div class="flex justify-end gap-2 pt-2">
+          <Button
+            type="button"
+            label="انصراف"
+            class="p-button-text p-button-sm text-gray-500"
+            @click="showDeleteDialog = false"
+          />
+          <Button
+            type="button"
+            label="بله، تیکت حذف شود"
+            icon="pi pi-trash"
+            class="!bg-rose-600 !border-rose-600 text-white p-button-sm px-3"
+            :loading="isDeleting"
+            @click="handleDeleteTicket"
+          />
+        </div>
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import type { Ticket, TicketAttachment } from '@nimoura/shared-types';
+
+const toast = useAppToast();
+const { isOwner } = usePermissions();
 
 const {
   tickets,
@@ -466,6 +524,7 @@ const {
   replyAdmin,
   updateTicketStatus,
   uploadAttachment,
+  deleteTicket,
   getStatusBadge,
   getPriorityBadge,
   getDepartmentLabel,
@@ -476,6 +535,30 @@ const searchQuery = ref('');
 const activeStatusFilter = ref('all');
 const replyText = ref('');
 const pendingAttachments = ref<TicketAttachment[]>([]);
+
+const showDeleteDialog = ref(false);
+const ticketToDelete = ref<Ticket | null>(null);
+const isDeleting = ref(false);
+
+const confirmDeleteTicket = (ticket: Ticket) => {
+  ticketToDelete.value = ticket;
+  showDeleteDialog.value = true;
+};
+
+const handleDeleteTicket = async () => {
+  if (!ticketToDelete.value) return;
+  isDeleting.value = true;
+  try {
+    await deleteTicket(ticketToDelete.value.id);
+    toast.success('تیکت پشتیبانی با موفقیت حذف گردید.');
+    showDeleteDialog.value = false;
+  } catch (err: any) {
+    toast.error(err?.data?.statusMessage || err?.data?.message || 'خطا در حذف تیکت. فقط مالک اجازه حذف دارد.');
+  } finally {
+    isDeleting.value = false;
+    ticketToDelete.value = null;
+  }
+};
 
 const statusFilters = [
   { key: 'all', label: 'همه' },

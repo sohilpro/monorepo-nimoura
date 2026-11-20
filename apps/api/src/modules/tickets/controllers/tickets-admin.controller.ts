@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -97,5 +98,12 @@ export class TicketsAdminController {
       size: file.size,
       type: file.mimetype,
     };
+  }
+
+  @Delete(':id')
+  @Roles(UserRole.OWNER)
+  @ApiOperation({ summary: 'حذف تیکت پشتیبانی (فقط توسط مالک فروشگاه)' })
+  async deleteTicket(@Param('id', ParseIntPipe) ticketId: number) {
+    return await this.ticketsService.deleteTicket(ticketId);
   }
 }

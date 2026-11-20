@@ -7,7 +7,17 @@
       ]"
       title="سفارشات"
       subtitle="مدیریت و پیگیری کلیه سفارش‌های مشتریان"
-    />
+    >
+      <template #actions>
+        <NuxtLink
+          to="/order/create"
+          class="bg-brand-500 text-white flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-theme-xs hover:bg-brand-600 transition"
+        >
+          <i class="pi pi-plus text-xs" />
+          <span>ایجاد سفارش بصورت دستی</span>
+        </NuxtLink>
+      </template>
+    </UtilsHeaderWithActions>
 
     <!-- فیلتر تب‌های وضعیت -->
     <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
@@ -41,6 +51,7 @@
       :sortOrder="sortOrder"
       :searchQuery="search"
       url-edit="order"
+      create-label="ایجاد سفارش بصورت دستی"
       api-delete-base="/api/orders"
       :on-refresh="refresh"
       itemNameKey="orderCode"

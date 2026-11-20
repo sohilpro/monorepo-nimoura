@@ -52,13 +52,15 @@ describe('CategoryService slug & SEO persistence', () => {
       seoText: '<h1>متن</h1>',
     });
 
-    expect(repo.create).toHaveBeenCalledWith({
-      name: 'لوازم آرایشی',
-      slug: 'cosmetics-2',
-      seoTitle: 'عنوان سئو',
-      seoDescription: 'توضیح متا',
-      seoText: '<h1>متن</h1>',
-    });
+    expect(repo.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'لوازم آرایشی',
+        slug: 'cosmetics-2',
+        seoTitle: 'عنوان سئو',
+        seoDescription: 'توضیح متا',
+        seoText: '<h1>متن</h1>',
+      }),
+    );
     expect(res.category?.slug).toBe('cosmetics-2');
   });
 

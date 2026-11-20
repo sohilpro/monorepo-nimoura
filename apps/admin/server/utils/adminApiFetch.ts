@@ -16,8 +16,10 @@ export async function adminApiFetch<T>(
     });
   }
 
+  const normalizedPath = path.replace(/^\/?admin(\/|$)/, "/");
+
   try {
-    return await $fetch<T>(path, {
+    return await $fetch<T>(normalizedPath, {
       baseURL: config.apiBase,
       ...options,
       headers: {

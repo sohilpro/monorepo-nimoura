@@ -1,7 +1,7 @@
 export default defineEventHandler(async (event) => {
   const body = await readBody(event);
 
-  return apiFetch(event, '/payment/create', {
+  return apiFetch(event, '/payments/create', {
     method: 'POST',
     body,
   });

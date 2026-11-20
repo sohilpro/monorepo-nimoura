@@ -1,9 +1,15 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 import tailwindcss from "@tailwindcss/vite";
 import Aura from "@primeuix/themes/aura";
 import { definePreset } from "@primeuix/themes";
 import { nimouraThemePreset } from "../../packages/ui/src";
+import { config as dotenvConfig } from "dotenv";
+
+// بارگذاری فایل .env از ریشه مونو‌ریپو
+dotenvConfig({ path: resolve(process.cwd(), "../../.env") });
+dotenvConfig({ path: resolve(process.cwd(), ".env") });
 
 const MyCustomTheme = definePreset(Aura, nimouraThemePreset);
 
@@ -122,8 +128,8 @@ export default defineNuxtConfig({
             "خرید بهترین محصولات آرایشی و مراقبتی پوست و مو از Nimoura. کیفیت بالا، ارسال سریع و ضمانت اصالت کالا.",
         },
         { property: "og:type", content: "website" },
-        { property: "og:url", content: "https://nimoura.shop/" },
-        { property: "og:image", content: "https://nimoura.shop/og-image.png" },
+        { property: "og:url", content: "https://nimoura.ir/" },
+        { property: "og:image", content: "https://nimoura.ir/og-image.png" },
         { property: "og:site_name", content: "Nimoura" },
         { property: "og:locale", content: "fa_IR" },
 
@@ -138,7 +144,7 @@ export default defineNuxtConfig({
           content:
             "خرید بهترین محصولات آرایشی و مراقبتی پوست و مو از Nimoura. کیفیت بالا، ارسال سریع و ضمانت اصالت کالا.",
         },
-        { name: "twitter:image", content: "https://nimoura.shop/og-image.png" },
+        { name: "twitter:image", content: "https://nimoura.ir/og-image.png" },
         { name: "twitter:site", content: "@nimoura" },
       ],
     },
@@ -151,7 +157,7 @@ export default defineNuxtConfig({
     torobClientSecret: process.env.TOROB_CLIENT_SECRET || "",
     apiBase: process.env.NUXT_PUBLIC_API_BASE || "http://localhost:4000/api/v1",
     public: {
-      baseURL: "https://nimoura.shop",
+      baseURL: "https://nimoura.ir",
       shop3dMode: "off", // off | admin | percent | all
       shop3dPercent: 0, // فقط برای حالت percent
       sentryDsn: "",
@@ -222,6 +228,8 @@ export default defineNuxtConfig({
     "/profile/**": { ssr: false, headers: { "X-Robots-Tag": "noindex, nofollow" } },
     "/cart/**": { ssr: false, headers: { "X-Robots-Tag": "noindex, nofollow" } },
     "/auth/**": { ssr: false, headers: { "X-Robots-Tag": "noindex, nofollow" } },
+    "/register": { redirect: { to: "/auth", statusCode: 301 } },
+    "/register/**": { redirect: { to: "/auth", statusCode: 301 } },
     "/payment/**": { ssr: false, headers: { "X-Robots-Tag": "noindex, nofollow" } },
     // Store 3D & OG
     "/store-3d": { headers: { "cache-control": "no-cache" } },

@@ -106,14 +106,12 @@ export default defineEventHandler(async (event) => {
         // --- مرحله ۴: ثبت موفقیت در دیتابیس (NestJS) ---
         // به اندپوینت کنترلر خودتان درخواست می‌زنیم
         try {
-          const data = await $fetch(
-            `${backendApiUrl}/orders/${orderId}/payment/success`,
+          const data = await apiFetch(
+            event,
+            `/orders/${orderId}/payment/success`,
             {
               method: "POST",
               body: { refId, method: "torobpay" },
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
             }
           );
 
@@ -130,24 +128,18 @@ export default defineEventHandler(async (event) => {
 
     // --- اگر به اینجا رسید یعنی پرداخت ناموفق بوده ---
     // ثبت شکست در دیتابیس
-    await $fetch(`${backendApiUrl}/orders/${orderId}/payment/failure`, {
+    await apiFetch(event, `/orders/${orderId}/payment/failure`, {
       method: "POST",
       body: { method: "torobpay" },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     }).catch(console.error);
 
     return { success: false, message: "پرداخت تایید نشد یا لغو شده است." };
   } catch (error: any) {
     console.error("Callback Process Error:", error);
     // ثبت خطا در دیتابیس
-    await $fetch(`${backendApiUrl}/orders/${orderId}/payment/failure`, {
+    await apiFetch(event, `/orders/${orderId}/payment/failure`, {
       method: "POST",
       body: { method: "torobpay" },
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     }).catch(console.error);
 
     return { success: false, message: error.message || "خطا در پردازش تراکنش" };

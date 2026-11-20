@@ -66,6 +66,7 @@ export function useTableQuery(defaults: {
     limit: limit.value,
     search: search.value,
     sort: sort.value,
+    sortBy: sort.value,
     sortOrder: sortOrder.value,
   }));
 
@@ -74,6 +75,7 @@ export function useTableQuery(defaults: {
     limit,
     search,
     sort,
+    sortBy: sort,
     sortOrder,
     queryParams,
     onPageChange,

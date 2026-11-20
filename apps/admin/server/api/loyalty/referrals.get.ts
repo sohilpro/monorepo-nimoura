@@ -1,6 +1,6 @@
 export default defineEventHandler(async (event) => {
   const query = getQuery(event);
-  return adminApiFetch(event, '/admin/loyalty/referrals', {
+  return adminApiFetch(event, '/loyalty/referrals', {
     method: 'GET',
     query,
   });

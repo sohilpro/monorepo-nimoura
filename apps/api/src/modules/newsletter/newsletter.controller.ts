@@ -20,7 +20,7 @@ import { NewsletterQueryDto } from './dtos/newsletter-query.dto';
 import { BroadcastCampaignDto } from './dtos/broadcast-campaign.dto';
 
 @ApiTags('Newsletter')
-@Controller('newsletter')
+@Controller(['newsletter', 'admin/newsletter'])
 export class NewsletterController {
   constructor(private readonly newsletterService: NewsletterService) {}
 

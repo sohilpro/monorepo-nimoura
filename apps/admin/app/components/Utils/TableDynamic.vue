@@ -20,7 +20,7 @@
           :to="`/${urlEdit}/create`"
           class="bg-brand-500 text-white flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-theme-xs hover:bg-brand-600 transition"
         >
-          ایجاد +
+          {{ props.createLabel || 'ایجاد +' }}
         </NuxtLink>
         <button
           type="button"
@@ -115,7 +115,13 @@
     </div>
   </div>
 
-  <UtilsEmptyItem v-else />
+  <UtilsEmptyItem
+    v-else
+    :is-search="Boolean(searchQuery || searchLocal)"
+    :search-query="searchQuery || searchLocal"
+    @clear-search="handleClearSearch"
+    @refresh="props?.onRefresh"
+  />
 </template>
 
 <script setup>
@@ -137,6 +143,10 @@ const props = defineProps({
     default: 10,
   },
   urlEdit: String,
+  createLabel: {
+    type: String,
+    default: "ایجاد +",
+  },
   apiDeleteBase: String, // مثال: "/api/category" یا "/api/product"
   itemNameKey: {
     type: String,
@@ -218,6 +228,17 @@ watch(debouncedSearch, (val) => {
     currentPage.value = 1;
   }
 });
+
+const handleClearSearch = () => {
+  searchQuery.value = "";
+  searchLocal.value = "";
+  if (props.serverSide && props.onSearch) {
+    props.onSearch("");
+    props?.onRefresh?.();
+  } else {
+    currentPage.value = 1;
+  }
+};
 
 // Sort
 const sortedData = computed(() => {

@@ -7,15 +7,24 @@
       <h1 class="text-2xl font-bold tracking-tight"></h1>
       <div class="flex items-center gap-3">
         <span
-          class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm"
+          class="inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium"
           :class="badgeTone(form.status)"
         >
           <span class="size-2 rounded-full" :class="dotTone(form.status)" />
           {{ statusLabel(form.status) }}
         </span>
-        <span class="text-xs text-neutral-500"
-          >کد سفارش: {{ form.orderCode }}</span
+        <span
+          v-if="!isCreate && form.orderCode"
+          class="text-xs text-neutral-500"
         >
+          کد سفارش: {{ form.orderCode }}
+        </span>
+        <span
+          v-else-if="isCreate"
+          class="text-xs text-brand-600 bg-brand-50 border border-brand-200 px-2.5 py-1 rounded-full font-medium"
+        >
+          سفارش دستی جدید
+        </span>
       </div>
     </div>
 
@@ -23,14 +32,124 @@
     <div class="grid relative grid-cols-1 gap-6 lg:grid-cols-3">
       <!-- Left: Main columns -->
       <div class="lg:col-span-2 space-y-6">
+        <!-- بخش انتخاب کاربر / مشتری (ویژه ایجاد سفارش دستی) -->
+        <OrderCard v-if="isCreate" title="انتخاب مشتری (اختیاری)">
+          <div class="space-y-4">
+            <p class="text-xs text-neutral-500 leading-relaxed">
+              می‌توانید یکی از مشتریان عضو سایت را جستجو و انتخاب کنید تا مشخصات و آدرس‌ها به صورت خودکار بارگذاری شوند، یا اطلاعات گیرنده را در بخش زیر مستقیماً وارد نمایید.
+            </p>
+
+            <!-- اگر کاربری انتخاب شده باشد -->
+            <div
+              v-if="selectedUser"
+              class="flex flex-wrap items-center justify-between gap-3 p-3.5 bg-brand-50/70 border border-brand-200/80 rounded-xl"
+            >
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-brand-500 text-white flex items-center justify-center font-bold text-sm shadow-xs"
+                >
+                  {{ (selectedUser.first_name?.[0] || 'ک') }}
+                </div>
+                <div>
+                  <div class="font-bold text-sm text-gray-900">
+                    {{ `${selectedUser.first_name || ''} ${selectedUser.last_name || ''}`.trim() || 'کاربر بدون نام' }}
+                  </div>
+                  <div class="text-xs text-gray-500 font-mono mt-0.5">
+                    {{ selectedUser.phone || selectedUser.email || 'بدون شماره' }}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                @click="clearSelectedUser"
+                class="text-xs text-rose-600 hover:text-rose-800 bg-white border border-rose-200 px-3 py-1.5 rounded-lg transition"
+              >
+                تغییر / حذف مشتری
+              </button>
+            </div>
+
+            <!-- جعبه جستجوی مشتری -->
+            <div v-else class="relative">
+              <input
+                v-model="userSearchQuery"
+                type="text"
+                placeholder="جستجوی مشتری بر اساس نام، نام خانوادگی یا شماره تماس..."
+                class="input"
+                @input="handleUserSearch"
+              />
+              <div v-if="isSearchingUser" class="absolute left-3 top-2.5">
+                <i class="pi pi-spin pi-spinner text-brand-500 text-sm" />
+              </div>
+
+              <!-- نتایج جستجو -->
+              <div
+                v-if="userSearchResults.length > 0"
+                class="absolute z-20 left-0 right-0 mt-1 max-h-56 overflow-y-auto bg-white border border-gray-200 rounded-xl shadow-lg divide-y divide-gray-100"
+              >
+                <div
+                  v-for="u in userSearchResults"
+                  :key="u.id"
+                  @click="selectUser(u)"
+                  class="p-2.5 hover:bg-brand-50 cursor-pointer flex items-center justify-between text-xs transition"
+                >
+                  <div class="font-medium text-gray-800">
+                    {{ `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'بدون نام' }}
+                  </div>
+                  <div class="text-gray-500 font-mono">
+                    {{ u.phone }}
+                  </div>
+                </div>
+              </div>
+              <div
+                v-else-if="userSearchQuery && !isSearchingUser && userSearched"
+                class="absolute z-20 left-0 right-0 mt-1 p-3 bg-white border border-gray-200 rounded-xl text-xs text-gray-500 text-center shadow-lg"
+              >
+                کاربری با این مشخصات یافت نشد
+              </div>
+            </div>
+
+            <!-- آدرس‌های ذخیره شده مشتری -->
+            <div v-if="userAddresses.length > 0" class="pt-2">
+              <label class="label">آدرس‌های ثبت‌شده مشتری (جهت تکمیل سریع کلیک کنید):</label>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
+                <div
+                  v-for="addr in userAddresses"
+                  :key="addr.id"
+                  @click="applyUserAddress(addr)"
+                  class="cursor-pointer border border-gray-200 hover:border-brand-500 hover:bg-brand-50/40 p-2.5 rounded-xl transition text-xs"
+                >
+                  <div class="font-semibold text-gray-800 mb-1 flex items-center justify-between">
+                    <span>{{ addr.title || 'آدرس' }}</span>
+                    <span class="text-[10px] text-brand-600 font-medium">انتخاب ↵</span>
+                  </div>
+                  <div class="text-gray-600 line-clamp-2">
+                    {{ [addr.state, addr.city, addr.address].filter(Boolean).join('، ') }}
+                  </div>
+                  <div v-if="addr.postal_code" class="text-gray-400 font-mono text-[11px] mt-1">
+                    کد پستی: {{ addr.postal_code }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </OrderCard>
+
         <!-- بخش اطلاعات سفارش -->
         <OrderCard title="اطلاعات سفارش">
           <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <OrderInputField
+              v-if="!isCreate"
               v-model.trim="form.orderCode"
               label="کد سفارش"
               placeholder="NIM-2508…"
               readonly
+            />
+            <OrderInputField
+              v-else
+              model-value="تولید خودکار پس از ثبت"
+              label="کد سفارش"
+              readonly
+              disabled
             />
 
             <OrderSelectField
@@ -93,21 +212,14 @@
               placeholder="RefId…"
             />
 
-            <!-- <OrderInputField
-              v-model="form.paymentInfo.paidAt"
-              label="تاریخ پرداخت"
-              type="datetime-local"
-              :readonly="!form.paymentInfo.isPaid"
-            /> -->
-
-            <DatePicker
+            <CommonPersianDatePicker
               v-model="form.paymentInfo.paidAt"
               label="تاریخ پرداخت"
               :disabled="!form.paymentInfo.isPaid"
               :class="{ 'opacity-50': !form.paymentInfo.isPaid }"
               placeholder="YYYY/MM/DD"
               format="YYYY-MM-DDTHH:mm:ss.SSS[Z]"
-              display-format="jYYYY/jMM/jDD"
+              display-format="jYYYY/jMM/jDD HH:mm"
               editable
               simple
             />
@@ -146,21 +258,23 @@
             <OrderInputField
               v-model.trim="form.shippingInfo.address.state"
               label="استان"
+              required
             />
             <OrderInputField
               v-model.trim="form.shippingInfo.address.city"
               label="شهر"
+              required
             />
             <OrderInputField
               v-model.trim="form.shippingInfo.address.postal_code"
               label="کدپستی"
-              placeholder="10 رقم"
-              pattern="^\d{10}$"
+              placeholder="10 رقم (اختیاری)"
             />
             <OrderTextareaField
               v-model.trim="form.shippingInfo.address.address"
               label="نشانی دقیق"
               rows="3"
+              required
             />
           </div>
         </OrderCard>
@@ -170,9 +284,8 @@
           <div class="overflow-x-auto">
             <table class="min-w-full text-sm">
               <thead>
-                <tr class="text-neutral-500">
+                <tr class="text-neutral-500 border-b border-neutral-100">
                   <th class="p-2 text-right font-medium">محصول</th>
-                  <!-- <th class="p-2 text-right font-medium">SKU</th> -->
                   <th class="p-2 text-right font-medium">قیمت واحد (تومان)</th>
                   <th class="p-2 text-right font-medium">تعداد</th>
                   <th class="p-2 text-right font-medium">مجموع</th>
@@ -188,8 +301,8 @@
                   <td class="p-2">
                     <div class="flex items-center gap-3">
                       <img
-                        :src="it.product.thumbnail"
-                        class="size-10 rounded-lg object-cover"
+                        :src="it.product.thumbnail || '/placeholder.png'"
+                        class="size-10 rounded-lg object-cover border border-neutral-200"
                         alt="thumb"
                       />
                       <div>
@@ -198,11 +311,11 @@
                         </p>
                         <div
                           v-if="it.variant"
-                          class="flex items-center gap-2 mt-1"
+                          class="flex items-center gap-2 mt-1 text-xs text-neutral-600"
                         >
                           <span
                             v-if="getVariantDisplay(it.variant).colorHex"
-                            class="w-4 h-4 rounded-full border border-gray-300"
+                            class="w-3.5 h-3.5 rounded-full border border-gray-300"
                             :style="{ backgroundColor: getVariantDisplay(it.variant).colorHex! }"
                           ></span>
                           {{ getVariantDisplay(it.variant).label }}
@@ -210,14 +323,13 @@
                       </div>
                     </div>
                   </td>
-                  <!-- <td class="p-2 ltr:font-mono">{{ it.product.sku }}</td> -->
                   <td class="p-2">
                     <OrderInputField v-model.number="it.unitPrice" />
                   </td>
                   <td class="p-2">
                     <OrderNumberInput
                       v-model.number="it.quantity"
-                      min="0"
+                      min="1"
                       class="w-24"
                     />
                   </td>
@@ -227,11 +339,16 @@
                   <td class="p-2 text-left">
                     <button
                       type="button"
-                      class="btn-ghost"
+                      class="btn-ghost text-rose-600 hover:text-rose-700"
                       @click="removeItem(idx)"
                     >
                       حذف
                     </button>
+                  </td>
+                </tr>
+                <tr v-if="form.items.length === 0">
+                  <td colspan="5" class="p-6 text-center text-neutral-400">
+                    هنوز کالایی به سفارش اضافه نشده است. برای ثبت سفارش، حداقل یک کالا از دکمه «افزودن آیتم» اضافه کنید.
                   </td>
                 </tr>
               </tbody>
@@ -277,13 +394,13 @@
               </dd>
             </div>
             <div class="border-t pt-3 flex items-center justify-between">
-              <dt class="text-neutral-700">مبلغ نهایی</dt>
-              <dd class="text-lg font-extrabold">
+              <dt class="text-neutral-700 font-semibold">مبلغ نهایی</dt>
+              <dd class="text-lg font-extrabold text-brand-600">
                 {{ formatCurrency(finalTotal) }}
               </dd>
             </div>
           </dl>
-          <p v-if="serverFinalMismatch" class="mt-3 text-xs text-amber-600">
+          <p v-if="serverFinalMismatch && !isCreate" class="mt-3 text-xs text-amber-600">
             توجه: مبلغ نهایی محاسبه‌شده با مقدار سمت سرور متفاوت است. پس از
             ذخیره، مقدار نهایی از سرور نمایش داده می‌شود.
           </p>
@@ -291,7 +408,7 @@
 
         <div class="sticky bottom-4 mt-6 space-y-3">
           <button type="submit" class="btn-primary w-full">
-            ذخیره تغییرات
+            {{ isCreate ? 'ثبت و ایجاد سفارش' : 'ذخیره تغییرات' }}
           </button>
           <button
             type="button"
@@ -357,8 +474,9 @@ interface OrderItem {
 }
 
 interface Order {
-  id: number;
-  orderCode: string;
+  id?: number;
+  userId?: number;
+  orderCode?: string;
   status: OrderStatus;
   shippingCost: number;
   subtotal: number;
@@ -372,26 +490,66 @@ interface Order {
   shippedAt?: Date | string | null;
 }
 
-const props = defineProps<{ order: Order }>();
+const props = withDefaults(
+  defineProps<{
+    order?: Partial<Order>;
+    isCreate?: boolean;
+  }>(),
+  {
+    order: () => ({}),
+    isCreate: false,
+  }
+);
+
 const emit = defineEmits<{
   (e: 'submit', payload: any): void;
   (e: 'cancel'): void;
   (e: 'add-item'): void;
 }>();
 
+const toast = useAppToast();
+
 function deepClone<T>(obj: T): T {
   return JSON.parse(JSON.stringify(obj || {}));
 }
 
-const rawInitial = deepClone(props.order || {} as any);
-if (!rawInitial.shippingInfo) {
-  rawInitial.shippingInfo = { first_name: '', last_name: '', phone: '', note: '', address: {} };
+const rawInitial = deepClone(props.order || ({} as any));
+if (!rawInitial.status) {
+  rawInitial.status = OrderStatus.PENDING;
 }
-if (!rawInitial.shippingInfo.address || typeof rawInitial.shippingInfo.address !== 'object') {
-  rawInitial.shippingInfo.address = { state: '', city: '', postal_code: '', address: '' };
+if (rawInitial.shippingCost === undefined) {
+  rawInitial.shippingCost = 0;
+}
+if (rawInitial.discount === undefined) {
+  rawInitial.discount = 0;
+}
+if (!rawInitial.shippingInfo) {
+  rawInitial.shippingInfo = {
+    first_name: '',
+    last_name: '',
+    phone: '',
+    note: '',
+    address: { state: '', city: '', postal_code: '', address: '' },
+  };
+}
+if (
+  !rawInitial.shippingInfo.address ||
+  typeof rawInitial.shippingInfo.address !== 'object'
+) {
+  rawInitial.shippingInfo.address = {
+    state: '',
+    city: '',
+    postal_code: '',
+    address: '',
+  };
 }
 if (!rawInitial.paymentInfo) {
-  rawInitial.paymentInfo = { method: PaymentMethod.ZARINPAL, isPaid: false, trackingCode: '', paidAt: null };
+  rawInitial.paymentInfo = {
+    method: PaymentMethod.ZARINPAL,
+    isPaid: false,
+    trackingCode: '',
+    paidAt: null,
+  };
 }
 if (!Array.isArray(rawInitial.items)) {
   rawInitial.items = [];
@@ -399,14 +557,88 @@ if (!Array.isArray(rawInitial.items)) {
 
 const form = reactive<Order>(rawInitial);
 
-const statusOptions = [
-  { value: OrderStatus.PENDING, label: 'در انتظار پرداخت' },
-  { value: OrderStatus.PAID, label: 'پرداخت شده' },
-  { value: OrderStatus.PROCESSING, label: 'در حال پردازش' },
-  { value: OrderStatus.SHIPPED, label: 'ارسال شده' },
-  { value: OrderStatus.DELIVERED, label: 'تحویل داده شده' },
-  { value: OrderStatus.CANCELLED, label: 'لغو شده' },
-];
+// مدیریت جستجو و انتخاب کاربر (مشتری) در حالت ثبت دستی
+const selectedUser = ref<any>(null);
+const userSearchQuery = ref('');
+const isSearchingUser = ref(false);
+const userSearched = ref(false);
+const userSearchResults = ref<any[]>([]);
+const userAddresses = ref<any[]>([]);
+let userSearchTimeout: any = null;
+
+function handleUserSearch() {
+  const q = userSearchQuery.value?.trim();
+  if (!q || q.length < 2) {
+    userSearchResults.value = [];
+    userSearched.value = false;
+    return;
+  }
+  clearTimeout(userSearchTimeout);
+  isSearchingUser.value = true;
+  userSearchTimeout = setTimeout(async () => {
+    try {
+      const res: any = await $fetch('/api/user', {
+        query: { search: q, limit: 10 },
+      });
+      const d = res?.data ?? res;
+      userSearchResults.value = d?.items ?? d?.users ?? [];
+      userSearched.value = true;
+    } catch {
+      userSearchResults.value = [];
+    } finally {
+      isSearchingUser.value = false;
+    }
+  }, 400);
+}
+
+async function selectUser(u: any) {
+  selectedUser.value = u;
+  form.userId = u.id;
+  userSearchResults.value = [];
+  userSearchQuery.value = '';
+  userSearched.value = false;
+
+  if (u.first_name) form.shippingInfo.first_name = u.first_name;
+  if (u.last_name) form.shippingInfo.last_name = u.last_name;
+  if (u.phone) form.shippingInfo.phone = u.phone;
+
+  try {
+    const res: any = await $fetch(`/api/user/${u.id}/addresses`);
+    const d = res?.data ?? res;
+    userAddresses.value = d?.addresses ?? (Array.isArray(d) ? d : []);
+  } catch {
+    userAddresses.value = [];
+  }
+}
+
+function clearSelectedUser() {
+  selectedUser.value = null;
+  form.userId = undefined;
+  userAddresses.value = [];
+}
+
+function applyUserAddress(addr: any) {
+  if (!addr) return;
+  if (addr.state) form.shippingInfo.address.state = addr.state;
+  if (addr.city) form.shippingInfo.address.city = addr.city;
+  if (addr.postal_code) form.shippingInfo.address.postal_code = addr.postal_code;
+  if (addr.address) form.shippingInfo.address.address = addr.address;
+  if (addr.title) form.shippingInfo.address.title = addr.title;
+}
+
+const statusOptions = computed(() => {
+  const all = [
+    { value: OrderStatus.PENDING, label: 'در انتظار پرداخت' },
+    { value: OrderStatus.PAID, label: 'پرداخت شده' },
+    { value: OrderStatus.PROCESSING, label: 'در حال پردازش' },
+    { value: OrderStatus.SHIPPED, label: 'ارسال شده' },
+    { value: OrderStatus.DELIVERED, label: 'تحویل داده شده' },
+  ];
+  if (!props.isCreate) {
+    all.push({ value: OrderStatus.CANCELLED, label: 'لغو شده' });
+  }
+  return all;
+});
 
 const paymentMethods = [
   { value: PaymentMethod.ZARINPAL, label: 'زرین‌پال' },
@@ -414,8 +646,45 @@ const paymentMethods = [
   { value: PaymentMethod.SNAPP_PAY, label: 'اسنپ‌پی' },
 ];
 
+const PAID_STATUSES = [
+  OrderStatus.PAID,
+  OrderStatus.PROCESSING,
+  OrderStatus.SHIPPED,
+  OrderStatus.DELIVERED,
+];
+
+watch(
+  () => form.paymentInfo.isPaid,
+  (isPaid) => {
+    if (isPaid && form.status === OrderStatus.PENDING) {
+      form.status = OrderStatus.PAID;
+      if (!form.paymentInfo.paidAt) {
+        form.paymentInfo.paidAt = new Date().toISOString();
+      }
+    } else if (!isPaid && form.status !== OrderStatus.PENDING && props.isCreate) {
+      form.status = OrderStatus.PENDING;
+      form.paymentInfo.paidAt = null;
+    }
+  }
+);
+
+watch(
+  () => form.status,
+  (st) => {
+    if (PAID_STATUSES.includes(st as any)) {
+      form.paymentInfo.isPaid = true;
+      if (!form.paymentInfo.paidAt) {
+        form.paymentInfo.paidAt = new Date().toISOString();
+      }
+    } else if (st === OrderStatus.PENDING && props.isCreate) {
+      form.paymentInfo.isPaid = false;
+      form.paymentInfo.paidAt = null;
+    }
+  }
+);
+
 function statusLabel(st: OrderStatus) {
-  return statusOptions.find((o) => o.value === st)?.label ?? st;
+  return statusOptions.value.find((o) => o.value === st)?.label ?? st;
 }
 
 function badgeTone(st: OrderStatus) {
@@ -482,25 +751,27 @@ watch([subtotal, () => form.shippingCost, () => form.discount], () => {
 
 function normalizeOrderForForm(o: any): any {
   return {
+    ...(o.userId ? { userId: Number(o.userId) } : {}),
     status: o.status,
     shippingCost: Number(o.shippingCost) || 0,
     discount: Number(o.discount) || 0,
-    postalBarcode: o.postalBarcode || undefined,
-    paymentRefId: o.paymentRefId || undefined,
+    postalBarcode: o.postalBarcode?.trim() || undefined,
+    paymentRefId: o.paymentRefId?.trim() || undefined,
     shippingInfo: o.shippingInfo
       ? {
-          first_name: o.shippingInfo.first_name,
-          last_name: o.shippingInfo.last_name,
-          phone: o.shippingInfo.phone,
-          note: o.shippingInfo.note,
+          first_name: o.shippingInfo.first_name?.trim(),
+          last_name: o.shippingInfo.last_name?.trim(),
+          phone: o.shippingInfo.phone?.trim(),
+          note: o.shippingInfo.note?.trim() || undefined,
           address:
             typeof o.shippingInfo.address === 'object' && o.shippingInfo.address !== null
               ? {
-                  title: o.shippingInfo.address.title,
-                  postal_code: o.shippingInfo.address.postal_code || '1111111111',
-                  state: o.shippingInfo.address.state || '',
-                  city: o.shippingInfo.address.city || '',
-                  address: o.shippingInfo.address.address || '',
+                  title: o.shippingInfo.address.title?.trim() || 'آدرس تحویل',
+                  postal_code:
+                    o.shippingInfo.address.postal_code?.trim() || '1111111111',
+                  state: o.shippingInfo.address.state?.trim() || '',
+                  city: o.shippingInfo.address.city?.trim() || '',
+                  address: o.shippingInfo.address.address?.trim() || '',
                 }
               : undefined,
         }
@@ -509,8 +780,8 @@ function normalizeOrderForForm(o: any): any {
       ? {
           method: o.paymentInfo.method,
           isPaid: !!o.paymentInfo.isPaid,
-          trackingCode: o.paymentInfo.trackingCode,
-          paidAt: o.paymentInfo.paidAt,
+          trackingCode: o.paymentInfo.trackingCode?.trim() || undefined,
+          paidAt: o.paymentInfo.paidAt || undefined,
         }
       : undefined,
     items: Array.isArray(o.items)
@@ -532,11 +803,23 @@ function onSubmit() {
     errs.push('نام خانوادگی گیرنده را وارد کنید');
   if (!/^0\d{10}$/.test(form.shippingInfo?.phone || ''))
     errs.push('شماره تماس معتبر نیست (باید ۱۱ رقم و با ۰ شروع شود)');
+  if (!form.shippingInfo?.address?.state?.trim())
+    errs.push('استان گیرنده را وارد کنید');
+  if (!form.shippingInfo?.address?.city?.trim())
+    errs.push('شهر گیرنده را وارد کنید');
+  if (!form.shippingInfo?.address?.address?.trim())
+    errs.push('نشانی دقیق گیرنده را وارد کنید');
+  if (
+    form.shippingInfo?.address?.postal_code &&
+    !/^\d{10}$/.test(form.shippingInfo.address.postal_code.trim())
+  ) {
+    errs.push('کد پستی در صورت وارد شدن باید ۱۰ رقم باشد');
+  }
   if (form.items.length === 0)
     errs.push('سفارش باید حداقل دارای یک قلم کالا باشد');
 
   if (errs.length) {
-    alert(errs.join('\n'));
+    toast.error(errs.join(' - '), 'خطای اعتبارسنجی فرم');
     return;
   }
 
@@ -619,7 +902,7 @@ const formattedShippedAt = computed(() => {
   align-items: center;
   justify-content: center;
   border-radius: 1rem;
-  padding: 0.5rem 1rem;
+  padding: 0.625rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
   background-color: var(--color-brand-500, #b76e79);
@@ -659,29 +942,6 @@ const formattedShippedAt = computed(() => {
 }
 .btn-ghost:hover {
   background-color: var(--color-gray-100, #f7eeec);
-}
-
-/* Card */
-.card {
-  border-radius: 1rem;
-  border: 1px solid var(--color-gray-200, #ebe0df);
-  background-color: #ffffff;
-  box-shadow: var(--shadow-theme-xs);
-}
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--color-gray-100, #f7eeec);
-  padding: 0.75rem 1rem;
-}
-.card-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--color-gray-800, #3a3131);
-}
-.card-body {
-  @apply p-4;
 }
 
 /* Inputs */

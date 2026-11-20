@@ -1,5 +1,7 @@
 export default defineEventHandler(async (event) => {
-  return await adminApiFetch(event, '/newsletter/stats', {
+  const res = await adminApiFetch<any>(event, '/newsletter/stats', {
     method: 'GET',
   });
+
+  return res?.data ?? res;
 });

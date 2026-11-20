@@ -168,10 +168,16 @@
 </template>
 
 <script setup lang="ts">
+import { UserRole } from "@nimoura/shared-types";
+
 const toast = useAppToast();
+const route = useRoute();
+const auth = useAuth();
+
 const showPassword = ref(false);
 const keepLoggedIn = ref(false);
 const isLoading = ref(false);
+
 const body = reactive({
   username: "",
   password: "",
@@ -181,24 +187,70 @@ const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value;
 };
 
-const auth = useAuth();
+onMounted(() => {
+  if (route.query.error === "unauthorized" || route.query.error === "forbidden") {
+    toast.error("نشست کاری شما منقضی شده یا دسترسی به پنل مدیریت مجاز نیست.");
+  }
+
+  if (typeof window !== "undefined") {
+    const savedUser = localStorage.getItem("nimoura_admin_remember");
+    if (savedUser) {
+      body.username = savedUser;
+      keepLoggedIn.value = true;
+    }
+  }
+});
 
 const handleSubmit = async () => {
+  if (!body.username.trim() || !body.password.trim()) {
+    toast.error("لطفاً نام کاربری و رمز عبور را وارد نمایید.");
+    return;
+  }
+
   isLoading.value = true;
 
   try {
     const data: any = await $fetch("/api/auth/login", {
       method: "POST",
-      body,
+      body: {
+        username: body.username.trim(),
+        password: body.password,
+        rememberMe: keepLoggedIn.value,
+      },
     });
 
-    auth.value = data.data.user;
+    const user = data?.data?.user;
 
-    toast.success(data?.data?.message || "ورود با موفقیت انجام شد");
-    navigateTo("/");
+    // بررسی قطعی نقش در کلاینت برای اطمینان مضاعف
+    if (!user || (user.role !== UserRole.ADMIN && user.role !== UserRole.OWNER)) {
+      auth.value = null;
+      await $fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+      toast.error("دسترسی غیرمجاز: حساب کاربری شما اجازه ورود به پنل ادمین را ندارد.");
+      return;
+    }
+
+    auth.value = user;
+
+    // مدیریت وضعیت مرا به خاطر بسپار
+    if (typeof window !== "undefined") {
+      if (keepLoggedIn.value) {
+        localStorage.setItem("nimoura_admin_remember", body.username.trim());
+      } else {
+        localStorage.removeItem("nimoura_admin_remember");
+      }
+    }
+
+    const greeting = user.role === UserRole.OWNER ? "مالک محترم" : "مدیر گرامی";
+    toast.success(`خوش آمدید، ${greeting}! ورود موفقیت‌آمیز بود.`);
+
+    const redirectPath = (route.query.redirect as string) || "/";
+    await navigateTo(redirectPath);
   } catch (error: any) {
     toast.error(
-      error?.data?.data?.message || error?.data?.message || "ورود ناموفق!",
+      error?.data?.statusMessage ||
+      error?.statusMessage ||
+      error?.data?.message ||
+      "نام کاربری یا رمز عبور نامعتبر است."
     );
   } finally {
     isLoading.value = false;

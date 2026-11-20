@@ -13,7 +13,7 @@
       <!-- first_name — editable -->
       <div class="field-group">
         <label class="field-label">
-          نام و نام خانوادگی
+          نام
           <span class="required">*</span>
         </label>
         <div class="field-wrap" :class="{ 'field-wrap--active': editMode, 'field-wrap--error': errors.first_name }">
@@ -21,7 +21,7 @@
           <input
             v-model="form.first_name"
             type="text"
-            placeholder="نام کامل"
+            placeholder="نام"
             class="field-input"
             :disabled="!editMode"
             maxlength="80"
@@ -34,7 +34,7 @@
       <!-- last_name — editable -->
       <div class="field-group">
         <label class="field-label">
-          نام و نام خانوادگی
+          نام خانوادگی
           <span class="required">*</span>
         </label>
         <div class="field-wrap" :class="{ 'field-wrap--active': editMode, 'field-wrap--error': errors.last_name }">
@@ -42,7 +42,7 @@
           <input
             v-model="form.last_name"
             type="text"
-            placeholder="نام کامل"
+            placeholder="نام خانوادگی"
             class="field-input"
             :disabled="!editMode"
             maxlength="80"
@@ -58,7 +58,7 @@
         <div class="field-wrap field-wrap--locked">
           <i class="pi pi-phone field-icon" style="opacity:.4" />
           <input
-            :value="props.user.mobile"
+            :value="currentUser?.mobile || (currentUser as any)?.phone || ''"
             type="tel"
             class="field-input"
             disabled
@@ -126,17 +126,44 @@
 </template>
 
 <script setup lang="ts">
+import type { UserProfile } from '@nimoura/shared-types'
+
+const auth = useAuth()
+
+const props = defineProps<{
+  user?: UserProfile | null
+}>()
+
+const emit = defineEmits<{
+  (e: 'updated', user: any): void
+}>()
+
 // ─── State ────────────────────────────────────
 const toast      = useAppToast()
 const editMode   = ref(false)
 const submitting = ref(false)
 const savedAt    = ref<string>('')
 
+const currentUser = computed(() => props.user || auth.value)
+
 const form = reactive({
-  first_name: props.user.first_name ?? '',
-  last_name:  props.user.last_name  ?? '',
-  birthDate:  props.user.birthDate ?? '',
+  first_name: currentUser.value?.first_name ?? '',
+  last_name:  currentUser.value?.last_name  ?? '',
+  birthDate:  (currentUser.value as any)?.birthDate ?? '',
 })
+
+// Watch currentUser so if it loads asynchronously, form state initializes correctly
+watch(
+  () => currentUser.value,
+  (u) => {
+    if (u && !editMode.value) {
+      form.first_name = u.first_name ?? ''
+      form.last_name  = u.last_name  ?? ''
+      form.birthDate  = (u as any)?.birthDate ?? ''
+    }
+  },
+  { immediate: true, deep: true }
+)
 
 const errors = reactive({
   first_name: '',
@@ -145,9 +172,9 @@ const errors = reactive({
 
 // ─── Handlers ────────────────────────────────
 function startEdit() {
-  form.first_name = props.user.first_name ?? ''
-  form.last_name  = props.user.last_name  ?? ''
-  form.birthDate  = props.user.birthDate ?? ''
+  form.first_name = currentUser.value?.first_name ?? ''
+  form.last_name  = currentUser.value?.last_name  ?? ''
+  form.birthDate  = (currentUser.value as any)?.birthDate ?? ''
 
   errors.first_name = ''
   errors.last_name  = ''
@@ -156,9 +183,9 @@ function startEdit() {
 }
 
 function cancelEdit() {
-  form.first_name = props.user.first_name ?? ''
-  form.last_name  = props.user.last_name  ?? ''
-  form.birthDate  = props.user.birthDate ?? ''
+  form.first_name = currentUser.value?.first_name ?? ''
+  form.last_name  = currentUser.value?.last_name  ?? ''
+  form.birthDate  = (currentUser.value as any)?.birthDate ?? ''
 
   errors.first_name = ''
   errors.last_name  = ''
@@ -193,6 +220,18 @@ function validate() {
   return true
 }
 
+async function updateProfile(payload: {
+  first_name: string
+  last_name: string
+  birthDate?: string
+}) {
+  const response = await $fetch<any>('/api/user/profile', {
+    method: 'PUT',
+    body: payload,
+  })
+  return response?.data?.user || response?.data || response
+}
+
 async function save() {
   if (!validate()) return
 
@@ -204,6 +243,15 @@ async function save() {
       last_name:  form.last_name.trim(),
       birthDate:  form.birthDate.trim() || undefined,
     })
+
+    if (auth.value && updated) {
+      auth.value = {
+        ...auth.value,
+        ...updated,
+        first_name: updated.first_name ?? form.first_name.trim(),
+        last_name:  updated.last_name  ?? form.last_name.trim(),
+      }
+    }
 
     emit('updated', updated)
 
@@ -221,11 +269,11 @@ async function save() {
       life: 3000
     })
 
-  } catch {
+  } catch (err: any) {
     toast.add({
       severity: 'error',
       summary: 'خطا',
-      detail: 'مشکلی پیش آمد، دوباره تلاش کن',
+      detail: err?.data?.message || err?.statusMessage || 'مشکلی پیش آمد، دوباره تلاش کن',
       life: 3000
     })
   } finally {

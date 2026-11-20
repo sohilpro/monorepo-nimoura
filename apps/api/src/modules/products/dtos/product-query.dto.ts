@@ -94,6 +94,15 @@ export class PaginationQueryDto {
 }
 
 export class ProductFilterQueryDto extends PaginationQueryDto {
+  @ApiPropertyOptional({
+    type: [Number],
+    description: 'فیلتر بر اساس شناسه‌های محصولات (جداشده با ویرگول)',
+    example: '1,2,5',
+  })
+  @IsOptional()
+  @Transform(({ value }) => parseIdList(value))
+  ids?: number[];
+
   @ApiPropertyOptional({ description: 'فیلتر بر اساس برند' })
   @IsOptional()
   @Type(() => Number)

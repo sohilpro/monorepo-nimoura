@@ -4,7 +4,7 @@
     :model-value="modelValue"
     placeholder="متن کامل مقاله را همینجا بنویسید..."
     min-height="400px"
-    owner-type="article_content"
+    owner-type="magazine_content_image"
     @update:model-value="(val) => emit('update:modelValue', val)"
   />
 </template>

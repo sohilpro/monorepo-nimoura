@@ -40,8 +40,13 @@ export async function apiFetch<T>(
       ? (error as { response?: { status?: number }; statusCode?: number })
       : {};
 
+    const statusCode = response.response?.status ?? response.statusCode ?? 502;
+    if (statusCode === 401) {
+      deleteCookie(event, 'accesstoken', { path: '/' });
+    }
+
     throw createError({
-      statusCode: response.response?.status ?? response.statusCode ?? 502,
+      statusCode,
       statusMessage: getErrorMessage(error),
     });
   }

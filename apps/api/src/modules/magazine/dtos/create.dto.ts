@@ -54,8 +54,11 @@ export class CreateArticleDto {
 
   @IsOptional()
   @IsArray()
-  @IsNumber({}, { each: true })
-  relatedProductIds?: number[];
+  relatedProductIds?: Array<number | string>;
+
+  @IsOptional()
+  @IsArray()
+  faqs?: Array<{ question: string; answer: string }>;
 
   @IsOptional()
   @IsString()

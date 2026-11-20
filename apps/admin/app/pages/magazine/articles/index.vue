@@ -22,6 +22,20 @@ watch(searchDebounced, (v) => {
 
 const { articles, pending, refresh } = useAdminArticleList(query);
 
+const articleItems = computed<any[]>(() => {
+  const a = articles.value as any;
+  if (!a) return [];
+  if (Array.isArray(a.data?.items)) return a.data.items;
+  if (Array.isArray(a.items)) return a.items;
+  if (Array.isArray(a)) return a;
+  return [];
+});
+
+const articleMeta = computed(() => {
+  const a = articles.value as any;
+  return a?.data?.meta ?? a?.meta ?? null;
+});
+
 const statusOptions = [
   { label: 'همه وضعیت‌ها', value: '' },
   { label: 'پیش‌نویس', value: 'draft' },
@@ -89,7 +103,7 @@ function confirmDelete(id: string, title: string) {
 
     <div class="overflow-hidden rounded-2xl bg-white ring-1 ring-gray-100">
       <DataTable
-        :value="articles?.data.items ?? []"
+        :value="articleItems"
         :loading="pending"
         striped-rows
         data-key="id"
@@ -142,11 +156,11 @@ function confirmDelete(id: string, title: string) {
         </template>
       </DataTable>
 
-      <div v-if="articles?.meta && articles.meta.totalPages > 1" class="border-t border-gray-100 p-3">
+      <div v-if="articleMeta && articleMeta.totalPages > 1" class="border-t border-gray-100 p-3">
         <Paginator
-          :rows="articles.meta.itemsPerPage"
-          :total-records="articles.meta.totalItems"
-          :first="(articles.meta.currentPage - 1) * articles.meta.itemsPerPage"
+          :rows="articleMeta.itemsPerPage"
+          :total-records="articleMeta.totalItems"
+          :first="(articleMeta.currentPage - 1) * articleMeta.itemsPerPage"
           @page="onPage"
         />
       </div>

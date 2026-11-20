@@ -10,6 +10,15 @@ const { data: article, pending, error } = await useAsyncData(
   () => fetchAdminArticle(id),
 );
 
+const articleTitle = computed(() => {
+  const data = article.value as any;
+  return data?.data?.title ?? data?.title;
+});
+
+useHead(() => ({
+  title: articleTitle.value || 'ویرایش مقاله',
+}));
+
 const submitting = ref(false);
 
 async function handleSubmit(payload: ArticleFormPayload) {
@@ -41,6 +50,6 @@ async function handleSubmit(payload: ArticleFormPayload) {
 
     <div v-if="pending" class="text-gray-400">در حال بارگذاری...</div>
     <div v-else-if="error" class="rounded-xl bg-red-50 p-4 text-red-600">مقاله پیدا نشد.</div>
-    <MagazineArticleForm v-else :initial="article.data" :submitting="submitting" @submit="handleSubmit" />
+    <MagazineArticleForm v-else :initial="(article as any)?.data ?? article" :submitting="submitting" @submit="handleSubmit" />
   </div>
 </template>

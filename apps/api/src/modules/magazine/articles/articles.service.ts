@@ -93,6 +93,8 @@ export class ArticlesService {
       metaDescription: dto.metaDescription,
       metaKeywords: dto.metaKeywords,
       canonicalUrl: dto.canonicalUrl,
+      relatedProductIds: dto.relatedProductIds?.map(String) ?? [],
+      faqs: dto.faqs ?? null,
 
       // روابط و مقادیر محاسباتی
       slug,
@@ -139,7 +141,16 @@ export class ArticlesService {
       article.publishedAt = new Date();
     }
 
-    Object.assign(article, dto);
+    if (dto.relatedProductIds !== undefined) {
+      article.relatedProductIds = dto.relatedProductIds.map(String);
+    }
+
+    if (dto.faqs !== undefined) {
+      article.faqs = dto.faqs;
+    }
+
+    const { authorId, categoryId, tagIds, relatedProductIds, faqs, ...rest } = dto;
+    Object.assign(article, rest);
     return this.articleRepo.save(article);
   }
 
@@ -265,6 +276,7 @@ export class ArticlesService {
         metaKeywords: true,
         canonicalUrl: true,
         relatedProductIds: true,
+        faqs: true,
         publishedAt: true,
         createdAt: true,
         updatedAt: true,
@@ -388,6 +400,7 @@ export class ArticlesService {
         metaKeywords: true,
         canonicalUrl: true,
         relatedProductIds: true,
+        faqs: true,
         publishedAt: true,
         createdAt: true,
         updatedAt: true,

@@ -3,7 +3,5 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({
-  layout: false,
-});
+// استفاده از لایه پیش‌فرض سایت برای داشتن هدر و فوتر کامل نیمورا
 </script>

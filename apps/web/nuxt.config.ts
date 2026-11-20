@@ -219,6 +219,9 @@ export default defineNuxtConfig({
   routeRules: {
     // Semi-static pages (SWR cache)
     "/": { swr: 3600 },
+    "/return-policy": { swr: 3600 },
+    "/shipping-pay": { swr: 3600 },
+    "/rules": { swr: 3600 },
     "/categories/**": { swr: 1800 },
     "/brand/**": { swr: 1800 },
     "/products/**": { swr: 1800 },

@@ -75,7 +75,7 @@
                 <NuxtLink to="/faq">سوالات متداول </NuxtLink>
               </li>
               <li>
-                <NuxtLink to="/rules">شرایظ و قوانین </NuxtLink>
+                <NuxtLink to="/rules">شرایط و قوانین</NuxtLink>
               </li>
               <li>
                 <NuxtLink to="/shipping-pay">روش های ارسال و پرداخت </NuxtLink>

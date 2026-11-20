@@ -20,10 +20,11 @@ export interface ArticleFormPayload {
   authorId: string;
   categoryId: string;
   tagIds?: string[];
-  relatedProductIds?: string[];
+  relatedProductIds?: Array<number | string>;
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string;
+  faqs?: Array<{ question: string; answer: string }>;
 }
 
 export function useAdminArticleList(query: Ref<AdminArticleQuery>) {

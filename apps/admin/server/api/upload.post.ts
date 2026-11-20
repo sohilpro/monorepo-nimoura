@@ -16,7 +16,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'فایلی ارسال نشده است' });
   }
 
-  const ownerType = ownerTypePart?.data ? ownerTypePart.data.toString() : 'article_content';
+  let ownerType = ownerTypePart?.data ? ownerTypePart.data.toString() : 'magazine_content_image';
+  if (ownerType === 'article_content') ownerType = 'magazine_content_image';
   const ownerId = ownerIdPart?.data ? ownerIdPart.data.toString() : 'general';
 
   const formData = new FormData();

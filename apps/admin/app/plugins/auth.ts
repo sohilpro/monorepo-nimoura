@@ -5,13 +5,17 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   // اگر قبلاً مقداردهی نشده، حتماً fetch کن
   if (!auth.value) {
     try {
-      // استفاده از await برای اینکه حتما قبل از روت‌ها جواب بیاید
       const { data, error }: any = await useFetch("/api/auth/me");
 
       if (error.value) {
         auth.value = null;
       } else {
-        auth.value = data.value?.data ?? data.value;
+        const u = data.value?.data ?? data.value;
+        if (u && u.id && u.role) {
+          auth.value = u;
+        } else {
+          auth.value = null;
+        }
       }
     } catch {
       auth.value = null;

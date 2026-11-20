@@ -7,6 +7,6 @@
 
 <script setup>
 definePageMeta({
-  middleware: "guest",
+  middleware: "auth",
 });
 </script>

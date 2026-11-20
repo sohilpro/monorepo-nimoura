@@ -3,25 +3,37 @@ import { UserRole } from "@nimoura/shared-types";
 export default defineNuxtRouteMiddleware(async (to) => {
   const auth = useAuth();
 
+  const isAuthPage = to.path === "/auth" || to.path.startsWith("/auth/");
+
   // بازیابی پروفایل کاربر در صورت خالی بودن استیت
   if (!auth.value) {
     try {
       const userRes = await $fetch<any>("/api/auth/me").catch(() => null);
-      if (userRes) {
-        auth.value = userRes?.data ?? userRes;
+      const user = userRes?.data ?? userRes;
+      if (user && user.id && user.role) {
+        auth.value = user;
+      } else {
+        auth.value = null;
       }
     } catch {
-      // ادامه با مقدار null
+      auth.value = null;
     }
   }
 
   // مدیریت صفحه ورود: اگر کاربر قبلاً با سطح دسترسی مجاز وارد شده باشد، هدایت به داشبورد
-  if (to.path === "/auth" || to.path.startsWith("/auth/")) {
+  if (isAuthPage) {
     if (
       auth.value &&
       (auth.value.role === UserRole.ADMIN || auth.value.role === UserRole.OWNER)
     ) {
-      return navigateTo("/");
+      const rawRedirect = to.query.redirect;
+      const target =
+        typeof rawRedirect === "string" &&
+        rawRedirect.startsWith("/") &&
+        !rawRedirect.startsWith("//")
+          ? rawRedirect
+          : "/";
+      return navigateTo(target);
     }
     return;
   }

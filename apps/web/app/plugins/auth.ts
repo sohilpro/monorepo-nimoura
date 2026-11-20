@@ -3,7 +3,6 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
   try {
     const { data, error }: any = await useFetch("/api/auth/me");
-    
 
     if (error.value) {
       if (import.meta.dev) {
@@ -11,7 +10,12 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       }
       auth.value = null;
     } else {
-      auth.value = data.value?.data;
+      const u = data.value?.data ?? data.value;
+      if (u && u.id) {
+        auth.value = u;
+      } else {
+        auth.value = null;
+      }
     }
   } catch (e) {
     if (import.meta.dev) {

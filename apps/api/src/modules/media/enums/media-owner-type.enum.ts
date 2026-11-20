@@ -12,6 +12,7 @@ export enum MediaOwnerType {
   EXPLORE_VIDEO = 'explore_video',
   MAGAZINE_COVER = 'magazine_cover',
   MAGAZINE_CONTENT_IMAGE = 'magazine_content_image', // عکس‌های بین متن مقاله
+  ARTICLE_CONTENT = 'article_content', // نام مستعار برای سازگاری ادیتور متن
   BANNER = 'banner', // بنرهای سایت
   CATEGORY_IMAGE = 'category_image', // تصویر شاخص دسته‌بندی
   CATEGORY_ICON = 'category_icon', // آیکون دسته‌بندی
@@ -31,6 +32,7 @@ export const MEDIA_OWNER_TYPE_TO_FTP_DIR: Record<MediaOwnerType, string> = {
   [MediaOwnerType.EXPLORE_VIDEO]: '/uploads/explore/videos',
   [MediaOwnerType.MAGAZINE_COVER]: '/uploads/magazine/covers',
   [MediaOwnerType.MAGAZINE_CONTENT_IMAGE]: '/uploads/magazine/content',
+  [MediaOwnerType.ARTICLE_CONTENT]: '/uploads/magazine/content',
   [MediaOwnerType.BANNER]: '/uploads/banners',
   [MediaOwnerType.CATEGORY_IMAGE]: '/uploads/categories',
   [MediaOwnerType.CATEGORY_ICON]: '/uploads/categories/icons',
@@ -59,6 +61,12 @@ export const MEDIA_OWNER_TYPE_ALLOWED_MIME: Record<MediaOwnerType, string[]> = {
     'image/jpeg',
     'image/png',
     'image/webp',
+  ],
+  [MediaOwnerType.ARTICLE_CONTENT]: [
+    'image/jpeg',
+    'image/png',
+    'image/webp',
+    'image/gif',
   ],
   [MediaOwnerType.BANNER]: [
     'image/jpeg',
@@ -96,6 +104,7 @@ export const MEDIA_OWNER_TYPE_MAX_SIZE: Record<MediaOwnerType, number> = {
   [MediaOwnerType.EXPLORE_VIDEO]: 200 * 1024 * 1024, // 200MB
   [MediaOwnerType.MAGAZINE_COVER]: 6 * 1024 * 1024, // 6MB
   [MediaOwnerType.MAGAZINE_CONTENT_IMAGE]: 6 * 1024 * 1024, // 6MB
+  [MediaOwnerType.ARTICLE_CONTENT]: 6 * 1024 * 1024, // 6MB
   [MediaOwnerType.BANNER]: 10 * 1024 * 1024, // 10MB
   [MediaOwnerType.CATEGORY_IMAGE]: 4 * 1024 * 1024, // 4MB
   [MediaOwnerType.CATEGORY_ICON]: 2 * 1024 * 1024, // 2MB
@@ -116,6 +125,7 @@ export const MEDIA_OWNER_TYPE_OPTIMIZABLE: Record<MediaOwnerType, boolean> = {
   [MediaOwnerType.EXPLORE_VIDEO]: false, // Sharp روی ویدیو کار نمی‌کند
   [MediaOwnerType.MAGAZINE_COVER]: true,
   [MediaOwnerType.MAGAZINE_CONTENT_IMAGE]: true,
+  [MediaOwnerType.ARTICLE_CONTENT]: true,
   [MediaOwnerType.BANNER]: true,
   [MediaOwnerType.CATEGORY_IMAGE]: true,
   [MediaOwnerType.CATEGORY_ICON]: true,
@@ -158,6 +168,11 @@ export const MEDIA_OWNER_TYPE_OPTIMIZE_OPTIONS: Record<
     quality: 82,
   },
   [MediaOwnerType.MAGAZINE_CONTENT_IMAGE]: {
+    maxWidth: 1400,
+    maxHeight: 1400,
+    quality: 78,
+  },
+  [MediaOwnerType.ARTICLE_CONTENT]: {
     maxWidth: 1400,
     maxHeight: 1400,
     quality: 78,

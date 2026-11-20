@@ -78,28 +78,27 @@ export class CommentsService {
 
   // فقط کامنت‌های تایید شده و بدون parent (سطح اول)، همراه با پاسخ‌های تاییدشده
   async findApprovedByArticle(articleId: number): Promise<Comment[]> {
-    return this.commentRepo.find({
-      where: {
-        article: { id: articleId },
-        status: CommentStatus.APPROVED,
-        parent: IsNull(), // ۲. استفاده از IsNull() به جای null خالص
-      },
-      select: {
-        id: true,
-        name: true,
-        content: true,
-        createdAt: true,
-        replies: {
-          id: true,
-          name: true,
-          content: true,
-          createdAt: true,
-        },
-      },
-      relations: { replies: true },
-      order: { createdAt: 'DESC' },
-      loadEagerRelations: false,
-    });
+    return this.commentRepo
+      .createQueryBuilder('comment')
+      .select([
+        'comment.id',
+        'comment.name',
+        'comment.content',
+        'comment.createdAt',
+        'reply.id',
+        'reply.name',
+        'reply.content',
+        'reply.createdAt',
+      ])
+      .leftJoin('comment.replies', 'reply', 'reply.status = :replyStatus', {
+        replyStatus: CommentStatus.APPROVED,
+      })
+      .where('comment.article_id = :articleId', { articleId })
+      .andWhere('comment.status = :status', { status: CommentStatus.APPROVED })
+      .andWhere('comment.parent_id IS NULL')
+      .orderBy('comment.createdAt', 'DESC')
+      .addOrderBy('reply.createdAt', 'ASC')
+      .getMany();
   }
 
   async findPendingAdmin(): Promise<Comment[]> {

@@ -8,6 +8,7 @@
 <script setup lang="ts">
 definePageMeta({
   layout: false,
+  middleware: "guest",
 });
 
 const step = ref<"phoneAndEmail" | "confirm">("phoneAndEmail");

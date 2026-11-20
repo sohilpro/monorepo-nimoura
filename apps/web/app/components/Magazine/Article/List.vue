@@ -29,7 +29,7 @@ function onPageChange(event: { page: number }) {
       v-else-if="articles && articles.length"
       class="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3"
     >
-      <ArticleCard v-for="article in articles" :key="article.id" :article="article" />
+      <MagazineArticleCard v-for="article in articles" :key="article.id" :article="article" />
     </div>
 
     <div v-else class="rounded-2xl border border-dashed border-nimoura-border py-16 text-center text-nimoura-text-400">

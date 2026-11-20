@@ -45,6 +45,7 @@ export interface Article {
   category: Category;
   tags: Tag[];
   relatedProductIds?: string[];
+  faqs?: Array<{ question: string; answer: string }>;
   publishedAt: string;
   createdAt: string;
 }

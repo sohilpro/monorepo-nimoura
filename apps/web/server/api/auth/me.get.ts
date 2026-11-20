@@ -12,6 +12,7 @@ export default defineEventHandler(async (event) => {
       },
     });
   } catch {
+    deleteCookie(event, 'accesstoken', { path: '/' });
     return null;
   }
 });

@@ -198,12 +198,20 @@
           </button>
           <button
             type="button"
-            title="درج تصویر در متن"
+            title="آپلود و درج تصویر در متن"
             class="toolbar-btn"
             :disabled="uploadingImage"
             @click="triggerImageBrowse"
           >
             <i :class="uploadingImage ? 'pi pi-spin pi-spinner text-xs' : 'pi pi-image text-xs'" />
+          </button>
+          <button
+            type="button"
+            title="درج تصویر با آدرس (URL)"
+            class="toolbar-btn"
+            @click="promptImageUrl"
+          >
+            <i class="pi pi-globe text-xs" />
           </button>
           <input
             ref="imageInputRef"
@@ -212,6 +220,85 @@
             class="hidden"
             @change="handleImageSelected"
           />
+        </div>
+
+        <span class="toolbar-divider" />
+
+        <!-- جدول و اسلایدر محصول -->
+        <div class="flex items-center gap-0.5">
+          <!-- دکمه جدول -->
+          <button
+            type="button"
+            title="درج جدول"
+            class="toolbar-btn"
+            :class="{ 'is-active': editor.isActive('table') }"
+            @click="insertOrToggleTable"
+          >
+            <i class="pi pi-table text-xs" />
+          </button>
+
+          <!-- دکمه‌های کنترل جدول زمانی که نشانگر داخل جدول است -->
+          <template v-if="editor.isActive('table')">
+            <button
+              type="button"
+              title="افزودن سطر بعد"
+              class="toolbar-btn !px-1.5 text-[11px]"
+              @click="editor.chain().focus().addRowAfter().run()"
+            >
+              +سطر
+            </button>
+            <button
+              type="button"
+              title="حذف سطر"
+              class="toolbar-btn !px-1.5 text-[11px] text-red-500 hover:text-red-700"
+              @click="editor.chain().focus().deleteRow().run()"
+            >
+              -سطر
+            </button>
+            <button
+              type="button"
+              title="افزودن ستون بعد"
+              class="toolbar-btn !px-1.5 text-[11px]"
+              @click="editor.chain().focus().addColumnAfter().run()"
+            >
+              +ستون
+            </button>
+            <button
+              type="button"
+              title="حذف ستون"
+              class="toolbar-btn !px-1.5 text-[11px] text-red-500 hover:text-red-700"
+              @click="editor.chain().focus().deleteColumn().run()"
+            >
+              -ستون
+            </button>
+            <button
+              type="button"
+              title="ادغام یا تفکیک سلول"
+              class="toolbar-btn !px-1.5 text-[11px]"
+              @click="editor.chain().focus().mergeOrSplit().run()"
+            >
+              ادغام
+            </button>
+            <button
+              type="button"
+              title="حذف کامل جدول"
+              class="toolbar-btn !px-1.5 text-[11px] text-red-600 hover:bg-red-50"
+              @click="editor.chain().focus().deleteTable().run()"
+            >
+              <i class="pi pi-trash text-xs" />
+            </button>
+          </template>
+
+          <!-- دکمه درج اسلایدر محصولات -->
+          <button
+            type="button"
+            title="درج اسلایدر محصولات در متن"
+            class="toolbar-btn text-nimoura-600 hover:text-nimoura-800"
+            @click="promptProductSlider"
+          >
+            <i class="pi pi-shopping-bag text-xs" />
+            <span class="text-[11px] mr-1 hidden sm:inline">اسلایدر محصول</span>
+          </button>
         </div>
 
         <span class="toolbar-divider" />
@@ -274,6 +361,7 @@ import Link from '@tiptap/extension-link';
 import { Placeholder } from '@tiptap/extensions';
 import TextAlign from '@tiptap/extension-text-align';
 import Underline from '@tiptap/extension-underline';
+import { Table, TableRow, TableHeader, TableCell } from '@tiptap/extension-table';
 
 const props = withDefaults(
   defineProps<{
@@ -289,7 +377,7 @@ const props = withDefaults(
     modelValue: '',
     placeholder: 'متن خود را اینجا وارد کنید...',
     minHeight: '260px',
-    ownerType: 'article_content',
+    ownerType: 'magazine_content_image',
     disabled: false,
     allowH1: false,
   }
@@ -333,6 +421,15 @@ const editor = useEditor({
     Placeholder.configure({
       placeholder: props.placeholder,
     }),
+    Table.configure({
+      resizable: true,
+      HTMLAttributes: {
+        class: 'nimoura-table',
+      },
+    }),
+    TableRow,
+    TableHeader,
+    TableCell,
   ],
   editorProps: {
     attributes: {
@@ -377,7 +474,7 @@ async function handleImageSelected(e: Event) {
   uploadingImage.value = true;
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('ownerType', props.ownerType || 'article_content');
+  formData.append('ownerType', props.ownerType || 'magazine_content_image');
   formData.append('ownerId', 'editor');
 
   try {
@@ -401,6 +498,15 @@ async function handleImageSelected(e: Event) {
   }
 }
 
+function promptImageUrl() {
+  if (!editor.value) return;
+  const url = window.prompt('آدرس تصویر (URL) را وارد کنید:');
+  if (!url || !url.trim()) return;
+  const alt = window.prompt('متن جایگزین تصویر (Alt):') || '';
+  editor.value.chain().focus().setImage({ src: url.trim(), alt }).run();
+  toast.success('تصویر درج شد');
+}
+
 function setLink() {
   if (!editor.value) return;
 
@@ -415,6 +521,46 @@ function setLink() {
   }
 
   editor.value.chain().focus().extendMarkRange('link').setLink({ href: url.trim() }).run();
+}
+
+function insertOrToggleTable() {
+  if (!editor.value) return;
+  if (editor.value.isActive('table')) {
+    editor.value.chain().focus().deleteTable().run();
+  } else {
+    editor.value
+      .chain()
+      .focus()
+      .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+      .run();
+    toast.info('جدول ۳×۳ درج شد');
+  }
+}
+
+function promptProductSlider() {
+  if (!editor.value) return;
+  const idsInput = window.prompt(
+    'شناسه‌های محصولات مورد نظر را با کاما جدا کنید (مثلاً: 1, 2, 5):',
+    ''
+  );
+  if (!idsInput || !idsInput.trim()) return;
+
+  const title =
+    window.prompt(
+      'عنوان اسلایدر محصولات (اختیاری):',
+      'محصولات پیشنهادی این بخش'
+    ) || 'محصولات پیشنهادی';
+
+  const cleanIds = idsInput
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .join(',');
+
+  const sliderHtml = `<div class="nimoura-product-slider my-8 p-4 rounded-2xl bg-nimoura-base/60 border border-nimoura-border/40" data-ids="${cleanIds}" data-title="${title}"><p class="text-sm font-bold text-nimoura-velvet mb-2">🛍️ ${title} (شناسه‌ها: ${cleanIds})</p></div><p></p>`;
+
+  editor.value.chain().focus().insertContent(sliderHtml).run();
+  toast.success('بلوک اسلایدر محصول در متن درج شد');
 }
 </script>
 
@@ -537,5 +683,39 @@ function setLink() {
   border-top: 1px solid var(--color-gray-200, #ebe0df);
   margin-top: 1rem;
   margin-bottom: 1rem;
+}
+
+:deep(.tiptap table) {
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+:deep(.tiptap th),
+:deep(.tiptap td) {
+  border: 1px solid #e5e7eb;
+  padding: 0.65rem 0.85rem;
+  position: relative;
+  text-align: right;
+  vertical-align: top;
+  box-sizing: border-box;
+}
+
+:deep(.tiptap th) {
+  background-color: #f9fafb;
+  font-weight: 700;
+  color: #374151;
+}
+
+:deep(.tiptap .selectedCell:after) {
+  z-index: 2;
+  position: absolute;
+  content: "";
+  left: 0; right: 0; top: 0; bottom: 0;
+  background: rgba(183, 110, 121, 0.15);
+  pointer-events: none;
 }
 </style>

@@ -142,6 +142,10 @@ export class Article extends CustomBaseEntity {
   @Column({ name: 'related_product_ids', type: 'simple-array', nullable: true })
   relatedProductIds: string[];
 
+  // سوالات متداول انتهای مقاله (FAQ)
+  @Column({ name: 'faqs', type: 'jsonb', nullable: true })
+  faqs?: Array<{ question: string; answer: string }> | null;
+
   @Column({ name: 'published_at', type: 'timestamptz', nullable: true })
   @Index()
   publishedAt?: Date | null;

@@ -3,6 +3,7 @@ import { SelectQueryBuilder } from 'typeorm';
 import { TagFilterService } from '../tags/services/tag-filter.service';
 
 export interface ListingFilters {
+  ids?: number[];
   search?: string;
   brandId?: number;
   subBrandId?: number;
@@ -38,6 +39,12 @@ export class ProductListingFilters {
     f: ListingFilters,
     options: { excludeTagGroupId?: number; skipPrice?: boolean } = {},
   ): Promise<void> {
+    if (f.ids?.length) {
+      qb.andWhere('p.id IN (:...filterProductIds)', {
+        filterProductIds: f.ids,
+      });
+    }
+
     if (f.search?.trim()) {
       qb.andWhere(
         '(p.title ILIKE :search OR p.englishTitle ILIKE :search OR p.sku ILIKE :search)',

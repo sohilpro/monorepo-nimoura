@@ -29,6 +29,9 @@ export async function adminApiFetch<T>(
     });
   } catch (error: any) {
     const statusCode = error?.response?.status || error?.statusCode || 502;
+    if (statusCode === 401) {
+      deleteCookie(event, "accesstoken", { path: "/" });
+    }
     const rawMessage =
       error?.data?.message ||
       error?.response?._data?.message ||

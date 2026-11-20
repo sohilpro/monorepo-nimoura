@@ -278,6 +278,7 @@ export class ProductsService {
       .where('p.isAvailable = :isAvailable', { isAvailable: true });
 
     await this.listingFilters.apply(qb, {
+      ids: query.ids,
       search: query.search,
       brandId: query.brandId,
       subBrandId: query.subBrandId,
@@ -550,6 +551,7 @@ export class ProductsService {
       );
 
     await this.listingFilters.apply(qb, {
+      ids: query.ids,
       search: query.search,
       brandId: query.brandId,
       subBrandId: query.subBrandId,
@@ -699,6 +701,7 @@ export class ProductsService {
       .andWhere('p.isAvailable = :active', { active: true });
 
     await this.listingFilters.apply(qb, {
+      ids: query.ids,
       search: query.search,
       subBrandId: activeSubBrand?.id ?? query.subBrandId,
       categoryIds: query.categoryId
@@ -847,6 +850,7 @@ export class ProductsService {
       .where('p.isAvailable = :active', { active: true });
 
     await this.listingFilters.apply(qb, {
+      ids: query.ids,
       search: query.search,
       brandId: query.brandId,
       subBrandId: query.subBrandId,

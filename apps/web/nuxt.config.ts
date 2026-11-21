@@ -38,8 +38,8 @@ export default defineNuxtConfig({
         dir: "rtl",
         lang: "fa",
       },
-      // title: "Nimoura | فروشگاه لوازم آرایشی و زیبایی",
-      title: "27506625",
+      title: "Nimoura | فروشگاه لوازم آرایشی و زیبایی",
+
       script: [
         {
           src: "https://www.zarinpal.com/webservice/TrustCode",
@@ -116,14 +116,6 @@ export default defineNuxtConfig({
         },
       ],
       meta: [
-        {
-          name: "robots",
-          content: "noindex, nofollow",
-        },
-        {
-          name: "enamad",
-          content: "27506625",
-        },
         // رنگ نوار آدرس موبایل (اختیاری)
         { name: "theme-color", content: "#f2d3c6" },
         {

@@ -99,9 +99,7 @@
             </li>
             <li>
               <p>آدرس ایمیل :</p>
-              <NuxtLink to="mailto:info@nimoura.ir">
-                info@nimoura.ir
-              </NuxtLink>
+              <NuxtLink to="mailto:info@nimoura.ir"> info@nimoura.ir </NuxtLink>
             </li>
           </ul>
         </div>
@@ -149,16 +147,18 @@
                 referrerpolicy="origin"
                 target="_blank"
                 class="w-full h-full"
-                to="https://trustseal.enamad.ir/?id=636446&Code=YIBQ5huQKfLRVDVNfoFA3C0LLOYLigf3"
-                ><NuxtImg
+                to="https://trustseal.enamad.ir/?id=8834507&Code=MbLPIm0frDrEpuJoVOOi4l4AuiaixHwF"
+              >
+                <NuxtImg
                   referrerpolicy="origin"
-                  src="https://trustseal.enamad.ir/logo.aspx?id=636446&Code=YIBQ5huQKfLRVDVNfoFA3C0LLOYLigf3"
+                  src="https://trustseal.enamad.ir/logo.aspx?id=8834507&Code=MbLPIm0frDrEpuJoVOOi4l4AuiaixHwF"
                   alt="اینماد"
                   loading="lazy"
                   class="w-full h-full object-contain"
                   style="cursor: pointer"
-                  code="YIBQ5huQKfLRVDVNfoFA3C0LLOYLigf3"
-              /></NuxtLink>
+                  code="MbLPIm0frDrEpuJoVOOi4l4AuiaixHwF"
+                />
+              </NuxtLink>
             </span>
 
             <span
@@ -198,22 +198,33 @@
       <div
         class="w-full rounded-2xl bg-gradient-to-r from-nimoura-primary/15 via-[#FFF2F4] to-nimoura-primary/10 border border-nimoura-primary/20 p-5 md:p-7 mt-8 shadow-sm"
       >
-        <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div
+          class="flex flex-col lg:flex-row items-center justify-between gap-6"
+        >
           <div class="space-y-1.5 text-center lg:text-right max-w-xl">
-            <div class="inline-flex items-center gap-1.5 rounded-full bg-nimoura-primary/10 px-3 py-1 text-xs font-semibold text-nimoura-primary">
+            <div
+              class="inline-flex items-center gap-1.5 rounded-full bg-nimoura-primary/10 px-3 py-1 text-xs font-semibold text-nimoura-primary"
+            >
               <i class="pi pi-gift text-xs" />
               <span>خبرنامه اختصاصی تخفیف‌ها و جشنواره‌ها</span>
             </div>
-            <h3 class="text-lg md:text-xl font-bold font-vazir text-nimoura-text-900">
+            <h3
+              class="text-lg md:text-xl font-bold font-vazir text-nimoura-text-900"
+            >
               اولین نفری باشید که از شگفتانه‌ها و کدهای تخفیف باخبر می‌شوید!
             </h3>
             <p class="text-xs md:text-sm text-nimoura-text-600 leading-relaxed">
-              شماره موبایل یا ایمیل‌تان را ثبت کنید تا کدهای تخفیف هدیه، حراج‌های شگفت‌انگیز و جشنواره‌های فصلی نیمورا مستقیماً برای شما پیامک یا ایمیل شود.
+              شماره موبایل یا ایمیل‌تان را ثبت کنید تا کدهای تخفیف هدیه،
+              حراج‌های شگفت‌انگیز و جشنواره‌های فصلی نیمورا مستقیماً برای شما
+              پیامک یا ایمیل شود.
             </p>
           </div>
 
           <div class="w-full lg:w-auto shrink-0">
-            <div v-if="newsletterSuccess" class="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-5 py-3 text-emerald-800 text-sm font-semibold">
+            <div
+              v-if="newsletterSuccess"
+              class="flex items-center justify-center gap-2 rounded-xl bg-emerald-50 border border-emerald-200 px-5 py-3 text-emerald-800 text-sm font-semibold"
+            >
               <i class="pi pi-check-circle text-base text-emerald-600" />
               <span>عضویت شما با موفقیت ثبت شد! منتظر شگفتانه‌ها باشید.</span>
             </div>
@@ -224,7 +235,9 @@
               @submit.prevent="handleNewsletterSubmit"
             >
               <div class="relative flex-1">
-                <i class="pi pi-bell absolute right-3.5 top-1/2 -translate-y-1/2 text-nimoura-text-400 text-xs pointer-events-none" />
+                <i
+                  class="pi pi-bell absolute right-3.5 top-1/2 -translate-y-1/2 text-nimoura-text-400 text-xs pointer-events-none"
+                />
                 <input
                   v-model="newsletterContact"
                   type="text"
@@ -239,9 +252,14 @@
                 :disabled="newsletterLoading || !newsletterContact.trim()"
                 class="px-5 py-2.5 bg-nimoura-primary hover:bg-nimoura-primary/95 text-white rounded-xl font-vazir text-xs sm:text-sm font-medium transition-all disabled:opacity-50 shrink-0 inline-flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
               >
-                <i v-if="newsletterLoading" class="pi pi-spin pi-spinner text-xs" />
+                <i
+                  v-if="newsletterLoading"
+                  class="pi pi-spin pi-spinner text-xs"
+                />
                 <i v-else class="pi pi-send text-xs" />
-                <span>{{ newsletterLoading ? 'در حال ثبت...' : 'عضویت در خبرنامه' }}</span>
+                <span>{{
+                  newsletterLoading ? "در حال ثبت..." : "عضویت در خبرنامه"
+                }}</span>
               </button>
             </form>
           </div>
@@ -255,7 +273,7 @@
 </template>
 
 <script setup lang="ts">
-const newsletterContact = ref('');
+const newsletterContact = ref("");
 const newsletterLoading = ref(false);
 const newsletterSuccess = ref(false);
 const toast = useAppToast();
@@ -264,9 +282,9 @@ async function handleNewsletterSubmit() {
   const contact = newsletterContact.value.trim();
   if (!contact) {
     toast.add({
-      severity: 'warn',
-      summary: 'ورودی الزامی است',
-      detail: 'لطفاً شماره موبایل یا ایمیل خود را وارد کنید.',
+      severity: "warn",
+      summary: "ورودی الزامی است",
+      detail: "لطفاً شماره موبایل یا ایمیل خود را وارد کنید.",
       life: 3000,
     });
     return;
@@ -276,9 +294,10 @@ async function handleNewsletterSubmit() {
   const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contact);
   if (!isPhone && !isEmail) {
     toast.add({
-      severity: 'error',
-      summary: 'فرمت نامعتبر',
-      detail: 'لطفاً یک شماره موبایل معتبر (مثلاً ۰۹۱۲۳۴۵۶۷۸۹) یا یک ایمیل صحیح وارد کنید.',
+      severity: "error",
+      summary: "فرمت نامعتبر",
+      detail:
+        "لطفاً یک شماره موبایل معتبر (مثلاً ۰۹۱۲۳۴۵۶۷۸۹) یا یک ایمیل صحیح وارد کنید.",
       life: 4000,
     });
     return;
@@ -286,22 +305,26 @@ async function handleNewsletterSubmit() {
 
   newsletterLoading.value = true;
   try {
-    const res: any = await $fetch('/api/newsletter/subscribe', {
-      method: 'POST',
-      body: { contact, source: 'footer' },
+    const res: any = await $fetch("/api/newsletter/subscribe", {
+      method: "POST",
+      body: { contact, source: "footer" },
     });
     newsletterSuccess.value = true;
     toast.add({
-      severity: 'success',
-      summary: 'عضویت در خبرنامه',
-      detail: res?.data?.message || res?.message || 'عضویت شما با موفقیت ثبت شد!',
+      severity: "success",
+      summary: "عضویت در خبرنامه",
+      detail:
+        res?.data?.message || res?.message || "عضویت شما با موفقیت ثبت شد!",
       life: 4000,
     });
   } catch (err: any) {
     toast.add({
-      severity: 'error',
-      summary: 'خطا در ثبت عضویت',
-      detail: err?.data?.message || err?.message || 'مشکلی پیش آمد، لطفاً دوباره تلاش کنید.',
+      severity: "error",
+      summary: "خطا در ثبت عضویت",
+      detail:
+        err?.data?.message ||
+        err?.message ||
+        "مشکلی پیش آمد، لطفاً دوباره تلاش کنید.",
       life: 4000,
     });
   } finally {

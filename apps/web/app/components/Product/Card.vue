@@ -10,20 +10,18 @@
     <UtilsOffBadge
       v-if="hasDiscount && discountPercent > 0"
       :value="discountPercent"
-      class="absolute top-0 end-0 z-10"
+      class="absolute top-0 inset-e-0 z-10"
     />
 
     <NuxtLink
       :to="productUrl"
       class="relative flex shrink-0 items-center justify-center overflow-hidden"
       :class="
-        isGrid
-          ? 'aspect-square w-full rounded-xl bg-nimoura-base/40'
-          : 'h-27'
+        isGrid ? 'aspect-square w-full rounded-xl bg-nimoura-base/40' : 'h-27'
       "
     >
       <NuxtImg
-        src="https://storage.khanoumi.com/ProductImages/52174-202541512441453.jpg"
+        :src="product.thumbnail"
         :alt="product.title || 'تصویر محصول'"
         format="webp,jpeg"
         :width="isGrid ? 256 : 96"
@@ -89,22 +87,27 @@
 </template>
 
 <script setup lang="ts">
-const { dontShowAddCartBtn, product, variant = 'compact', showBadges = false } =
-  defineProps<{
-    dontShowAddCartBtn?: boolean;
-    product: any;
-    variant?: 'compact' | 'grid';
-    showBadges?: boolean;
-  }>();
+const {
+  dontShowAddCartBtn,
+  product,
+  variant = "compact",
+  showBadges = false,
+} = defineProps<{
+  dontShowAddCartBtn?: boolean;
+  product: any;
+  variant?: "compact" | "grid";
+  showBadges?: boolean;
+}>();
 
-const isGrid = computed(() => variant === 'grid');
+const isGrid = computed(() => variant === "grid");
 
 const productUrl = computed(
-  () => `/product/${encodeURIComponent(product?.slug || createSlug(product?.title || ''))}`,
+  () =>
+    `/product/${encodeURIComponent(product?.slug || createSlug(product?.title || ""))}`,
 );
 
 const isOutOfStock = computed(
-  () => product?.stockStatus === 'out_of_stock' || product?.stock === 0,
+  () => product?.stockStatus === "out_of_stock" || product?.stock === 0,
 );
 
 const basePrice = computed(() => Number(product?.price) || 0);

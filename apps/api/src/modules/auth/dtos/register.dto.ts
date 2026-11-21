@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { AuthMessage } from '../../../common/auth/enums/auth-message.enum';
-import { Length, MinLength } from 'class-validator';
+import { IsOptional, Length, MinLength } from 'class-validator';
 import { TrimString } from 'src/common/decorators/trim-string.decorator';
 import { IsValidUsername } from '../../../common/auth/validators/is-username-valid.decorator';
 
@@ -48,5 +48,6 @@ export class RegisterDto {
     required: false,
   })
   @TrimString()
+  @IsOptional()
   referralCode?: string;
 }

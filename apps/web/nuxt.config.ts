@@ -155,7 +155,7 @@ export default defineNuxtConfig({
     torobPassword: process.env.TOROB_PASSWORD || "",
     torobClientId: process.env.TOROB_CLIENT_ID || "",
     torobClientSecret: process.env.TOROB_CLIENT_SECRET || "",
-    apiBase: process.env.NUXT_PUBLIC_API_BASE || "http://localhost:4000/api/v1",
+    apiBase: process.env.NUXT_PUBLIC_API_BASE || "https://api.nimoura.ir/api/v1",
     public: {
       baseURL: "https://nimoura.ir",
       shop3dMode: "off", // off | admin | percent | all

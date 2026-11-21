@@ -51,14 +51,18 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const { first_name, password, last_name } = registerDto;
+    const { first_name, last_name, password, referralCode } = registerDto;
+
     const { type, username } = this.DetectUsername(registerDto.username);
 
     let user = await this.userRepository.findOne({
       where: { [type]: username },
       select: { id: true },
     });
-    if (user) throw new ConflictException(AuthMessage.ConflictUser);
+
+    if (user) {
+      throw new ConflictException(AuthMessage.ConflictUser);
+    }
 
     const userCount = await this.userRepository.count();
     const role: UserRole = userCount === 0 ? UserRole.OWNER : UserRole.USER;
@@ -73,15 +77,17 @@ export class AuthService {
       [type]: username,
       password: hashedPassword,
     });
+
     user = await this.userRepository.save(user);
 
-    if (registerDto.referralCode?.trim()) {
+    if (referralCode?.trim()) {
       await this.loyaltyService
-        .registerReferral(registerDto.referralCode.trim(), user.id)
+        .registerReferral(referralCode.trim(), user.id)
         .catch(() => null);
     }
 
     const accessToken = this.tokensService.genAccessToken(user);
+
     return {
       message: AuthMessage.RegisterSuccess,
       accessToken,

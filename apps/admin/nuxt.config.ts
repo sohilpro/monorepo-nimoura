@@ -53,10 +53,10 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     apiBase:
-      process.env.NUXT_ADMIN_API_BASE || "http://localhost:4000/api/v1/admin",
+      process.env.NUXT_ADMIN_API_BASE || "http://api:4000/api/v1/admin",
     public: {
       apiBasePublic:
-        process.env.NUXT_PUBLIC_API_BASE || "http://localhost:4000/api/v1",
+        process.env.NUXT_PUBLIC_API_BASE || "http://api:4000/api/v1",
     },
   },
 

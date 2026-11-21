@@ -1,7 +1,7 @@
-.git
 node_modules
 .nuxt
 .output
+dist
+.git
 .env
-.DS_Store
-npm-debug.log*
+*.log

@@ -22,9 +22,15 @@ export default defineNuxtConfig({
   },
 
   alias: {
-    "@nimoura/ui": fileURLToPath(new URL("../../packages/ui/src", import.meta.url)),
-    "@nimoura/utils": fileURLToPath(new URL("../../packages/utils/src", import.meta.url)),
-    "@nimoura/shared-types": fileURLToPath(new URL("../../packages/shared-types/src", import.meta.url)),
+    "@nimoura/ui": fileURLToPath(
+      new URL("../../packages/ui/src", import.meta.url),
+    ),
+    "@nimoura/utils": fileURLToPath(
+      new URL("../../packages/utils/src", import.meta.url),
+    ),
+    "@nimoura/shared-types": fileURLToPath(
+      new URL("../../packages/shared-types/src", import.meta.url),
+    ),
   },
   app: {
     head: {
@@ -32,7 +38,8 @@ export default defineNuxtConfig({
         dir: "rtl",
         lang: "fa",
       },
-      title: "Nimoura | فروشگاه لوازم آرایشی و زیبایی",
+      // title: "Nimoura | فروشگاه لوازم آرایشی و زیبایی",
+      title: "27506625",
       script: [
         {
           src: "https://www.zarinpal.com/webservice/TrustCode",
@@ -109,6 +116,14 @@ export default defineNuxtConfig({
         },
       ],
       meta: [
+        {
+          name: "robots",
+          content: "noindex, nofollow",
+        },
+        {
+          name: "enamad",
+          content: "27506625",
+        },
         // رنگ نوار آدرس موبایل (اختیاری)
         { name: "theme-color", content: "#f2d3c6" },
         {
@@ -155,7 +170,8 @@ export default defineNuxtConfig({
     torobPassword: process.env.TOROB_PASSWORD || "",
     torobClientId: process.env.TOROB_CLIENT_ID || "",
     torobClientSecret: process.env.TOROB_CLIENT_SECRET || "",
-    apiBase: process.env.NUXT_PUBLIC_API_BASE || "https://api.nimoura.ir/api/v1",
+    apiBase:
+      process.env.NUXT_PUBLIC_API_BASE || "https://api.nimoura.ir/api/v1",
     public: {
       baseURL: "https://nimoura.ir",
       shop3dMode: "off", // off | admin | percent | all
@@ -228,12 +244,24 @@ export default defineNuxtConfig({
     // Product pages (SSR)
     "/product/**": { ssr: true },
     // Private / User account & Checkout (SPA mode, noindex)
-    "/profile/**": { ssr: false, headers: { "X-Robots-Tag": "noindex, nofollow" } },
-    "/cart/**": { ssr: false, headers: { "X-Robots-Tag": "noindex, nofollow" } },
-    "/auth/**": { ssr: false, headers: { "X-Robots-Tag": "noindex, nofollow" } },
+    "/profile/**": {
+      ssr: false,
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
+    },
+    "/cart/**": {
+      ssr: false,
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
+    },
+    "/auth/**": {
+      ssr: false,
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
+    },
     "/register": { redirect: { to: "/auth", statusCode: 301 } },
     "/register/**": { redirect: { to: "/auth", statusCode: 301 } },
-    "/payment/**": { ssr: false, headers: { "X-Robots-Tag": "noindex, nofollow" } },
+    "/payment/**": {
+      ssr: false,
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
+    },
     // Store 3D & OG
     "/store-3d": { headers: { "cache-control": "no-cache" } },
     "/og/**": { headers: { "cache-control": "public, max-age=86400" } },

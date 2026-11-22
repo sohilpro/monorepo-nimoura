@@ -68,7 +68,7 @@
               class="relative flex h-16 w-full items-center justify-center overflow-hidden rounded-xl bg-nimoura-base/40 p-2 transition-colors group-hover:bg-nimoura-base/80 sm:h-20"
             >
               <img
-                :src="brand.logo"
+                :src="formatImageUrl(brand.logo)"
                 :alt="`لوگوی برند ${brand.name}`"
                 loading="lazy"
                 class="max-h-full max-w-full object-contain filter grayscale opacity-75 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105"

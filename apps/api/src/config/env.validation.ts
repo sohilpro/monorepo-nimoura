@@ -100,6 +100,14 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsOptional()
+  MELI_SMS_PATTERN_FIRST_ORDER?: string;
+
+  @IsString()
+  @IsOptional()
+  MELI_FIRST_ORDER?: string;
+
+  @IsString()
+  @IsOptional()
   ZARINPAL_MERCHANT_ID?: string;
 }
 

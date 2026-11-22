@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { extname, join } from 'path';
 import { randomUUID } from 'crypto';
 import { promises as fs, existsSync } from 'fs';
@@ -20,6 +20,7 @@ import {
   MediaOwnerType,
 } from './enums/media-owner-type.enum';
 import { MediaQueryDto } from './dtos/media-query.dto';
+import { UpdateMediaDto } from './dtos/update-media.dto';
 import { getErrorCode } from 'src/common/utils/error.helper';
 
 interface UploadOptions {
@@ -30,12 +31,20 @@ interface UploadOptions {
 
 @Injectable()
 export class MediaStaticService {
-  // روت ذخیره‌سازی فایل‌ها داخل پوشه uploads (پشتیبانی همزمان از اجرای ریشه مونو‌ریپو و داکر)
-  private readonly rootUploadDir = existsSync(
-    join(process.cwd(), 'apps', 'backend', 'uploads'),
-  )
-    ? join(process.cwd(), 'apps', 'backend', 'uploads')
-    : join(process.cwd(), 'uploads');
+  // روت ذخیره‌سازی فایل‌ها داخل پوشه uploads (پشتیبانی همزمان از اجرای ریشه مونو‌ریپو، فولدر api و داکر)
+  private readonly rootUploadDir = (() => {
+    const candidates = [
+      join(process.cwd(), 'apps', 'api', 'uploads'),
+      join(process.cwd(), 'uploads'),
+      join(process.cwd(), 'apps', 'backend', 'uploads'),
+    ];
+    for (const dir of candidates) {
+      if (existsSync(dir)) return dir;
+    }
+    return existsSync(join(process.cwd(), 'apps', 'api'))
+      ? join(process.cwd(), 'apps', 'api', 'uploads')
+      : join(process.cwd(), 'uploads');
+  })();
 
   constructor(
     @InjectRepository(Media) private readonly mediaRepo: Repository<Media>,
@@ -106,10 +115,10 @@ export class MediaStaticService {
       });
     }
 
-    // ۵. جستجوی بهینه و Case-Insensitive در نام فایل‌ها
+    // ۵. جستجوی بهینه و Case-Insensitive در نام فایل‌ها و شناسه مالک
     if (search && search.trim() !== '') {
       queryBuilder.andWhere(
-        '(LOWER(media.originalName) LIKE LOWER(:search) OR LOWER(media.fileName) LIKE LOWER(:search))',
+        '(LOWER(media.originalName) LIKE LOWER(:search) OR LOWER(media.fileName) LIKE LOWER(:search) OR LOWER(media.ownerId) LIKE LOWER(:search))',
         { search: `%${search.trim()}%` },
       );
     }
@@ -318,6 +327,121 @@ export class MediaStaticService {
       .set({ ownerType: newOwnerType, ownerId: newOwnerId })
       .where('publicUrl IN (:...validUrls)', { validUrls })
       .execute();
+  }
+
+  /**
+   * ویرایش مشخصات و مالکیت یک مدیا
+   */
+  async updateMedia(id: number, dto: UpdateMediaDto): Promise<Media> {
+    const media = await this.mediaRepo.findOne({ where: { id } });
+    if (!media) {
+      throw new NotFoundException('فایل مورد نظر یافت نشد');
+    }
+
+    if (dto.ownerType !== undefined) {
+      media.ownerType = dto.ownerType;
+    }
+    if (dto.ownerId !== undefined) {
+      media.ownerId = String(dto.ownerId).trim();
+    }
+    if (dto.originalName !== undefined) {
+      media.originalName = dto.originalName.trim();
+    }
+    if (dto.order !== undefined) {
+      media.order = Number(dto.order) || 0;
+    }
+
+    return await this.mediaRepo.save(media);
+  }
+
+  /**
+   * حذف دسته‌جمعی چند فایل بر اساس آرایه‌ای از شناسه‌ها
+   */
+  async deleteManyByIds(ids: number[]): Promise<{ deletedCount: number }> {
+    if (!ids || ids.length === 0) return { deletedCount: 0 };
+
+    const mediaList = await this.mediaRepo.find({
+      where: { id: In(ids) },
+    });
+
+    if (mediaList.length === 0) return { deletedCount: 0 };
+
+    await Promise.all(mediaList.map((m) => this.removeFileFromDisk(m.ftpPath)));
+    await this.mediaRepo.remove(mediaList);
+
+    return { deletedCount: mediaList.length };
+  }
+
+  /**
+   * دریافت آمار کلی و تفکیکی رسانه‌ها و فایل‌ها
+   */
+  async getStats() {
+    const totalCount = await this.mediaRepo.count();
+
+    const rawSize = await this.mediaRepo
+      .createQueryBuilder('media')
+      .select('SUM(media.size)', 'totalSize')
+      .getRawOne();
+    const totalSize = Number(rawSize?.totalSize || 0);
+
+    const tempCount = await this.mediaRepo
+      .createQueryBuilder('media')
+      .where("media.ownerId = 'temp' OR media.ownerId LIKE 'temp_%'")
+      .getCount();
+
+    // تفکیک بر اساس نوع مالک
+    const byOwnerTypeRaw = await this.mediaRepo
+      .createQueryBuilder('media')
+      .select('media.ownerType', 'ownerType')
+      .addSelect('COUNT(media.id)', 'count')
+      .addSelect('SUM(media.size)', 'size')
+      .groupBy('media.ownerType')
+      .getRawMany();
+
+    const byOwnerType: Record<string, { count: number; size: number }> = {};
+    for (const row of byOwnerTypeRaw) {
+      if (row.ownerType) {
+        byOwnerType[row.ownerType] = {
+          count: Number(row.count || 0),
+          size: Number(row.size || 0),
+        };
+      }
+    }
+
+    // تفکیک دسته‌ای فرمت‌ها
+    const imageCount = await this.mediaRepo
+      .createQueryBuilder('media')
+      .where("media.mimeType LIKE 'image/%'")
+      .getCount();
+
+    const videoCount = await this.mediaRepo
+      .createQueryBuilder('media')
+      .where("media.mimeType LIKE 'video/%'")
+      .getCount();
+
+    const docCount = await this.mediaRepo
+      .createQueryBuilder('media')
+      .where("media.mimeType LIKE 'application/%' OR media.mimeType LIKE 'text/%'")
+      .getCount();
+
+    const otherCount = Math.max(
+      0,
+      totalCount - (imageCount + videoCount + docCount),
+    );
+
+    return {
+      totalCount,
+      totalSize,
+      tempCount,
+      attachedCount: Math.max(0, totalCount - tempCount),
+      byOwnerType,
+      byMimeCategory: {
+        images: imageCount,
+        videos: videoCount,
+        documents: docCount,
+        others: otherCount,
+      },
+    };
   }
 
   /** حذف همه انواع مدیای مرتبط با یک مالک */

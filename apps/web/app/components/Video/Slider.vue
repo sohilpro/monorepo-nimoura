@@ -117,7 +117,7 @@ function openVideo(index: number) {
           >
             <!-- Poster -->
             <img
-              :src="video.posterUrl"
+              :src="formatImageUrl(video.posterUrl)"
               :alt="video.title"
               class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
               loading="lazy"

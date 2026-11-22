@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, In, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Not, Repository } from 'typeorm';
 import { randomBytes } from 'crypto';
 import { LoyaltyLedger } from './entities/loyalty-ledger.entity';
 import { LoyaltyVisit } from './entities/loyalty-visit.entity';
@@ -894,21 +894,20 @@ export class LoyaltyService {
       });
       const savedPromo = await promoRepo.save(promo);
 
-      // ۳. ثبت رفرال با وضعیت COMPLETED و ذخیره کد تخفیف صادرشده
+      // ۳. ثبت رفرال با وضعیت PENDING (در انتظار اولین خرید دوست) و ذخیره کد تخفیف صادرشده
       const referral = em.getRepository(Referral).create({
         referrerId: referrer.id,
         referredUserId: newUserId,
         referralCode: cleanCode,
         discountCode: generatedPromoCode,
         promotionId: savedPromo.id,
-        status: ReferralStatus.COMPLETED,
+        status: ReferralStatus.PENDING,
         rewardAmount: friendCreditAmount,
         discountAmount: inviterDiscountAmount,
-        completedAt: new Date(),
       });
       const savedReferral = await em.getRepository(Referral).save(referral);
 
-      // ۴. ارسال پیامک به معرف شامل کد تخفیف ۵۰ هزار تومانی
+      // ۴. ارسال پیامک به معرف شامل کد تخفیف ۵۰ هزار تومانی (مرحله اول)
       if (referrer.mobile) {
         this.smsService
           .sendReferralSuccessViaMeliSms(referrer.mobile, generatedPromoCode)
@@ -981,10 +980,15 @@ export class LoyaltyService {
 
     if (!ref) return null;
 
-    const paidCount = await em.count(Orders, {
-      where: { user: { id: referredUserId }, status: In([...PAID_STATUSES]) },
+    // بررسی اینکه آیا قبلاً سفارش پرداخت‌شده دیگری غیر از این سفارش وجود داشته یا خیر
+    const otherPaidCount = await em.count(Orders, {
+      where: {
+        user: { id: referredUserId },
+        status: In([...PAID_STATUSES]),
+        id: Not(orderId),
+      },
     });
-    if (paidCount > 1) {
+    if (otherPaidCount > 0) {
       return null;
     }
 
@@ -996,7 +1000,7 @@ export class LoyaltyService {
     });
 
     if (!existing) {
-      const reward = Number(ref.rewardAmount);
+      const reward = Number(ref.rewardAmount) || 50000;
       await em.getRepository(LoyaltyLedger).insert({
         userId: ref.referrerId,
         amount: reward,
@@ -1020,7 +1024,7 @@ export class LoyaltyService {
           : 'دوست شما');
 
       this.smsService
-        .sendReferralSuccessViaMeliSms(ref.referrer.mobile, friendName)
+        .sendReferralFirstOrderViaMeliSms(ref.referrer.mobile, friendName)
         .catch(() => null);
     }
 

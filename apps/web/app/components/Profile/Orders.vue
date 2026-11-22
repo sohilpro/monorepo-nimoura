@@ -73,7 +73,7 @@
           >
             <img
               v-if="item.product?.thumbnail"
-              :src="item.product.thumbnail"
+              :src="formatImageUrl(item.product.thumbnail)"
               :alt="item.product?.title"
               class="h-full w-full object-cover"
             />

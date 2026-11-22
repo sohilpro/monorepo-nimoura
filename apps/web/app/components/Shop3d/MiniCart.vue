@@ -61,7 +61,7 @@ async function run(fn: () => Promise<void>) {
         <ul class="max-h-[45dvh] space-y-2 overflow-y-auto">
           <li v-for="l in lines" :key="l.key" class="flex items-center gap-2.5">
             <div class="size-12 shrink-0 overflow-hidden rounded-xl bg-white ring-1 ring-nimoura-border/50">
-              <img v-if="l.image" :src="l.image" :alt="l.title" class="size-full object-contain" loading="lazy" />
+              <img v-if="l.image" :src="formatImageUrl(l.image)" :alt="l.title" class="size-full object-contain" loading="lazy" />
             </div>
             <div class="min-w-0 flex-1">
               <p class="line-clamp-1 text-xs">{{ l.title }}</p>

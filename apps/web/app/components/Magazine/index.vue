@@ -258,7 +258,7 @@ function formatDate(date?: string) {
           <div class="aspect-[16/10] w-full sm:aspect-[21/9] bg-nimoura-velvet">
             <img
               v-if="hero.coverImage"
-              :src="hero.coverImage"
+              :src="formatImageUrl(hero.coverImage)"
               :alt="hero.coverImageAlt || hero.title"
               class="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.03]"
             />
@@ -339,7 +339,7 @@ function formatDate(date?: string) {
               <div class="h-20 w-24 shrink-0 overflow-hidden rounded-xl bg-nimoura-accent/15">
                 <img
                   v-if="p.coverImage"
-                  :src="p.coverImage"
+                  :src="formatImageUrl(p.coverImage)"
                   :alt="p.title"
                   class="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                 />

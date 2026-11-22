@@ -26,7 +26,7 @@ function formatDate(date?: string) {
     >
       <img
         v-if="article.coverImage"
-        :src="article.coverImage"
+        :src="formatImageUrl(article.coverImage)"
         :alt="article.coverImageAlt || article.title"
         loading="lazy"
         class="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.05]"

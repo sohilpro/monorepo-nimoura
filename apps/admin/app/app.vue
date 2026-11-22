@@ -5,6 +5,7 @@ const routeTitles: Array<{ pattern: RegExp; title: string }> = [
   { pattern: /^\/auth(?:\/|$)/, title: 'ورود به پنل' },
   { pattern: /^\/loyalty(?:\/|$)/, title: 'باشگاه مشتریان' },
   { pattern: /^\/banners(?:\/|$)/, title: 'بنرها' },
+  { pattern: /^\/media(?:\/|$)/, title: 'مدیریت رسانه و فایل‌ها' },
   { pattern: /^\/brand(?:\/|$)/, title: 'برندها' },
   { pattern: /^\/category(?:\/|$)/, title: 'دسته‌بندی‌ها' },
   { pattern: /^\/comments(?:\/|$)/, title: 'نظرات' },
@@ -35,6 +36,7 @@ useHead(() => ({
 
 <template>
   <Toast position="top-center" />
+  <ConfirmDialog />
   <NuxtLayout>
     <NuxtLoadingIndicator color="#b76e79" />
     <NuxtPage />

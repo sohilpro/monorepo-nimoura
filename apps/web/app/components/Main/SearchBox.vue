@@ -156,13 +156,12 @@
                     @click="closeSearch"
                   >
                     <!-- Product Image -->
-                    <NuxtImg
-                      :src="item.thumbnail"
+                    <img
+                      :src="formatImageUrl(item.thumbnail)"
                       :alt="item.title"
-                      width="55"
-                      height="55"
-                      format="webp"
                       class="size-14 shrink-0 rounded-lg object-cover"
+                      loading="lazy"
+                      decoding="async"
                     />
 
                     <!-- Product Title -->

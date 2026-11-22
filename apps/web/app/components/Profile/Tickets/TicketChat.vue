@@ -139,7 +139,7 @@
                   :class="msg.senderRole === 'user' ? 'border-white/30' : 'border-gray-200'"
                 >
                   <img
-                    :src="file.url"
+                    :src="formatImageUrl(file.url)"
                     :alt="file.name"
                     class="h-28 w-full object-cover transition-transform group-hover:scale-105"
                   />

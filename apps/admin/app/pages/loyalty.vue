@@ -1188,14 +1188,14 @@ function getLedgerTypeBadgeClass(type: string): string {
                     class="rounded-full bg-emerald-50 text-emerald-700 px-2.5 py-1 text-[11px] font-medium border border-emerald-200 inline-flex items-center gap-1"
                   >
                     <i class="pi pi-check text-[10px]" />
-                    <span>عضویت و پاداش تکمیل شد</span>
+                    <span>تکمیل شد (ثبت اولین خرید)</span>
                   </span>
                   <span
                     v-else
                     class="rounded-full bg-amber-50 text-amber-700 px-2.5 py-1 text-[11px] font-medium border border-amber-200 inline-flex items-center gap-1"
                   >
                     <i class="pi pi-clock text-[10px]" />
-                    <span>در انتظار</span>
+                    <span>در انتظار اولین خرید</span>
                   </span>
                 </td>
                 <td class="py-3 px-3 text-gray-500 font-mono text-[11px]">

@@ -106,7 +106,7 @@ function close() {
               class="flex gap-3"
             >
               <img
-                :src="comment.user.avatar || '/images/avatar-placeholder.png'"
+                :src="formatImageUrl(comment.user.avatar) || '/images/avatar-placeholder.png'"
                 class="w-9 h-9 rounded-full object-cover shrink-0"
               />
               <div class="flex-1">

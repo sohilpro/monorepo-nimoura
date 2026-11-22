@@ -162,6 +162,15 @@ export default defineNuxtConfig({
     torobPassword: process.env.TOROB_PASSWORD || "",
     torobClientId: process.env.TOROB_CLIENT_ID || "",
     torobClientSecret: process.env.TOROB_CLIENT_SECRET || "",
+
+    // سرو یا پروکسی تصاویر آپلودی بکند از طریق /uploads/** در همین دامنه
+    uploads: {
+      // مسیر پوشه uploads روی دیسک (در داکر به volume مشترک بکند مپ میشود)
+      dir: process.env.NUXT_UPLOADS_DIR || "",
+      // آدرس داخلی بکند برای حالت fallback (مثلاً http://api:4000)
+      upstream: process.env.NUXT_UPLOADS_UPSTREAM || "",
+    },
+
     apiBase:
       process.env.NUXT_PUBLIC_API_BASE || "https://api.nimoura.ir/api/v1",
     public: {

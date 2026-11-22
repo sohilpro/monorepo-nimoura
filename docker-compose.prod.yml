@@ -77,6 +77,11 @@ services:
       - HOST=0.0.0.0
       - PORT=3000
       - NUXT_PUBLIC_API_BASE=https://api.nimoura.ir/api/v1
+      # سرو /uploads/** از روی همان volumeای که بکند مینویسد (فقط خواندنی)
+      - NUXT_UPLOADS_DIR=/app/apps/api/uploads
+      - NUXT_UPLOADS_UPSTREAM=http://api:4000
+    volumes:
+      - uploads_data:/app/apps/api/uploads:ro
     depends_on:
       - api
     networks:

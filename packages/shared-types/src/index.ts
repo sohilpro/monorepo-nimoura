@@ -8,3 +8,4 @@ export * from './api.js';
 export * from './tags.js';
 export * from './dashboard.js';
 export * from './tickets.js';
+export * from './media.js';

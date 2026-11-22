@@ -21,17 +21,15 @@
             @mouseleave="onMouseLeave"
             @mousemove="onMouseMove($event)"
           >
-            <NuxtPicture
-              :src="img" :alt="`نمایش تصویر ${i + 1}`"
-              format="avif,webp,jpeg"
-              :img-attrs="{
-                class: 'object-cover w-full h-full select-none',
-                style: 'cursor:crosshair',
-                draggable: 'false',
-                fetchpriority: i === 0 ? 'high' : undefined,
-              }"
-              sizes="600px" width="800" height="800"
+            <img
+              :src="formatImageUrl(img)"
+              :alt="`نمایش تصویر ${i + 1}`"
+              class="object-cover w-full h-full select-none"
+              style="cursor:crosshair"
+              draggable="false"
+              :fetchpriority="i === 0 ? 'high' : undefined"
               :loading="i === 0 ? 'eager' : 'lazy'"
+              decoding="async"
             />
           </div>
         </div>
@@ -60,11 +58,12 @@
             :class="activeIndex === i ? 'border-nimoura-primary' : 'border-transparent'"
             @click="scrollTo(i)"
           >
-            <NuxtPicture
-              :src="img" :alt="`تصویر بندانگشتی ${i + 1}`"
-              format="avif,webp,jpeg"
-              :img-attrs="{ class: 'object-cover rounded-lg w-full h-full' }"
-              width="150" height="150" sizes="150px" loading="lazy"
+            <img
+              :src="formatImageUrl(img)"
+              :alt="`تصویر بندانگشتی ${i + 1}`"
+              class="object-cover rounded-lg w-full h-full"
+              loading="lazy"
+              decoding="async"
             />
           </div>
         </div>
@@ -79,15 +78,13 @@
           class="flex-none w-56 h-56 rounded-2xl overflow-hidden cursor-pointer border border-gray-100 bg-nimoura-base/30"
           @click="openGallery(i)"
         >
-          <NuxtPicture
-            :src="img" :alt="`تصویر ${i + 1}`"
-            format="avif,webp,jpeg"
-            :img-attrs="{
-              class: 'object-cover w-full h-full',
-              fetchpriority: i === 0 ? 'high' : undefined,
-            }"
-            width="340" height="340"
+          <img
+            :src="formatImageUrl(img)"
+            :alt="`تصویر ${i + 1}`"
+            class="object-cover w-full h-full"
+            :fetchpriority="i === 0 ? 'high' : undefined"
             :loading="i === 0 ? 'eager' : 'lazy'"
+            decoding="async"
           />
         </div>
       </div>
@@ -154,15 +151,12 @@
               v-else
               class="relative w-full h-full flex items-center justify-center"
             >
-              <NuxtPicture
+              <img
                 :key="currentSlide.src"
-                :src="currentSlide.src"
+                :src="formatImageUrl(currentSlide.src)"
                 :alt="`تصویر ${galleryIndex + 1}`"
-                format="avif,webp,jpeg"
-                :img-attrs="{
-                  style: 'display:block; max-width:100%; max-height:calc(100vh - 200px); object-fit:contain; border-radius:12px;'
-                }"
-                width="800" height="800"
+                style="display:block; max-width:100%; max-height:calc(100vh - 200px); object-fit:contain; border-radius:12px;"
+                decoding="async"
               />
 
               <!-- Customer comment overlay -->
@@ -227,12 +221,13 @@
                 <p>تصاویر خریداران</p>
               </div>
 
-              <NuxtPicture
+              <img
                 v-else
-                :src="slide.src" alt=""
-                format="avif,webp,jpeg"
-                :img-attrs="{ class: 'object-cover w-full h-full' }"
-                width="112" height="112" loading="lazy"
+                :src="formatImageUrl(slide.src)"
+                alt=""
+                class="object-cover w-full h-full"
+                loading="lazy"
+                decoding="async"
               />
 
               <span
@@ -343,7 +338,7 @@ const isZooming = ref(false), zoomImgSrc = ref('')
 const lensPos = ref({ x: 0, y: 0 }), bgPos = ref({ x: 0, y: 0 })
 const zoomPortalPos = ref({ top: 0, left: 0 })
 
-const onMouseEnter = (i: number) => { zoomImgSrc.value = props.images[i] ?? ''; isZooming.value = true }
+const onMouseEnter = (i: number) => { zoomImgSrc.value = formatImageUrl(props.images[i]); isZooming.value = true }
 const onMouseLeave = () => { isZooming.value = false; zoomImgSrc.value = '' }
 const onMouseMove = (event: MouseEvent) => {
   const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()

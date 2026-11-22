@@ -153,7 +153,7 @@
                 @click="close"
               >
                 <img
-                  :src="item.thumbnail"
+                  :src="formatImageUrl(item.thumbnail)"
                   :alt="item.title"
                   width="55"
                   height="55"

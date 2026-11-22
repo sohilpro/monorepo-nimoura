@@ -71,7 +71,7 @@
               class="h-16 w-16 shrink-0 snap-start overflow-hidden rounded-xl border border-nimoura-border transition-opacity hover:opacity-85 sm:h-20 sm:w-20"
               @click="lightboxSrc = img"
             >
-              <img :src="img" alt="تصویر خریدار" class="h-full w-full object-cover" />
+              <img :src="formatImageUrl(img)" alt="تصویر خریدار" class="h-full w-full object-cover" />
             </button>
           </div>
         </div>
@@ -159,7 +159,7 @@
                 class="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-nimoura-border transition-opacity hover:opacity-85 sm:h-16 sm:w-16"
                 @click="lightboxSrc = img"
               >
-                <img :src="img" alt="تصویر نظر" class="h-full w-full object-cover" />
+                <img :src="formatImageUrl(img)" alt="تصویر نظر" class="h-full w-full object-cover" />
               </button>
             </div>
 
@@ -229,7 +229,7 @@
         @click="lightboxSrc = null"
       >
         <img
-          :src="lightboxSrc"
+          :src="formatImageUrl(lightboxSrc)"
           alt="بزرگ‌نمایی تصویر نظر"
           class="max-h-[90dvh] max-w-full rounded-2xl object-contain shadow-2xl"
         />

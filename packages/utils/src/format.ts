@@ -44,3 +44,13 @@ export function formatDate(value: string | Date | null | undefined): string {
   if (Number.isNaN(date.getTime())) return '';
   return date.toLocaleDateString('fa-IR');
 }
+
+export function formatFileSize(bytes: number | null | undefined): string {
+  if (!bytes || bytes <= 0) return '۰ بایت';
+  const k = 1024;
+  const sizes = ['بایت', 'کیلوبایت', 'مگابایت', 'گیگابایت', 'ترابایت'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
+  const val = parseFloat((bytes / Math.pow(k, i)).toFixed(1));
+  return `${toPersianDigits(val)} ${sizes[i]}`;
+}
+

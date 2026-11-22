@@ -11,7 +11,7 @@
         >
           <img
             v-if="product?.image"
-            :src="product.image"
+            :src="formatImageUrl(product.image)"
             :alt="product.title"
             class="w-full h-full object-cover"
           />

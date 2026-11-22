@@ -112,7 +112,7 @@ async function share() {
   <section ref="rootRef" class="relative bg-black flex items-center justify-center">
     <video
       ref="videoRef"
-      :src="video.videoUrl"
+      :src="formatImageUrl(video.videoUrl)"
       :poster="video.posterUrl"
       class="h-full w-full object-contain"
       playsinline
@@ -124,7 +124,7 @@ async function share() {
 
     <!-- پوستر: تا شروع پخش نشون داده می‌شه -->
     <div v-if="showPoster" class="absolute inset-0" @click="togglePlay">
-      <img :src="video.posterUrl" class="h-full w-full object-contain" :alt="video.title" />
+      <img :src="formatImageUrl(video.posterUrl)" class="h-full w-full object-contain" :alt="video.title" />
       <div class="absolute inset-0 flex items-center justify-center bg-black/10">
         <i class="pi pi-play-circle text-white text-6xl! drop-shadow-lg"/>
       </div>
@@ -175,7 +175,7 @@ async function share() {
       @click.stop
     >
       <img
-        :src="video.product.thumbnail || '/images/placeholder-product.jpg'"
+        :src="formatImageUrl(video.product.thumbnail) || '/images/placeholder-product.jpg'"
         class="w-12 h-12 rounded-lg object-cover shrink-0"
       />
       <div class="flex-1 min-w-0">

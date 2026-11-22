@@ -185,9 +185,9 @@
             ۲
           </div>
           <div>
-            <h4 class="text-xs font-bold text-blue-950 sm:text-sm">ثبت‌نام و شارژ ۵۰ هزار تومان دوست</h4>
+            <h4 class="text-xs font-bold text-blue-950 sm:text-sm">ثبت‌نام دوست و هدایای اولیه</h4>
             <p class="mt-1 text-[11px] text-blue-900/70 leading-relaxed">
-              دوست شما با کد شما ثبت‌نام می‌کند و بلافاصله ۵۰٬۰۰۰ تومان اعتبار نقدی در باشگاه مشتریان هدیه می‌گیرد.
+              دوست شما ۵۰٬۰۰۰ تومان اعتبار باشگاه هدیه می‌گیرد و یک کد تخفیف ۵۰٬۰۰۰ تومانی اختصاصی برای شما پیامک می‌شود.
             </p>
           </div>
         </div>
@@ -197,9 +197,9 @@
             ۳
           </div>
           <div>
-            <h4 class="text-xs font-bold text-emerald-950 sm:text-sm">کد تخفیف ۵۰ هزار تومانی و پیامک</h4>
+            <h4 class="text-xs font-bold text-emerald-950 sm:text-sm">ثبت اولین خرید و ۵۰ هزار تومان نقد</h4>
             <p class="mt-1 text-[11px] text-emerald-900/70 leading-relaxed">
-              همزمان یک کد تخفیف ۵۰٬۰۰۰ تومانی برای شما صادر شده و پیامک آن برایتان ارسال می‌شود.
+              با ثبت و نهایی شدن اولین خرید دوستتان، ۵۰٬۰۰۰ تومان اعتبار نقدی دیگر به کیف پول شما اضافه و پیامک می‌شود!
             </p>
           </div>
         </div>
@@ -265,10 +265,18 @@
               </td>
               <td class="py-3.5">
                 <span
+                  v-if="friend.status === 'COMPLETED'"
                   class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200"
                 >
                   <i class="pi pi-check text-[10px]" />
-                  <span>عضویت موفق</span>
+                  <span>ثبت خرید و تکمیل پاداش</span>
+                </span>
+                <span
+                  v-else
+                  class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 border border-amber-200"
+                >
+                  <i class="pi pi-clock text-[10px]" />
+                  <span>در انتظار اولین خرید</span>
                 </span>
               </td>
               <td class="py-3.5 pl-2 text-left">

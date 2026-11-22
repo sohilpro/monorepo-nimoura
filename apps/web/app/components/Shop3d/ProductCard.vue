@@ -121,7 +121,7 @@ onBeforeUnmount(() => {
         <div class="size-24 shrink-0 overflow-hidden rounded-2xl bg-white ring-1 ring-nimoura-border/50">
           <img
             v-if="p.image && !imgFailed"
-            :src="p.image"
+            :src="formatImageUrl(p.image)"
             :alt="p.title"
             class="size-full object-contain"
             @error="imgFailed = true"

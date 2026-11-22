@@ -314,7 +314,7 @@ function formatDate(dateStr?: string) {
             <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-nimoura-accent/25 overflow-hidden border border-nimoura-primary/20">
               <img
                 v-if="article.author?.avatar"
-                :src="article.author.avatar"
+                :src="formatImageUrl(article.author.avatar)"
                 :alt="article.author.name"
                 class="h-full w-full object-cover"
               />
@@ -396,7 +396,7 @@ function formatDate(dateStr?: string) {
       <div class="relative overflow-hidden rounded-3xl border border-nimoura-border/40 shadow-sm aspect-[16/9] sm:aspect-[21/10] bg-nimoura-velvet/5">
         <img
           v-if="article.coverImage"
-          :src="article.coverImage"
+          :src="formatImageUrl(article.coverImage)"
           :alt="article.coverImageAlt || article.title"
           class="h-full w-full object-cover"
         />
@@ -430,7 +430,7 @@ function formatDate(dateStr?: string) {
               <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-nimoura-accent/30 overflow-hidden border border-nimoura-primary/20">
                 <img
                   v-if="article.author?.avatar"
-                  :src="article.author.avatar"
+                  :src="formatImageUrl(article.author.avatar)"
                   :alt="article.author.name"
                   class="h-full w-full object-cover"
                 />

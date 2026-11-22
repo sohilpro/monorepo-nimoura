@@ -291,6 +291,15 @@ const rawMenuItems = [
     ],
   },
   {
+    key: "media",
+    label: "مدیریت فایل‌ها و رسانه",
+    icon: "pi pi-folder-open",
+    items: [
+      { key: "media-all", label: "کتابخانه فایل‌ها (Uploads)", icon: "pi pi-images", route: "/media" },
+      { key: "media-upload", label: "آپلود فایل جدید", icon: "pi pi-cloud-upload", route: "/media/upload" },
+    ],
+  },
+  {
     key: "magazine",
     label: "مجله زیبایی",
     icon: "pi pi-book",

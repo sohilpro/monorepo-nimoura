@@ -131,13 +131,11 @@
             class="relative mb-2.5 aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-br transition-all duration-300 group-hover:shadow-sm"
             :class="item.gradientClass"
           >
-            <NuxtImg
-              :src="item.image"
+            <img
+              :src="formatImageUrl(item.image)"
               :alt="item.name"
-              width="240"
-              height="240"
-              format="webp,jpeg"
               loading="lazy"
+              decoding="async"
               class="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-108"
             />
 
@@ -187,13 +185,11 @@
             class="relative mb-2 aspect-square w-full overflow-hidden rounded-xl bg-gradient-to-br"
             :class="item.gradientClass"
           >
-            <NuxtImg
-              :src="item.image"
+            <img
+              :src="formatImageUrl(item.image)"
               :alt="item.name"
-              width="200"
-              height="200"
-              format="webp,jpeg"
               loading="lazy"
+              decoding="async"
               class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-108"
             />
           </div>
@@ -227,13 +223,11 @@
             class="relative size-18 rounded-full p-0.5 ring-2 ring-nimoura-text-200 transition-all duration-300 group-hover:ring-nimoura-primary sm:size-22"
           >
             <div class="h-full w-full overflow-hidden rounded-full">
-              <NuxtImg
-                :src="item.image"
+              <img
+                :src="formatImageUrl(item.image)"
                 :alt="item.name"
-                width="120"
-                height="120"
-                format="webp,jpeg"
                 loading="lazy"
+                decoding="async"
                 class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
             </div>
@@ -258,13 +252,11 @@
           :to="item.to"
           class="group relative h-48 sm:h-56 overflow-hidden rounded-3xl border border-nimoura-text-100 shadow-sm transition-all duration-300 hover:shadow-lg"
         >
-          <NuxtImg
-            :src="item.image"
+          <img
+            :src="formatImageUrl(item.image)"
             :alt="item.name"
-            width="600"
-            height="400"
-            format="webp,jpeg"
             loading="lazy"
+            decoding="async"
             class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-108"
           />
 

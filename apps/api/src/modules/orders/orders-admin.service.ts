@@ -644,11 +644,11 @@ export class OrdersAdminService {
           eligibleAmount,
           em,
         );
-        // await this.loyaltyService.completeReferralOnFirstOrder(
-        //   order.user.id,
-        //   order.id,
-        //   em,
-        // );
+        await this.loyaltyService.completeReferralOnFirstOrder(
+          order.user.id,
+          order.id,
+          em,
+        );
       }
     }
 

@@ -288,7 +288,7 @@ onMounted(async () => {
               class="flex gap-3 text-sm"
             >
               <img
-                :src="item.thumbnail || '/images/placeholder-product.jpg'"
+                :src="formatImageUrl(item.thumbnail) || '/images/placeholder-product.jpg'"
                 class="w-12 h-12 rounded-lg object-cover border border-nimoura-text-100"
               />
               <div class="flex-1 min-w-0">

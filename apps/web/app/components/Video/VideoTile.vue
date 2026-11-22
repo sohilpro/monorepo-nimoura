@@ -56,7 +56,7 @@ function formatViews(count: number) {
     <video
       v-if="size === 'large'"
       ref="videoRef"
-      :src="video.videoUrl"
+      :src="formatImageUrl(video.videoUrl)"
       :poster="video.posterUrl"
       class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
       muted
@@ -66,7 +66,7 @@ function formatViews(count: number) {
     />
     <img
       v-else
-      :src="video.posterUrl"
+      :src="formatImageUrl(video.posterUrl)"
       :alt="video.title"
       loading="lazy"
       class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"

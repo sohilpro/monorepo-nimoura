@@ -60,6 +60,11 @@ services:
       PORT: 3000
       HOST: 0.0.0.0
       NUXT_PUBLIC_API_BASE: http://api:4000/api/v1
+      # عکسها از همان پوشهای خوانده میشوند که بکند آپلود میکند
+      NUXT_UPLOADS_DIR: /app/apps/api/uploads
+      NUXT_UPLOADS_UPSTREAM: http://api:4000
+    volumes:
+      - ./apps/api/uploads:/app/apps/api/uploads:ro
     depends_on:
       - api
     networks:

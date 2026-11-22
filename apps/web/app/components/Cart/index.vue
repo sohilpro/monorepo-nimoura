@@ -144,7 +144,7 @@ onMounted(async () => {
               class="shrink-0"
             >
               <img
-                :src="item.thumbnail || '/images/placeholder-product.jpg'"
+                :src="formatImageUrl(item.thumbnail) || '/images/placeholder-product.jpg'"
                 :alt="item.title"
                 class="w-24 h-24 sm:w-28 sm:h-28 object-cover rounded-xl border border-nimoura-text-100"
               />

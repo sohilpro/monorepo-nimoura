@@ -24,10 +24,22 @@ import { MediaQueryDto } from '../dtos/media-query.dto';
 import { ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { DeleteMediaDto } from '../dtos/delete-media.dto';
 import { ReassignMediaOwnerDto } from '../dtos/reassign-media-owner.dto';
+import { UpdateMediaDto } from '../dtos/update-media.dto';
+import { BulkDeleteMediaDto } from '../dtos/bulk-delete-media.dto';
 
 @AdminController('media')
 export class MediaAdminController {
   constructor(private readonly mediaService: MediaStaticService) {}
+
+  @Get('stats')
+  @ApiOperation({ summary: 'دریافت آمار کلی و تفکیکی رسانه‌ها و فایل‌ها' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'آمار کلی و تفکیکی مدیاها برگشت داده شد.',
+  })
+  async getStats() {
+    return await this.mediaService.getStats();
+  }
 
   @Get('list')
   @ApiOperation({
@@ -122,5 +134,25 @@ export class MediaAdminController {
       dto.newOwnerId,
     );
     return { success: true };
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'ویرایش مشخصات یا تغییر مالکیت و تایپ یک مدیا' })
+  @ApiResponse({ status: 200, description: 'مدیا با موفقیت ویرایش شد.' })
+  async updateMedia(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateMediaDto,
+  ) {
+    const updated = await this.mediaService.updateMedia(id, dto);
+    return { success: true, data: updated };
+  }
+
+  @Post('bulk-delete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'حذف دسته‌جمعی مدیاها بر اساس شناسه‌ها' })
+  @ApiResponse({ status: 200, description: 'مدیاها با موفقیت حذف شدند.' })
+  async bulkDelete(@Body() dto: BulkDeleteMediaDto) {
+    const result = await this.mediaService.deleteManyByIds(dto.ids);
+    return { success: true, ...result };
   }
 }

@@ -354,6 +354,7 @@ const footerOffset = ref(0);
 let footerEl: HTMLElement | null = null;
 let footerWatcher: MutationObserver | null = null;
 let sizeWatcher: ResizeObserver | null = null;
+let isBound = false;
 let rafId = 0;
 
 const updateFooterOffset = () => {
@@ -371,12 +372,15 @@ const scheduleUpdate = () => {
 };
 
 const bindFooter = () => {
+  if (isBound) return true;
+
   footerEl =
     document.querySelector<HTMLElement>("[data-site-footer]") ??
     document.querySelector<HTMLElement>("footer");
 
   if (!footerEl) return false;
 
+  isBound = true;
   window.addEventListener("scroll", scheduleUpdate, { passive: true });
   window.addEventListener("resize", scheduleUpdate, { passive: true });
 
@@ -391,7 +395,7 @@ const bindFooter = () => {
 };
 
 onMounted(() => {
-  // فوتر در لayout بعد از اسلات رندر میشود، بنابراین ممکن است هنوز در DOM نباشد.
+  // فوتر در لایوت بعد از اسلات رندر میشود، بنابراین ممکن است هنوز در DOM نباشد.
   if (bindFooter()) return;
 
   footerWatcher = new MutationObserver(() => {

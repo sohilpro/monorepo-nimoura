@@ -3,6 +3,8 @@ import {
   type BannerPosition,
   type CreateBannerPayload,
   type UpdateBannerPayload,
+  type CreateBannerPositionPayload,
+  type UpdateBannerPositionPayload,
   BannerDevice,
   BannerStatus,
 } from '@nimoura/shared-types';
@@ -122,6 +124,98 @@ export function useAdminBanners() {
   }
 
   /**
+   * ایجاد جایگاه بنر
+   */
+  async function createBannerPosition(
+    payload: CreateBannerPositionPayload,
+  ): Promise<BannerPosition | null> {
+    isLoading.value = true;
+    try {
+      const response = await $fetch<any>('/api/banner/positions', {
+        method: 'POST',
+        body: payload,
+      });
+      toast.add({
+        severity: 'success',
+        summary: 'موفقیت',
+        detail: 'جایگاه بنر با موفقیت ایجاد شد',
+        life: 3000,
+      });
+      return (response?.data ?? response) as BannerPosition;
+    } catch (error: any) {
+      toast.add({
+        severity: 'error',
+        summary: 'خطا',
+        detail:
+          error?.data?.message ||
+          error?.statusMessage ||
+          'خطا در ایجاد جایگاه بنر',
+        life: 4000,
+      });
+      return null;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function updateBannerPosition(
+    id: number,
+    payload: UpdateBannerPositionPayload,
+  ): Promise<boolean> {
+    isLoading.value = true;
+    try {
+      await $fetch(`/api/banner/positions/${id}`, {
+        method: 'PUT',
+        body: payload,
+      });
+      toast.add({
+        severity: 'success',
+        summary: 'موفقیت',
+        detail: 'جایگاه بنر بهروزرسانی شد',
+        life: 3000,
+      });
+      return true;
+    } catch (error: any) {
+      toast.add({
+        severity: 'error',
+        summary: 'خطا',
+        detail: error?.data?.message || error?.statusMessage || 'خطا در ویرایش جایگاه',
+        life: 4000,
+      });
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  async function deleteBannerPosition(id: number): Promise<boolean> {
+    isLoading.value = true;
+    try {
+      await $fetch(`/api/banner/positions/${id}`, { method: 'DELETE' });
+      toast.add({
+        severity: 'success',
+        summary: 'موفقیت',
+        detail: 'جایگاه بنر حذف شد',
+        life: 3000,
+      });
+      return true;
+    } catch (error: any) {
+      toast.add({
+        severity: 'error',
+        summary: 'خطا',
+        detail:
+          error?.data?.message ||
+          error?.statusMessage ||
+          'برای حذف جایگاه، ابتدا بنرهای آن را حذف کنید',
+        life: 4000,
+      });
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /**
    * ترجمه فارسی نوع دستگاه
    */
   function getDeviceLabel(device?: BannerDevice | string): string {
@@ -183,6 +277,9 @@ export function useAdminBanners() {
     createBanner,
     updateBanner,
     fetchBannerPositions,
+    createBannerPosition,
+    updateBannerPosition,
+    deleteBannerPosition,
     getDeviceLabel,
     getStatusLabel,
     getStatusBadgeClass,

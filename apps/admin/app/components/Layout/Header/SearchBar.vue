@@ -91,7 +91,7 @@
             </div>
 
             <!-- بخش نتایج و صفحات -->
-            <div class="max-h-[60vh] overflow-y-auto p-3 no-scrollbar space-y-4">
+            <div class="max-h-[60vh] overflow-y-auto p-3 scrollbar-hide space-y-4">
               <!-- نتایج سرچ آنلاین (در صورت وجود ورودی) -->
               <div v-if="query.trim().length >= 2">
                 <!-- محصولات یافت شده -->

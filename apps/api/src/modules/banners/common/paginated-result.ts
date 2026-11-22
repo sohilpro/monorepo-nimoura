@@ -1,7 +1,13 @@
+/**
+ * شکل استاندارد پاسخ لیست بنرها در پنل ادمین.
+ *
+ * قبل از این، همان آرایه سه بار در کلیدهای data/items/banners تکرار میشد.
+ * پنل ادمین ابتدا وارد .data میشد و سپس دنبال .items میگشت، در نتیجه با
+ * Finding یک آرایه بجای شیء، لیست همیشه خالی میماند. فقط یک کلید آرایه
+ * (items) نگه میداریم تا هم payload سبکتر شود و هم مصرفکننده سادهتر.
+ */
 export class PaginatedResult<T> {
-  data: T[];
   items: T[];
-  banners: T[];
   total: number;
   page: number;
   limit: number;
@@ -13,11 +19,9 @@ export class PaginatedResult<T> {
     totalPages: number;
   };
 
-  constructor(data: T[], total: number, page: number, limit: number) {
+  constructor(items: T[], total: number, page: number, limit: number) {
     const totalPages = Math.max(1, Math.ceil(total / limit));
-    this.data = data;
-    this.items = data;
-    this.banners = data;
+    this.items = items;
     this.total = total;
     this.page = page;
     this.limit = limit;

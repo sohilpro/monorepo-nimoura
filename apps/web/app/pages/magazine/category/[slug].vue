@@ -1,4 +1,6 @@
 <script setup lang="ts">
+definePageMeta({ layout: 'magazine' });
+
 const route = useRoute();
 const slug = route.params.slug as string;
 

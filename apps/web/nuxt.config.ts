@@ -235,7 +235,9 @@ export default defineNuxtConfig({
 
   routeRules: {
     // Semi-static pages (SWR cache)
-    "/": { swr: 3600 },
+    // بنرهای صفحه اصلی توسط ادمین تغییر میکنند؛ کش طولانی باعث میشد بنر جدید
+    // تا یک ساعت روی سایت دیده نشود. ۶۰ ثانیه هم کش میدهد هم بهروزرسانی سریع.
+    "/": { swr: 60 },
     "/return-policy": { swr: 3600 },
     "/shipping-pay": { swr: 3600 },
     "/rules": { swr: 3600 },

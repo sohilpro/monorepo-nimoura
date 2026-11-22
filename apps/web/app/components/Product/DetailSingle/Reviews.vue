@@ -63,7 +63,7 @@
           <p class="mb-2.5 text-sm font-medium text-nimoura-text-700">
             تصاویر خریداران
           </p>
-          <div class="no-scrollbar flex snap-x gap-2 overflow-x-auto pb-1">
+          <div class="scrollbar-hide flex snap-x gap-2 overflow-x-auto pb-1">
             <button
               v-for="(img, i) in allImages.slice(0, 12)"
               :key="i"

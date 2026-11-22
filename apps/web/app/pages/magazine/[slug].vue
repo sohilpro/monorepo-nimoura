@@ -2,6 +2,8 @@
 import type { Article } from "~~/server/types/magazine";
 import type { TocItem } from "~/components/Magazine/Article/Toc.vue";
 
+definePageMeta({ layout: 'magazine' });
+
 const route = useRoute();
 const slug = computed(() => route.params.slug as string);
 const toast = useAppToast();

@@ -1,7 +1,7 @@
 <template>
   <nav class="mt-4 w-full sm:mt-6" aria-label="Breadcrumb">
     <ol
-      class="breadcrumb-scroll flex w-full flex-nowrap items-center gap-x-1.5 overflow-x-auto whitespace-nowrap pb-1 text-xs text-nimoura-text-600 sm:gap-x-2 sm:text-sm"
+      class="scrollbar-hide flex w-full flex-nowrap items-center gap-x-1.5 overflow-x-auto whitespace-nowrap pb-1 text-xs text-nimoura-text-600 sm:gap-x-2 sm:text-sm"
     >
       <!-- HOME / FIRST ITEM -->
       <li v-if="items.length > 0" class="flex shrink-0 items-center">
@@ -98,14 +98,3 @@ onMounted(() => {
   })
 })
 </script>
-
-<style scoped>
-.breadcrumb-scroll {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  -webkit-overflow-scrolling: touch;
-}
-.breadcrumb-scroll::-webkit-scrollbar {
-  display: none;
-}
-</style>

@@ -204,7 +204,7 @@
           </div>
 
           <!-- Thumbnails -->
-          <div class="flex gap-2 px-4 pb-5 pt-1 overflow-x-auto shrink-0 no-scrollbar">
+          <div class="flex gap-2 px-4 pb-5 pt-1 overflow-x-auto shrink-0 scrollbar-hide">
             <div
               v-for="(slide, i) in allSlides" :key="'ovt-' + i"
               class="relative flex-none w-14 h-14 rounded-xl overflow-hidden cursor-pointer transition-all duration-200"

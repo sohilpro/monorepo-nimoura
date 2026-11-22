@@ -53,14 +53,41 @@ const { data: rawBanners, refresh } = await useFetch('/api/banner', {
   key: 'admin-banners-list',
 });
 
-const bannersList = computed(() => {
-  const d = (rawBanners.value as any)?.data ?? rawBanners.value;
-  return d?.items ?? d?.banners ?? d?.data ?? [];
-});
+/**
+ * پاسخ لیست بنرها بسته به نسخه بکند میتواند این شکلها باشد:
+ *   { items: [...] }                      (شکل فعلی API)
+ *   { success, data: { items: [...] } }   (پوشش ResponseInterceptor)
+ *   { data: [...], items: [...], banners: [...] }  (شکل قدیمی تکراری)
+ *   [...]                                 (وقتی BFF آرایه را مستقیم برگرداند)
+ * بنابراین آرایه را با جستجوی محدود پیدا میکنیم، نه با یک بار unwrapping.
+ */
+function extractBannerList(payload: unknown, depth = 0): any[] {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== 'object' || depth > 3) return [];
+
+  const root: any = payload;
+  if (Array.isArray(root.data)) return root.data;
+
+  for (const key of ['items', 'banners', 'data'] as const) {
+    const value = root[key];
+    if (Array.isArray(value)) return value;
+  }
+  for (const key of ['items', 'banners', 'data'] as const) {
+    const nested = root[key];
+    if (nested && typeof nested === 'object') {
+      const found = extractBannerList(nested, depth + 1);
+      if (found.length) return found;
+    }
+  }
+  return [];
+}
+
+const bannersList = computed(() => extractBannerList(rawBanners.value));
 
 const totalCount = computed(() => {
-  const d = (rawBanners.value as any)?.data ?? rawBanners.value;
-  return d?.total ?? d?.meta?.total ?? bannersList.value.length;
+  const root: any = (rawBanners.value as any)?.data ?? rawBanners.value;
+  if (Array.isArray(root)) return root.length;
+  return root?.total ?? root?.meta?.total ?? bannersList.value.length;
 });
 
 const columns = [

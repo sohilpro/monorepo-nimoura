@@ -1,45 +1,53 @@
 <template>
-  <div class="flex flex-col h-[650px] max-h-[85vh] rounded-2xl border border-gray-200 bg-white shadow-xs overflow-hidden" dir="rtl">
+  <div
+    class="flex h-[650px] max-h-[85vh] flex-col overflow-hidden rounded-2xl border border-nimoura-text-100 bg-white font-vazir shadow-[0_8px_30px_rgba(39,33,33,0.05)]"
+    dir="rtl"
+  >
     <!-- ══ HEADER ══ -->
-    <div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50/70">
-      <div class="flex items-center gap-3">
+    <div
+      class="flex flex-wrap items-center justify-between gap-3 border-b border-nimoura-text-100 bg-nimoura-50/70 px-4 py-3.5"
+    >
+      <div class="flex min-w-0 items-center gap-3">
         <!-- Back Button -->
-        <button
-          type="button"
-          class="flex h-8 w-8 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+        <Button
+          icon="pi pi-arrow-right"
           title="بازگشت به لیست"
+          aria-label="بازگشت به لیست"
+          class="!flex !size-9 !shrink-0 !items-center !justify-center !rounded-xl !border !border-nimoura-text-100 !bg-white !text-sm !text-nimoura-text-600 transition-colors hover:!border-nimoura-primary/40 hover:!bg-nimoura-50 hover:!text-nimoura-primary"
           @click="$emit('back')"
-        >
-          <i class="pi pi-arrow-right text-xs" />
-        </button>
+        />
 
-        <div>
-          <div class="flex items-center gap-2">
-            <h3 class="font-vazir text-sm font-bold text-gray-900">
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="min-w-0 truncate font-vazir text-sm font-bold text-nimoura-text-900">
               {{ ticket.title }}
             </h3>
             <!-- Tracking Code -->
-            <button
-              type="button"
-              class="inline-flex items-center gap-1 rounded-md bg-gray-200/60 px-1.5 py-0.5 text-[11px] font-mono font-medium text-gray-700 hover:bg-gray-200 transition-colors cursor-pointer"
+            <Button
+              :label="ticket.trackingCode"
+              icon="pi pi-copy"
+              icon-pos="right"
               title="کپی کد پیگیری"
+              :pt="{
+                icon: {
+                  class: copied ? '!text-nimoura-success' : '!text-nimoura-text-400',
+                },
+              }"
+              class="!rounded-lg !border-0 !bg-nimoura-100/70 !px-2 !py-1 !font-mono !text-[11px] !font-medium !text-nimoura-text-700 transition-colors hover:!bg-nimoura-200/70"
               @click="copyCode"
-            >
-              <span>{{ ticket.trackingCode }}</span>
-              <i :class="copied ? 'pi pi-check text-emerald-600' : 'pi pi-copy text-gray-400'" class="text-[10px]" />
-            </button>
+            />
           </div>
 
-          <div class="flex items-center gap-2 mt-1 text-[11px]">
-            <span class="text-gray-500 font-medium">
+          <div class="mt-1.5 flex flex-wrap items-center gap-2 text-[11px]">
+            <span class="font-medium text-nimoura-text-500">
               {{ getDepartmentLabel(ticket.department) }}
             </span>
-            <span class="text-gray-300">•</span>
+            <span class="text-nimoura-text-300">•</span>
             <span
-              class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium border"
+              class="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium"
               :class="getStatusBadge(ticket.status).color"
             >
-              <span class="h-1.5 w-1.5 rounded-full" :class="getStatusBadge(ticket.status).dot" />
+              <span class="size-1.5 rounded-full" :class="getStatusBadge(ticket.status).dot" />
               <span>{{ getStatusBadge(ticket.status).label }}</span>
             </span>
           </div>
@@ -48,31 +56,33 @@
 
       <!-- Actions -->
       <div class="flex items-center gap-2">
-        <button
+        <Button
           v-if="ticket.status !== 'closed'"
-          type="button"
-          class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 hover:text-rose-600 transition-colors cursor-pointer"
+          label="بستن تیکت"
+          :icon="closing ? 'pi pi-spin pi-spinner' : 'pi pi-lock'"
+          icon-pos="left"
           :disabled="closing"
+          class="!inline-flex !items-center !gap-1.5 !rounded-xl !border-nimoura-text-100 !bg-white !px-3 !py-2 !font-vazir !text-xs !font-medium !text-nimoura-text-600 transition-colors hover:!border-nimoura-error/40 hover:!bg-nimoura-error/5 hover:!text-nimoura-error disabled:!opacity-60"
           @click="handleCloseTicket"
-        >
-          <i v-if="closing" class="pi pi-spin pi-spinner text-xs" />
-          <i v-else class="pi pi-lock text-xs" />
-          <span>بستن تیکت</span>
-        </button>
+        />
       </div>
     </div>
 
     <!-- ══ CHAT STREAM ══ -->
     <div
       ref="chatScrollContainer"
-      class="flex-1 overflow-y-auto p-4 space-y-4 bg-[#fcf9f9]"
+      class="flex-1 space-y-4 overflow-y-auto bg-nimoura-base/70 p-4"
     >
       <!-- Initial Ticket Info Banner -->
-      <div class="mx-auto max-w-md rounded-xl bg-white/80 p-3 text-center border border-gray-200/60 shadow-2xs">
-        <p class="text-xs text-gray-600">
-          تیکت با کد <span class="font-mono font-semibold text-nimoura-primary">{{ ticket.trackingCode }}</span> ایجاد شد.
+      <div
+        class="mx-auto max-w-md rounded-2xl border border-nimoura-text-100 bg-white/90 p-3 text-center shadow-[0_4px_16px_rgba(39,33,33,0.04)]"
+      >
+        <p class="font-vazir text-xs text-nimoura-text-600">
+          تیکت با کد
+          <span class="font-mono font-semibold text-nimoura-primary">{{ ticket.trackingCode }}</span>
+          ایجاد شد.
         </p>
-        <p class="mt-1 text-[11px] text-gray-400">
+        <p class="mt-1 text-[11px] text-nimoura-text-400">
           پشتیبان‌های نیمورا در اسرع وقت پاسخگوی شما خواهند بود.
         </p>
       </div>
@@ -84,28 +94,28 @@
         class="flex flex-col"
         :class="msg.senderRole === 'user' ? 'items-end' : 'items-start'"
       >
-        <div class="flex items-end gap-2 max-w-[85%] sm:max-w-[75%]">
+        <div class="flex max-w-[85%] items-end gap-2 sm:max-w-[75%]">
           <!-- Support Avatar (Left) -->
           <div
             v-if="msg.senderRole !== 'user'"
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-nimoura-primary text-white shadow-xs mb-1"
+            class="mb-1 flex size-8 shrink-0 items-center justify-center rounded-xl bg-nimoura-primary text-white shadow-[0_4px_10px_rgba(183,110,121,0.25)]"
           >
-            <i class="pi pi-headphones text-xs" />
+            <i class="pi pi-headphones text-xs!" />
           </div>
 
           <!-- Bubble -->
           <div
-            class="rounded-2xl p-3.5 shadow-2xs text-sm"
+            class="rounded-2xl p-3.5 text-sm shadow-[0_4px_14px_rgba(39,33,33,0.05)]"
             :class="
               msg.senderRole === 'user'
-                ? 'bg-nimoura-primary text-white rounded-bl-sm'
-                : 'bg-white text-gray-800 border border-gray-200/80 rounded-br-sm'
+                ? 'rounded-bl-sm bg-nimoura-primary text-white'
+                : 'rounded-br-sm border border-nimoura-text-100 bg-white text-nimoura-text-900'
             "
           >
             <!-- Sender Header -->
             <div
-              class="flex items-center justify-between gap-4 mb-1.5 text-[11px]"
-              :class="msg.senderRole === 'user' ? 'text-white/80' : 'text-gray-400'"
+              class="mb-1.5 flex items-center justify-between gap-4 text-[11px]"
+              :class="msg.senderRole === 'user' ? 'text-white/80' : 'text-nimoura-text-400'"
             >
               <span class="font-semibold">
                 {{ msg.senderRole === 'user' ? 'شما' : 'پشتیبان رسمی نیمورا' }}
@@ -114,15 +124,15 @@
             </div>
 
             <!-- Message Text -->
-            <p class="whitespace-pre-line leading-relaxed text-[13px] font-vazir">
+            <p class="whitespace-pre-line font-vazir text-[13px] leading-relaxed">
               {{ msg.message }}
             </p>
 
             <!-- Attachments -->
             <div
               v-if="msg.attachments && msg.attachments.length > 0"
-              class="mt-2.5 pt-2 border-t space-y-1.5"
-              :class="msg.senderRole === 'user' ? 'border-white/20' : 'border-gray-100'"
+              class="mt-2.5 space-y-1.5 border-t pt-2"
+              :class="msg.senderRole === 'user' ? 'border-white/25' : 'border-nimoura-text-100'"
             >
               <div
                 v-for="(file, fIdx) in msg.attachments"
@@ -135,15 +145,17 @@
                   :href="file.url"
                   target="_blank"
                   rel="noopener noreferrer"
-                  class="group relative block overflow-hidden rounded-xl border max-w-[200px]"
-                  :class="msg.senderRole === 'user' ? 'border-white/30' : 'border-gray-200'"
+                  class="group relative block max-w-[200px] overflow-hidden rounded-xl border"
+                  :class="msg.senderRole === 'user' ? 'border-white/30' : 'border-nimoura-text-100'"
                 >
                   <img
                     :src="formatImageUrl(file.url)"
                     :alt="file.name"
-                    class="h-28 w-full object-cover transition-transform group-hover:scale-105"
+                    class="h-28 w-full object-cover transition-transform duration-300 group-hover:scale-105"
                   />
-                  <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">
+                  <div
+                    class="absolute inset-0 flex items-center justify-center bg-nimoura-950/30 text-xs text-white opacity-0 transition-opacity group-hover:opacity-100"
+                  >
                     <i class="pi pi-search-plus" />
                   </div>
                 </a>
@@ -158,12 +170,12 @@
                   :class="
                     msg.senderRole === 'user'
                       ? 'bg-white/15 text-white hover:bg-white/25'
-                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      : 'bg-nimoura-50 text-nimoura-text-700 hover:bg-nimoura-100'
                   "
                 >
-                  <i class="pi pi-file text-sm" />
+                  <i class="pi pi-file text-sm!" />
                   <span class="max-w-[140px] truncate">{{ file.name }}</span>
-                  <i class="pi pi-download text-[10px]" />
+                  <i class="pi pi-download text-[10px]!" />
                 </a>
               </div>
             </div>
@@ -174,42 +186,44 @@
       <!-- Closed Notice Banner -->
       <div
         v-if="ticket.status === 'closed'"
-        class="rounded-xl border border-gray-200 bg-gray-100 p-3 text-center text-xs text-gray-600"
+        class="rounded-xl border border-nimoura-text-100 bg-nimoura-50 p-3 text-center font-vazir text-xs text-nimoura-text-600"
       >
-        <i class="pi pi-lock ms-1 text-gray-400" />
+        <i class="pi pi-lock ms-1 text-nimoura-text-400" />
         <span>این گفتگو بسته شده است. با ارسال پیام جدید، تیکت به‌صورت خودکار مجدداً بازگشایی خواهد شد.</span>
       </div>
     </div>
 
     <!-- ══ COMPOSER / INPUT ══ -->
-    <div class="border-t border-gray-200 bg-white p-3">
+    <div class="border-t border-nimoura-text-100 bg-white p-3">
       <!-- Attached files preview pills before sending -->
       <div v-if="pendingAttachments.length > 0" class="mb-2 flex flex-wrap gap-2">
         <div
           v-for="(att, aIdx) in pendingAttachments"
           :key="aIdx"
-          class="flex items-center gap-1.5 rounded-lg border border-nimoura-primary/20 bg-nimoura-primary/5 px-2.5 py-1 text-xs text-nimoura-primary"
+          class="flex items-center gap-1.5 rounded-lg border border-nimoura-primary/25 bg-nimoura-primary/5 px-2.5 py-1 text-xs text-nimoura-primary"
         >
-          <i class="pi pi-file text-xs" />
+          <i class="pi pi-file text-xs!" />
           <span class="max-w-[150px] truncate">{{ att.name }}</span>
-          <button
-            type="button"
-            class="text-nimoura-primary/60 hover:text-rose-500 cursor-pointer"
+          <Button
+            icon="pi pi-times"
+            title="حذف پیوست"
+            class="!flex !size-5 !items-center !justify-center !border-0 !bg-transparent !p-0 !text-[10px] !text-nimoura-primary/70 transition-colors hover:!bg-transparent hover:!text-nimoura-error"
             @click="pendingAttachments.splice(aIdx, 1)"
-          >
-            <i class="pi pi-times text-[10px]" />
-          </button>
+          />
         </div>
       </div>
 
       <div class="flex items-end gap-2">
         <!-- Attachment Button -->
-        <label
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-gray-200 text-gray-500 hover:border-nimoura-primary hover:text-nimoura-primary hover:bg-nimoura-primary/5 transition-colors cursor-pointer"
+        <Button
+          as="label"
+          :loading="uploading"
+          :disabled="uploading || sending"
           title="پیوست فایل یا تصویر"
+          class="!flex !size-10 !shrink-0 !cursor-pointer !items-center !justify-center !rounded-xl !border !border-nimoura-text-100 !bg-white !text-sm !text-nimoura-text-500 transition-colors hover:!border-nimoura-primary hover:!bg-nimoura-primary/5 hover:!text-nimoura-primary"
         >
-          <i v-if="uploading" class="pi pi-spin pi-spinner text-sm" />
-          <i v-else class="pi pi-paperclip text-sm" />
+          <i v-if="uploading" class="pi pi-spin pi-spinner text-sm!" />
+          <i v-else class="pi pi-paperclip text-sm!" />
           <input
             type="file"
             class="hidden"
@@ -217,30 +231,29 @@
             :disabled="uploading || sending"
             @change="handleFileUpload"
           />
-        </label>
+        </Button>
 
         <!-- Message Textarea -->
-        <div class="flex-1">
-          <textarea
+        <div class="min-w-0 flex-1">
+          <Textarea
             v-model="replyText"
             rows="1"
             placeholder="پیام خود را بنویسید... (Enter برای ارسال، Shift+Enter خط جدید)"
-            class="w-full resize-none rounded-xl border border-gray-200 px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 transition focus:border-nimoura-primary focus:outline-none focus:ring-2 focus:ring-nimoura-primary/10 max-h-32 min-h-[42px]"
+            class="!max-h-32 !min-h-[42px] !w-full !resize-none !rounded-xl !border-nimoura-text-100 !bg-white !px-3.5 !py-2.5 !font-vazir !text-[13px] !text-nimoura-text-800 placeholder:!text-nimoura-text-400 focus:!border-nimoura-primary focus:!ring-2 focus:!ring-nimoura-primary/10"
             :disabled="sending"
             @keydown.enter.exact.prevent="handleSend"
           />
         </div>
 
         <!-- Send Button -->
-        <button
-          type="button"
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-nimoura-primary text-white shadow-md shadow-nimoura-primary/20 hover:bg-nimoura-primary-dark disabled:opacity-50 transition cursor-pointer"
+        <Button
+          icon="pi pi-send"
+          :loading="sending"
           :disabled="(!replyText.trim() && pendingAttachments.length === 0) || sending || uploading"
+          title="ارسال پیام"
+          class="!flex !size-10 !shrink-0 !items-center !justify-center !rounded-xl !border-nimoura-primary !bg-nimoura-primary !text-sm !text-white !shadow-[0_6px_18px_rgba(183,110,121,0.24)] transition-colors hover:!bg-nimoura-primary/90 disabled:!opacity-50"
           @click="handleSend"
-        >
-          <i v-if="sending" class="pi pi-spin pi-spinner text-sm" />
-          <i v-else class="pi pi-send text-sm" />
-        </button>
+        />
       </div>
     </div>
   </div>

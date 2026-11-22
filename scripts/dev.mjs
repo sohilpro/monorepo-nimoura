@@ -196,12 +196,16 @@ async function start() {
   freePort(3000);
   freePort(3001);
 
-  // 0. Ensure workspace packages consumed by Node.js runtime (@nimoura/utils) are built.
-  log('ORCHESTRATOR', colors.yellow, 'Building @nimoura/utils for backend runtime...');
-  try {
-    execSync(`${npmCmd} run build --workspace=@nimoura/utils`, { stdio: 'inherit' });
-  } catch {
-    log('ORCHESTRATOR', colors.red, 'Failed to build @nimoura/utils.');
+  // 0. Ensure workspace packages consumed by Node.js runtime are built.
+  // shared-types exports its compiled dist (the .ts source uses NodeNext '.js'
+  // specifiers that Node cannot resolve at runtime), so it must be built first.
+  for (const pkg of ['@nimoura/shared-types', '@nimoura/utils']) {
+    log('ORCHESTRATOR', colors.yellow, `Building ${pkg} for backend runtime...`);
+    try {
+      execSync(`${npmCmd} run build --workspace=${pkg}`, { stdio: 'inherit' });
+    } catch {
+      log('ORCHESTRATOR', colors.red, `Failed to build ${pkg}.`);
+    }
   }
 
   // 1. Start the backend (NestJS on port 4000).

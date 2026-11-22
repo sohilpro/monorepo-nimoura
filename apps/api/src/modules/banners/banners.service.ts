@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Banner } from './entities';
+import { Banner, BannerPosition } from './entities';
 import {
   CreateBannerDto,
   UpdateBannerDto,
@@ -15,13 +15,28 @@ import { MediaStaticService } from '../media/media-static.service';
 
 @Injectable()
 export class BannersService {
+  private readonly logger = new Logger(BannersService.name);
+
   constructor(
     @InjectRepository(Banner)
     private readonly bannerRepo: Repository<Banner>,
+    @InjectRepository(BannerPosition)
+    private readonly positionRepo: Repository<BannerPosition>,
     private readonly mediaService: MediaStaticService,
   ) {}
 
   async create(dto: CreateBannerDto): Promise<Banner> {
+    // اعتبارسنجی جایگاه قبل از ذخیره؛ در غیر این صورت نقض FK به خطای 500 منجر میشد
+    const position = await this.positionRepo.findOne({
+      where: { id: dto.positionId },
+      select: { id: true, key: true, name: true, isActive: true },
+    });
+    if (!position) {
+      throw new NotFoundException(
+        `جایگاه بنر با شناسه ${dto.positionId} یافت نشد. لطفاً ابتدا جایگاه را ایجاد کنید.`,
+      );
+    }
+
     const banner = this.bannerRepo.create({
       ...dto,
       startAt: dto.startAt ? new Date(dto.startAt) : undefined,
@@ -41,11 +56,18 @@ export class BannersService {
     const saved = await this.bannerRepo.save(banner);
 
     // ۳. انتساب شناسه واقعی بنر به تصاویر آپلود شده (تغییر ownerId از 'temp' به شناسه بنر)
-    await this.mediaService.reassignOwner(
-      [saved.imageUrl, saved.mobileImageUrl],
-      MediaOwnerType.BANNER,
-      String(saved.id),
-    );
+    // این مرحله نباید باعث 500 بعد از ذخیره شدن بنر شود
+    try {
+      await this.mediaService.reassignOwner(
+        [saved.imageUrl, saved.mobileImageUrl],
+        MediaOwnerType.BANNER,
+        String(saved.id),
+      );
+    } catch (error: unknown) {
+      this.logger.warn(
+        `انتساب مدیا به بنر ${saved.id} ناموفق بود: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
 
     return saved;
   }

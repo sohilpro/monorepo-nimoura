@@ -62,7 +62,7 @@ function cellClass(i: number) {
       cfg.cols,
       gapClass,
       mobileScroll &&
-        'max-sm:flex max-sm:snap-x max-sm:snap-mandatory max-sm:overflow-x-auto max-sm:pb-2 max-sm:[scrollbar-width:none]',
+        'max-sm:flex max-sm:snap-x max-sm:snap-mandatory max-sm:overflow-x-auto max-sm:pb-2 scrollbar-hide',
     ]"
   >
     <div

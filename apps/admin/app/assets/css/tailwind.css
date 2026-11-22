@@ -330,7 +330,7 @@
   background-color: var(--color-brand-100, #f5e4e6);
 }
 
-.no-scrollbar {
+.scrollbar-hide {
   &::-webkit-scrollbar {
     display: none;
   }

@@ -69,7 +69,7 @@
       <!-- Scroll / Strip Skeleton -->
       <div
         v-else-if="variant === 'scroll'"
-        class="no-scrollbar flex gap-3 overflow-hidden"
+        class="scrollbar-hide flex gap-3 overflow-hidden"
       >
         <div
           v-for="n in limit"
@@ -173,7 +173,7 @@
       <!-- ── Variant 2: Horizontal Smooth Scroll Strip ── -->
       <div
         v-else-if="variant === 'scroll'"
-        class="no-scrollbar flex gap-3 overflow-x-auto touch-pan-x snap-x scroll-smooth pb-2"
+        class="scrollbar-hide flex gap-3 overflow-x-auto touch-pan-x snap-x scroll-smooth pb-2"
       >
         <NuxtLink
           v-for="item in resolvedList"
@@ -448,12 +448,3 @@ const resolvedList = computed(() => {
 });
 </script>
 
-<style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-</style>

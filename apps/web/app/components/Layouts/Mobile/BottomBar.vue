@@ -13,11 +13,10 @@
     :class="isHidden ? 'translate-y-[110%]' : 'translate-y-0'"
   >
     <ul
-      class="flex justify-around items-center mx-3 rounded-[22px] px-1 py-2
+      class="flex justify-around items-center mx-3 mb-[calc(env(safe-area-inset-bottom,0px)+10px)] rounded-[22px] px-1 py-2
              bg-white/[0.82] backdrop-blur-xl saturate-[180%]
              border border-white/60
              shadow-[0_8px_32px_rgba(180,100,80,0.10),0_2px_8px_rgba(0,0,0,0.07),inset_0_1px_0_rgba(255,255,255,0.9)]"
-      :style="{ marginBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }"
     >
       <li v-for="item in navItems" :key="item.key" class="flex-1">
 
@@ -25,13 +24,16 @@
         <button
           v-if="item.key === 'categories'"
           type="button"
-          class="nav-item"
+          class="relative flex flex-col items-center gap-[3px] w-full px-0.5 pt-1 pb-0.5
+                 border-none bg-transparent cursor-pointer transition-colors duration-200
+                 [-webkit-tap-highlight-color:transparent]"
           :class="drawerOpen ? 'text-nimoura-primary' : 'text-gray-400'"
           :aria-label="item.label"
           @click="drawerOpen = !drawerOpen"
         >
           <span
-            class="nav-icon-pill"
+            class="flex items-center justify-center w-11 h-[30px] rounded-[14px]
+                   transition-[background,transform] duration-200"
             :class="drawerOpen ? 'bg-nimoura-primary/[0.12] -translate-y-px' : ''"
           >
             <svg
@@ -47,25 +49,28 @@
               <circle cx="19" cy="17.75" r="2.75" fill="currentColor" opacity=".3"/>
             </svg>
           </span>
-          <span class="nav-label">{{ item.label }}</span>
+          <span class="text-[10px] leading-none tracking-[0.02em] whitespace-nowrap font-vazir">{{ item.label }}</span>
         </button>
 
         <!-- Regular link -->
         <NuxtLink
           v-else
           :to="item.to!"
-          class="nav-item no-underline"
+          class="relative flex flex-col items-center gap-[3px] w-full px-0.5 pt-1 pb-0.5
+                 border-none bg-transparent cursor-pointer transition-colors duration-200 no-underline
+                 [-webkit-tap-highlight-color:transparent]"
           :class="isActive(item) ? 'text-nimoura-primary' : 'text-gray-400'"
           :aria-label="item.label"
           @click="drawerOpen = false"
         >
           <span
-            class="nav-icon-pill"
+            class="flex items-center justify-center w-11 h-[30px] rounded-[14px]
+                   transition-[background,transform] duration-200"
             :class="isActive(item) ? 'bg-nimoura-primary/[0.12] -translate-y-px' : ''"
           >
             <i :class="`pi ${item.icon} text-[19px]`" />
           </span>
-          <span class="nav-label">{{ item.label }}</span>
+          <span class="text-[10px] leading-none tracking-[0.02em] whitespace-nowrap font-vazir">{{ item.label }}</span>
 
           <!-- Cart badge -->
           <span
@@ -169,38 +174,3 @@ onUnmounted(() => {
   document.body.style.overflow = ''
 })
 </script>
-
-<style scoped>
-.nav-item {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  width: 100%;
-  padding: 4px 2px 2px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  transition: color 0.2s;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.nav-icon-pill {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 30px;
-  border-radius: 14px;
-  transition: background 0.25s, transform 0.2s;
-}
-
-.nav-label {
-  font-size: 10px;
-  line-height: 1;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  font-family: 'Vazirmatn', sans-serif;
-}
-</style>

@@ -6,17 +6,23 @@
     :style="{ width: '92vw', maxWidth: '580px' }"
     :closable="!submitting"
     dir="rtl"
+    class="!overflow-hidden !rounded-2xl !shadow-[0_20px_60px_rgba(39,33,33,0.18)]"
+    :pt="{
+      header: { class: '!border-b !border-nimoura-text-100 !bg-nimoura-50/70 !px-5 !py-4' },
+      title: { class: '!font-vazir !text-sm !font-bold !text-nimoura-text-900' },
+      content: { class: '!px-5 !py-4' },
+    }"
   >
-    <form @submit.prevent="handleSubmit" class="space-y-4 pt-2 text-sm text-gray-700">
+    <form @submit.prevent="handleSubmit" class="space-y-5 pt-1 font-vazir text-sm text-nimoura-text-700">
       <!-- Title -->
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-          موضوع تیکت <span class="text-rose-500">*</span>
+        <label class="mb-1.5 block text-xs font-semibold text-nimoura-text-700">
+          موضوع تیکت <span class="text-nimoura-error">*</span>
         </label>
-        <input
+        <InputText
           v-model="form.title"
           type="text"
-          class="w-full rounded-xl border border-gray-200 px-3.5 py-2.5 text-sm transition focus:border-nimoura-primary focus:outline-none focus:ring-2 focus:ring-nimoura-primary/10"
+          class="!w-full !rounded-xl !border-nimoura-text-100 !bg-white !px-3.5 !py-2.5 !font-vazir !text-sm !text-nimoura-text-800 placeholder:!text-nimoura-text-400 focus:!border-nimoura-primary focus:!ring-2 focus:!ring-nimoura-primary/10"
           placeholder="مثلاً: مشکل در ثبت سفارش یا مغایرت کالای ارسالی"
           required
         />
@@ -24,60 +30,55 @@
 
       <!-- Department -->
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-          بخش مربوطه (دپارتمان) <span class="text-rose-500">*</span>
+        <label class="mb-1.5 block text-xs font-semibold text-nimoura-text-700">
+          بخش مربوطه (دپارتمان) <span class="text-nimoura-error">*</span>
         </label>
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          <button
+        <div class="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <Button
             v-for="dept in departments"
             :key="dept.value"
-            type="button"
-            class="flex items-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition text-right cursor-pointer"
+            :label="dept.label"
+            :icon="`pi ${dept.icon}`"
+            icon-pos="left"
             :class="
               form.department === dept.value
-                ? 'border-nimoura-primary bg-nimoura-primary/5 text-nimoura-primary shadow-xs font-semibold'
-                : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                ? '!justify-start !rounded-xl !border-nimoura-primary !bg-nimoura-primary/10 !text-nimoura-primary !shadow-[0_4px_12px_rgba(183,110,121,0.12)] !font-semibold'
+                : '!justify-start !rounded-xl !border-nimoura-text-100 !bg-white !font-medium !text-nimoura-text-600 transition-colors hover:!border-nimoura-primary/40 hover:!bg-nimoura-50 hover:!text-nimoura-primary'
             "
             @click="form.department = dept.value"
-          >
-            <i :class="`pi ${dept.icon} text-sm`" />
-            <span class="truncate">{{ dept.label }}</span>
-          </button>
+          />
         </div>
       </div>
 
       <!-- Priority -->
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+        <label class="mb-1.5 block text-xs font-semibold text-nimoura-text-700">
           اولویت پاسخ‌دهی
         </label>
         <div class="flex gap-2">
-          <button
+          <Button
             v-for="p in priorities"
             :key="p.value"
-            type="button"
-            class="flex-1 py-1.5 px-2 rounded-lg border text-xs font-medium transition cursor-pointer text-center"
+            :label="p.label"
             :class="
               form.priority === p.value
-                ? `${p.activeClass} font-semibold shadow-xs`
-                : 'border-gray-200 bg-white text-gray-500 hover:bg-gray-50'
+                ? `${p.activeClass} !font-semibold !shadow-[0_4px_12px_rgba(39,33,33,0.06)]`
+                : '!rounded-lg !border-nimoura-text-100 !bg-white !text-xs !font-medium !text-nimoura-text-500 transition-colors hover:!bg-nimoura-50'
             "
             @click="form.priority = p.value"
-          >
-            {{ p.label }}
-          </button>
+          />
         </div>
       </div>
 
       <!-- Message -->
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1.5">
-          متن پیام شما <span class="text-rose-500">*</span>
+        <label class="mb-1.5 block text-xs font-semibold text-nimoura-text-700">
+          متن پیام شما <span class="text-nimoura-error">*</span>
         </label>
-        <textarea
+        <Textarea
           v-model="form.message"
-          rows="4"
-          class="w-full rounded-xl border border-gray-200 p-3 text-sm transition focus:border-nimoura-primary focus:outline-none focus:ring-2 focus:ring-nimoura-primary/10"
+          :rows="4"
+          class="!w-full !rounded-xl !border-nimoura-text-100 !bg-white !p-3 !font-vazir !text-sm !text-nimoura-text-800 placeholder:!text-nimoura-text-400 focus:!border-nimoura-primary focus:!ring-2 focus:!ring-nimoura-primary/10"
           placeholder="شرح دقیق مسئله، شماره پیگیری سفارش یا هرگونه توضیحات لازم را بنویسید..."
           required
         />
@@ -85,36 +86,35 @@
 
       <!-- Attachment -->
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1.5">
+        <label class="mb-1.5 block text-xs font-semibold text-nimoura-text-700">
           پیوست فایل یا تصویر (اختیاری)
         </label>
         <div class="space-y-2">
-          <div
-            v-if="attachments.length > 0"
-            class="flex flex-wrap gap-2"
-          >
+          <div v-if="attachments.length > 0" class="flex flex-wrap gap-2">
             <div
               v-for="(att, idx) in attachments"
               :key="idx"
-              class="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs text-gray-700"
+              class="flex items-center gap-2 rounded-lg border border-nimoura-text-100 bg-nimoura-50 px-2.5 py-1.5 text-xs text-nimoura-text-700"
             >
               <i class="pi pi-file text-nimoura-primary" />
               <span class="max-w-[160px] truncate">{{ att.name }}</span>
-              <button
-                type="button"
-                class="text-gray-400 hover:text-rose-500 transition-colors cursor-pointer"
+              <Button
+                icon="pi pi-times"
+                title="حذف پیوست"
+                class="!flex !size-5 !items-center !justify-center !border-0 !bg-transparent !p-0 !text-[10px] !text-nimoura-text-400 transition-colors hover:!bg-transparent hover:!text-nimoura-error"
                 @click="removeAttachment(idx)"
-              >
-                <i class="pi pi-times text-[10px]" />
-              </button>
+              />
             </div>
           </div>
 
-          <label
-            class="flex items-center justify-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50/50 p-3 text-xs font-medium text-gray-500 transition hover:border-nimoura-primary hover:bg-nimoura-primary/5 hover:text-nimoura-primary cursor-pointer"
+          <Button
+            as="label"
+            :loading="uploading"
+            :disabled="uploading"
+            class="!flex !w-full !cursor-pointer !items-center !justify-center !gap-2 !rounded-xl !border !border-dashed !border-nimoura-text-200 !bg-nimoura-50/60 !px-3 !py-3 !font-vazir !text-xs !font-medium !text-nimoura-text-500 transition-colors hover:!border-nimoura-primary hover:!bg-nimoura-primary/5 hover:!text-nimoura-primary"
           >
-            <i v-if="uploading" class="pi pi-spin pi-spinner text-sm" />
-            <i v-else class="pi pi-paperclip text-sm" />
+            <i v-if="uploading" class="pi pi-spin pi-spinner text-sm!" />
+            <i v-else class="pi pi-paperclip text-sm!" />
             <span>{{ uploading ? 'در حال بارگذاری فایل...' : 'انتخاب تصویر یا فایل (حداکثر ۱۰ مگابایت)' }}</span>
             <input
               type="file"
@@ -123,37 +123,37 @@
               :disabled="uploading"
               @change="handleFileSelect"
             />
-          </label>
+          </Button>
         </div>
       </div>
 
       <!-- Error alert -->
       <div
         v-if="errorMessage"
-        class="rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs font-medium text-rose-700"
+        class="flex items-start gap-2 rounded-xl border border-nimoura-error/30 bg-nimoura-error/5 p-3 text-xs font-medium text-nimoura-error"
       >
-        {{ errorMessage }}
+        <i class="pi pi-exclamation-circle mt-0.5 shrink-0" />
+        <span>{{ errorMessage }}</span>
       </div>
 
       <!-- Footer Buttons -->
-      <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
-        <button
-          type="button"
-          class="rounded-xl px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
+      <div class="flex items-center justify-end gap-2.5 border-t border-nimoura-text-100 pt-4">
+        <Button
+          label="انصراف"
+          text
           :disabled="submitting"
+          class="!rounded-xl !font-vazir !text-xs !font-medium !text-nimoura-text-600 hover:!bg-nimoura-50"
           @click="visible = false"
-        >
-          انصراف
-        </button>
-        <button
+        />
+        <Button
           type="submit"
-          class="inline-flex items-center gap-2 rounded-xl bg-nimoura-primary px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-nimoura-primary/20 transition hover:bg-nimoura-primary-dark disabled:opacity-50 cursor-pointer"
+          :label="submitting ? 'در حال ارسال...' : 'ارسال تیکت'"
+          icon="pi pi-send"
+          icon-pos="left"
+          :loading="submitting"
           :disabled="submitting || uploading"
-        >
-          <i v-if="submitting" class="pi pi-spin pi-spinner text-xs" />
-          <i v-else class="pi pi-send text-xs" />
-          <span>{{ submitting ? 'در حال ارسال...' : 'ارسال تیکت' }}</span>
-        </button>
+          class="!inline-flex !items-center !gap-2 !rounded-xl !border-nimoura-primary !bg-nimoura-primary !px-5 !py-2.5 !font-vazir !text-xs !font-semibold !text-white !shadow-[0_6px_18px_rgba(183,110,121,0.24)] transition-colors hover:!bg-nimoura-primary/90 disabled:!opacity-50"
+        />
       </div>
     </form>
   </Dialog>
@@ -182,10 +182,10 @@ const departments = [
 ];
 
 const priorities = [
-  { value: TicketPriority.LOW, label: 'عادی', activeClass: 'border-gray-400 bg-gray-100 text-gray-800' },
-  { value: TicketPriority.MEDIUM, label: 'متوسط', activeClass: 'border-blue-400 bg-blue-50 text-blue-700' },
-  { value: TicketPriority.HIGH, label: 'زیاد', activeClass: 'border-orange-400 bg-orange-50 text-orange-700' },
-  { value: TicketPriority.URGENT, label: 'فوری', activeClass: 'border-rose-400 bg-rose-50 text-rose-700' },
+  { value: TicketPriority.LOW, label: 'عادی', activeClass: '!rounded-lg !border-nimoura-text-300 !bg-nimoura-50 !text-nimoura-text-800' },
+  { value: TicketPriority.MEDIUM, label: 'متوسط', activeClass: '!rounded-lg !border-nimoura-primary/40 !bg-nimoura-primary/10 !text-nimoura-primary' },
+  { value: TicketPriority.HIGH, label: 'زیاد', activeClass: '!rounded-lg !border-nimoura-warning/60 !bg-nimoura-warning/10 !text-nimoura-warning' },
+  { value: TicketPriority.URGENT, label: 'فوری', activeClass: '!rounded-lg !border-nimoura-error/40 !bg-nimoura-error/10 !text-nimoura-error' },
 ];
 
 const form = ref({

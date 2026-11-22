@@ -12,6 +12,21 @@
   --color-nimoura-dark: #2e2636;
   --color-nimoura-velvet: #3b2f45;
   --color-nimoura-success: #2fb57e;
+  --color-nimoura-error: #f04438;
+  --color-nimoura-warning: #f79009;
+
+  /* 🎨 nimoura Numeric Scale (mirrors packages/ui/src/primevue-preset.ts) */
+  --color-nimoura-50: #fbf4f5;
+  --color-nimoura-100: #f5e4e6;
+  --color-nimoura-200: #eccad0;
+  --color-nimoura-300: #e0a7b1;
+  --color-nimoura-400: #ce7f8d;
+  --color-nimoura-500: #b76e79;
+  --color-nimoura-600: #a15661;
+  --color-nimoura-700: #87444f;
+  --color-nimoura-800: #713a43;
+  --color-nimoura-900: #5e333a;
+  --color-nimoura-950: #341a1e;
 
   /* 📝 Text Scale */
   --color-nimoura-text-100: #e9e6e6;
@@ -137,14 +152,6 @@
   .small-card_price {
     @apply flex items-center font-modam justify-between gap-x-2;
   }
-}
-
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
 }
 
 .torobpay-widget-media.torobpay-logo-light-sweep::after {

@@ -1,11 +1,15 @@
 <template>
-  <div class="orders-root">
+  <div class="font-vazir text-nimoura-text-700">
 
     <!-- Header -->
-    <div class="mb-5 flex items-center justify-between">
+    <div class="mb-5 flex items-center justify-between gap-3">
       <div>
-        <h2 class="panel-title">سفارشات من</h2>
-        <p class="mt-1 text-xs font-vazir" style="color:var(--nt-400)">
+        <h2
+          class="relative pr-3 text-[0.95rem] font-bold font-vazir text-nimoura-text-800 before:absolute before:right-0 before:top-1/2 before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-sm before:bg-nimoura-primary before:content-['']"
+        >
+          سفارشات من
+        </h2>
+        <p class="mt-1 text-xs font-vazir text-nimoura-text-400">
           <span class="font-modam">{{ orders.length }}</span> سفارش ثبت شده
         </p>
       </div>
@@ -13,25 +17,36 @@
 
     <!-- Skeleton -->
     <div v-if="loading" class="space-y-3">
-      <div v-for="n in 3" :key="n" class="order-card animate-pulse">
-        <div class="flex gap-3">
-          <div class="h-12 w-12 rounded-2xl bg-gray-100 shrink-0" />
+      <div
+        v-for="n in 3"
+        :key="n"
+        class="animate-pulse rounded-2xl border border-nimoura-text-100 bg-white p-4 shadow-[0_8px_30px_rgba(39,33,33,0.05)]"
+      >
+        <div class="flex items-center gap-3">
+          <Skeleton width="2.625rem" height="2.625rem" border-radius="0.875rem" />
           <div class="flex-1 space-y-2 py-1">
-            <div class="h-3.5 w-28 rounded-full bg-gray-100" />
-            <div class="h-3 w-44 rounded-full bg-gray-100" />
+            <Skeleton width="7rem" height="0.875rem" border-radius="0.375rem" />
+            <Skeleton width="11rem" height="0.75rem" border-radius="0.375rem" />
           </div>
-          <div class="h-6 w-20 rounded-full bg-gray-100" />
+          <Skeleton width="5rem" height="1.5rem" border-radius="1rem" />
         </div>
       </div>
     </div>
 
     <!-- Empty -->
-    <div v-else-if="!orders.length" class="empty-state">
-      <div class="empty-icon-wrap">
-        <i class="pi pi-shopping-bag text-3xl" style="color:var(--primary);opacity:.4" />
+    <div v-else-if="!orders.length" class="flex flex-col items-center px-5 py-12 text-center">
+      <div class="flex size-18 items-center justify-center rounded-full bg-nimoura-primary/10">
+        <i class="pi pi-shopping-bag text-3xl! text-nimoura-primary/40" />
       </div>
-      <p class="mt-4 text-sm font-medium font-vazir" style="color:var(--nt-500)">هنوز سفارشی ثبت نکردی</p>
-      <NuxtLink to="/" class="empty-cta mt-4">رفتن به فروشگاه</NuxtLink>
+      <p class="mt-4 text-sm font-medium font-vazir text-nimoura-text-500">
+        هنوز سفارشی ثبت نکردی
+      </p>
+      <NuxtLink
+        to="/"
+        class="mt-4 inline-flex items-center justify-center rounded-xl bg-gradient-to-br from-nimoura-primary to-nimoura-700 px-6 py-2.5 text-sm font-semibold font-vazir text-white no-underline shadow-[0_6px_18px_rgba(183,110,121,0.3)] transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_24px_rgba(183,110,121,0.35)]"
+      >
+        رفتن به فروشگاه
+      </NuxtLink>
     </div>
 
     <!-- List -->
@@ -39,27 +54,28 @@
       <div
         v-for="order in orders"
         :key="order.id"
-        class="order-card cursor-pointer"
+        class="group cursor-pointer rounded-2xl border border-nimoura-text-100 bg-white p-4 shadow-[0_8px_30px_rgba(39,33,33,0.05)] transition-all duration-300 hover:-translate-y-0.5 hover:border-nimoura-primary/30 hover:shadow-[0_14px_34px_rgba(39,33,33,0.09)]"
         @click="goToDetail(order.id)"
       >
         <!-- Top row -->
         <div class="flex items-start justify-between gap-3">
           <div class="flex items-center gap-3">
-            <div class="order-icon-wrap">
-              <i :class="`pi ${statusMeta(order.status).icon} text-base`"
-                 :style="`color:${statusMeta(order.status).color}`" />
+            <div class="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[14px] bg-nimoura-primary/10">
+              <i :class="['pi', statusMeta(order.status).icon, 'text-base!', statusMeta(order.status).iconClass]" />
             </div>
-            <div>
-              <p class="text-sm font-bold font-vazir" style="color:var(--nt-800)">
+            <div class="min-w-0">
+              <p class="text-sm font-bold font-vazir text-nimoura-text-800">
                 سفارش {{ order.orderCode ?? `#${order.id}` }}
               </p>
-              <p class="mt-0.5 text-xs font-vazir" style="color:var(--nt-400)">
+              <p class="mt-0.5 text-xs font-vazir text-nimoura-text-400">
                 {{ formatDate(order.createdAt) }}
               </p>
             </div>
           </div>
-          <span class="order-badge shrink-0"
-                :style="`background:${statusMeta(order.status).bg};color:${statusMeta(order.status).color}`">
+          <span
+            class="inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-[11px] font-semibold font-vazir"
+            :class="[statusMeta(order.status).badgeClass, statusMeta(order.status).textClass]"
+          >
             {{ statusMeta(order.status).label }}
           </span>
         </div>
@@ -69,7 +85,7 @@
           <div
             v-for="item in order.items.slice(0, 4)"
             :key="item.id"
-            class="product-thumb shrink-0"
+            class="flex h-[52px] w-[52px] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-nimoura-text-100 bg-nimoura-base/60"
           >
             <img
               v-if="item.product?.thumbnail"
@@ -77,30 +93,28 @@
               :alt="item.product?.title"
               class="h-full w-full object-cover"
             />
-            <i v-else class="pi pi-image text-gray-300 text-lg" />
+            <i v-else class="pi pi-image text-lg! text-nimoura-text-300" />
           </div>
           <div
             v-if="order.items.length > 4"
-            class="product-thumb shrink-0 flex items-center justify-center"
-            style="background:rgba(183,110,121,0.08)"
+            class="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-xl border border-nimoura-text-100 bg-nimoura-primary/10"
           >
-            <span class="text-xs font-bold font-vazir" style="color:var(--primary)">
+            <span class="text-xs font-bold font-vazir text-nimoura-primary">
               +{{ order.items.length - 4 }}
             </span>
           </div>
         </div>
 
         <!-- Bottom row -->
-        <div class="mt-3 flex items-center justify-between border-t pt-3"
-             style="border-color:rgba(183,110,121,0.08)">
-          <span class="text-xs" style="color:var(--nt-400)">
+        <div class="mt-3 flex items-center justify-between gap-2 border-t border-nimoura-text-100 pt-3">
+          <span class="text-xs font-vazir text-nimoura-text-400">
             <span class="font-modam">{{ order.items?.length ?? 0 }}</span> کالا
           </span>
           <div class="flex items-center gap-3">
-            <span class="text-sm font-bold font-modam" style="color:var(--primary)">
+            <span class="font-modam text-sm font-bold text-nimoura-primary">
               {{ formatPrice(order.finalTotal) }} تومان
             </span>
-            <i class="pi pi-angle-left text-sm" style="color:var(--nt-300)" />
+            <i class="pi pi-angle-left text-sm! text-nimoura-text-300 transition-transform duration-300 group-hover:-translate-x-1" />
           </div>
         </div>
       </div>
@@ -124,12 +138,12 @@ async function fetchOrders(): Promise<Order[] | any> {
 // ── Status meta ────────────────────────────────
 function statusMeta(status: Order['status']) {
   const map = {
-    pending:   { label: 'در انتظار پرداخت', icon: 'pi-clock',       color: '#d97706', bg: 'rgba(245,158,11,.1)'   },
-    paid:      { label: 'پرداخت شده',        icon: 'pi-check-circle', color: '#059669', bg: 'rgba(16,185,129,.1)'   },
-    shipped:   { label: 'ارسال شده',          icon: 'pi-truck',        color: '#2563eb', bg: 'rgba(37,99,235,.08)'   },
-    cancelled: { label: 'لغو شده',            icon: 'pi-times-circle', color: '#dc2626', bg: 'rgba(220,38,38,.08)'   },
+    pending:   { label: 'در انتظار پرداخت', icon: 'pi-clock',        textClass: 'text-nimoura-warning', badgeClass: 'bg-nimoura-warning/10', iconClass: 'text-nimoura-warning' },
+    paid:      { label: 'پرداخت شده',        icon: 'pi-check-circle', textClass: 'text-nimoura-success', badgeClass: 'bg-nimoura-success/10', iconClass: 'text-nimoura-success' },
+    shipped:   { label: 'ارسال شده',          icon: 'pi-truck',        textClass: 'text-nimoura-primary', badgeClass: 'bg-nimoura-primary/10', iconClass: 'text-nimoura-primary' },
+    cancelled: { label: 'لغو شده',            icon: 'pi-times-circle', textClass: 'text-nimoura-error',   badgeClass: 'bg-nimoura-error/10',   iconClass: 'text-nimoura-error' },
   }
-  return map[status] ?? map.pending
+  return map[status as keyof typeof map] ?? map.pending
 }
 
 // ── Helpers ────────────────────────────────────
@@ -151,71 +165,3 @@ onMounted(async () => {
   finally { loading.value = false }
 })
 </script>
-
-<style scoped>
-.orders-root {
-  --primary: #b76e79;
-  --base:    #fff8f4;
-  --nt-400: #9b9191; --nt-500: #807676;
-  --nt-800: #3a3131;
-  font-family: 'Vazirmatn', sans-serif;
-}
-
-.panel-title {
-  font-size: .95rem; font-weight: 700; color: var(--nt-800);
-  position: relative; padding-right: 12px;
-}
-.panel-title::before {
-  content: ''; position: absolute; right: 0; top: 50%;
-  transform: translateY(-50%);
-  width: 3px; height: 16px;
-  background: var(--primary); border-radius: 2px;
-}
-
-.order-card {
-  background: #fff; border-radius: 20px; padding: 16px;
-  border: 1px solid rgba(183,110,121,0.09);
-  box-shadow: 0 2px 16px rgba(183,110,121,0.05);
-  transition: box-shadow .2s, transform .2s;
-}
-.order-card:hover {
-  box-shadow: 0 6px 24px rgba(183,110,121,0.12);
-  transform: translateY(-2px);
-}
-
-.order-icon-wrap {
-  width: 42px; height: 42px; border-radius: 14px; flex-shrink: 0;
-  background: rgba(183,110,121,0.07);
-  display: flex; align-items: center; justify-content: center;
-}
-
-.order-badge {
-  display: inline-flex; align-items: center;
-  padding: 4px 10px; border-radius: 20px;
-  font-size: 11px; font-family: 'Vazirmatn', sans-serif; font-weight: 600;
-}
-
-.product-thumb {
-  width: 52px; height: 52px; border-radius: 12px; overflow: hidden;
-  background: rgba(183,110,121,0.05);
-  border: 1px solid rgba(183,110,121,0.1);
-  display: flex; align-items: center; justify-content: center;
-}
-
-.empty-state {
-  display: flex; flex-direction: column; align-items: center;
-  padding: 48px 20px; text-align: center;
-}
-.empty-icon-wrap {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: rgba(183,110,121,0.07);
-  display: flex; align-items: center; justify-content: center;
-}
-.empty-cta {
-  padding: 10px 24px; border-radius: 14px;
-  background: linear-gradient(135deg, #b76e79, #9a5a64);
-  color: #fff; text-decoration: none;
-  font-size: .875rem; font-family: 'Vazirmatn', sans-serif; font-weight: 600;
-  box-shadow: 0 4px 14px rgba(183,110,121,0.3);
-}
-</style>

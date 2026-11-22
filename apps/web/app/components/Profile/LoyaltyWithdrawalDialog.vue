@@ -7,113 +7,101 @@
     :closable="!submitting"
     dir="rtl"
   >
-    <div class="space-y-4 pt-2 text-sm text-gray-700">
-      <div class="rounded-xl bg-nimoura-primary/5 p-3 text-nimoura-text-700 border border-nimoura-primary/15">
-        <div class="flex items-center justify-between">
+    <div class="space-y-4 pt-2 text-sm text-nimoura-text-700">
+      <div class="rounded-xl border border-nimoura-primary/15 bg-nimoura-primary/5 p-3">
+        <div class="flex items-center justify-between gap-2">
           <span class="text-xs text-nimoura-text-500">اعتبار قابل برداشت:</span>
-          <span class="font-modam text-base font-bold text-nimoura-primary">
-            {{ numberFormat(balance) }} تومان
-          </span>
+          <span class="font-modam text-base font-bold text-nimoura-primary">{{ numberFormat(balance) }} تومان</span>
         </div>
-        <p class="mt-1 text-[11px] text-nimoura-text-400">
-          حداقل مبلغ جهت ثبت درخواست تسویه ۱۰٬۰۰۰ تومان است.
-        </p>
+        <p class="mt-1 text-[11px] text-nimoura-text-400">حداقل مبلغ جهت ثبت درخواست تسویه ۱۰٬۰۰۰ تومان است.</p>
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1">
-          مبلغ درخواستی (تومان) <span class="text-red-500">*</span>
+        <label class="mb-1.5 block text-xs font-semibold text-nimoura-text-700">
+          مبلغ درخواستی (تومان) <span class="text-nimoura-error">*</span>
         </label>
         <div class="flex gap-2">
-          <input
-            v-model.number="form.amount"
+          <InputText
+            :model-value="String(form.amount)"
             type="number"
-            class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-nimoura-primary focus:outline-none"
             :max="balance"
             min="10000"
             placeholder="مثلاً ۵۰۰۰۰"
+            class="!w-full !rounded-xl !border-nimoura-200 !bg-white !px-3 !py-2.5 !text-sm focus:!border-nimoura-primary"
+            @update:model-value="form.amount = Number($event)"
           />
-          <button
+          <Button
             type="button"
-            class="shrink-0 rounded-xl bg-gray-100 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-200"
+            label="حداکثر"
+            size="small"
+            outlined
+            class="!shrink-0 !rounded-xl !border-nimoura-200 !bg-nimoura-50 !px-3 !py-2 !text-xs !font-medium !text-nimoura-text-700 hover:!bg-nimoura-100"
             @click="form.amount = balance"
-          >
-            حداکثر
-          </button>
+          />
         </div>
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1">
-          شماره شبا (با IR یا بدون آن) <span class="text-red-500">*</span>
+        <label class="mb-1.5 block text-xs font-semibold text-nimoura-text-700">
+          شماره شبا (با IR یا بدون آن) <span class="text-nimoura-error">*</span>
         </label>
-        <input
+        <InputText
           v-model="form.iban"
           type="text"
           dir="ltr"
-          class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-mono focus:border-nimoura-primary focus:outline-none"
           placeholder="IR120000000000000000000000"
+          class="!w-full !rounded-xl !border-nimoura-200 !bg-white !px-3 !py-2.5 !font-mono !text-sm focus:!border-nimoura-primary"
         />
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1">
-          نام و نام خانوادگی صاحب حساب <span class="text-red-500">*</span>
+        <label class="mb-1.5 block text-xs font-semibold text-nimoura-text-700">
+          نام و نام خانوادگی صاحب حساب <span class="text-nimoura-error">*</span>
         </label>
-        <input
+        <InputText
           v-model="form.accountHolderName"
           type="text"
-          class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-nimoura-primary focus:outline-none"
           placeholder="نام کامل صاحب حساب بانکی"
+          class="!w-full !rounded-xl !border-nimoura-200 !bg-white !px-3 !py-2.5 !text-sm focus:!border-nimoura-primary"
         />
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1">
-          شماره کارت (اختیاری)
-        </label>
-        <input
+        <label class="mb-1.5 block text-xs font-semibold text-nimoura-text-700">شماره کارت (اختیاری)</label>
+        <InputText
           v-model="form.cardNumber"
           type="text"
           dir="ltr"
-          class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-mono focus:border-nimoura-primary focus:outline-none"
           placeholder="۶۰۳۷-xxxx-xxxx-xxxx"
+          class="!w-full !rounded-xl !border-nimoura-200 !bg-white !px-3 !py-2.5 !font-mono !text-sm focus:!border-nimoura-primary"
         />
       </div>
 
-      <!-- درخواست‌های قبلی -->
-      <div v-if="withdrawals && withdrawals.length > 0" class="border-t pt-3">
-        <p class="text-xs font-semibold text-gray-600 mb-2">درخواست‌های قبلی شما:</p>
-        <div class="max-h-36 overflow-y-auto space-y-1.5 text-xs">
+      <!--previous requests-->
+      <div v-if="withdrawals && withdrawals.length > 0" class="border-t border-nimoura-text-100 pt-3">
+        <p class="mb-2 text-xs font-semibold text-nimoura-text-600">درخواستهای قبلی شما:</p>
+        <div class="max-h-36 space-y-1.5 overflow-y-auto text-xs">
           <div
             v-for="w in withdrawals.slice(0, 5)"
             :key="w.id"
-            class="flex items-center justify-between rounded-lg bg-gray-50 px-2.5 py-1.5 border border-gray-100"
+            class="flex items-center justify-between gap-2 rounded-lg border border-nimoura-100 bg-nimoura-base px-2.5 py-1.5"
           >
             <div>
-              <span class="font-modam font-semibold text-gray-800">{{ numberFormat(w.amount) }} ت</span>
-              <span class="text-[10px] text-gray-400 ms-1.5">{{ formatDate(w.createdAt) }}</span>
+              <span class="font-modam font-semibold text-nimoura-text-800">{{ numberFormat(w.amount) }} ت</span>
+              <span class="ms-1.5 text-[10px] text-nimoura-text-400">{{ formatDate(w.createdAt) }}</span>
             </div>
-            <div>
-              <span
-                v-if="w.status === 'PENDING'"
-                class="rounded-full bg-amber-50 text-amber-700 px-2 py-0.5 text-[10px] font-medium border border-amber-200"
-              >
-                در انتظار بررسی
-              </span>
-              <span
-                v-else-if="w.status === 'APPROVED'"
-                class="rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-medium border border-emerald-200"
-              >
-                واریز شد
-              </span>
-              <span
-                v-else
-                class="rounded-full bg-rose-50 text-rose-700 px-2 py-0.5 text-[10px] font-medium border border-rose-200"
-              >
-                رد شده
-              </span>
-            </div>
+            <span
+              v-if="w.status === 'PENDING'"
+              class="rounded-full border border-nimoura-warning/30 bg-nimoura-warning/10 px-2 py-0.5 text-[10px] font-medium text-nimoura-warning"
+            >در انتظار بررسی</span>
+            <span
+              v-else-if="w.status === 'APPROVED'"
+              class="rounded-full border border-nimoura-success/30 bg-nimoura-success/10 px-2 py-0.5 text-[10px] font-medium text-nimoura-success"
+            >واریز شد</span>
+            <span
+              v-else
+              class="rounded-full border border-nimoura-error/30 bg-nimoura-error/10 px-2 py-0.5 text-[10px] font-medium text-nimoura-error"
+            >رد شده</span>
           </div>
         </div>
       </div>
@@ -124,7 +112,9 @@
         <Button
           type="button"
           label="انصراف"
-          class="p-button-text p-button-sm text-gray-600"
+          text
+          size="small"
+          class="!text-nimoura-text-600 hover:!bg-nimoura-50"
           :disabled="submitting"
           @click="visible = false"
         />
@@ -132,7 +122,8 @@
           type="button"
           label="ثبت درخواست تسویه"
           icon="pi pi-check"
-          class="p-button-sm !bg-nimoura-primary !border-nimoura-primary text-white"
+          size="small"
+          class="!rounded-xl !border-nimoura-primary !bg-nimoura-primary !px-4 !text-white hover:!bg-nimoura-600"
           :loading="submitting"
           @click="handleSubmit"
         />

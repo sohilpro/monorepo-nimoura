@@ -21,17 +21,15 @@ useHead({
 const route = useRoute();
 const router = useRouter();
 
-// ---------- دسته‌بندی‌ها برای نوار افقی ----------
-const { data: categoriesData } = useMagazineCategoriesTree();
-const categories = computed<any[]>(() => {
-  const c = categoriesData.value as any;
-  if (Array.isArray(c?.data)) return c.data;
-  if (Array.isArray(c)) return c;
-  return [];
-});
-
 // ---------- متغیرهای جستجو و فیلتر ----------
 const searchQuery = ref((route.query.search as string) || "");
+
+watch(
+  () => route.query.search,
+  (value) => {
+    searchQuery.value = String(value || "");
+  },
+);
 const activeCategorySlug = computed(() => (route.query.category as string) || "");
 const activeTagSlug = computed(() => (route.query.tag as string) || "");
 const activeSort = ref<"latest" | "popular" | "most_liked">(
@@ -113,16 +111,6 @@ function onSearchInput() {
   }, 400);
 }
 
-function selectCategory(slug?: string) {
-  router.push({
-    query: {
-      ...route.query,
-      category: slug || undefined,
-      page: undefined,
-    },
-  });
-}
-
 function clearFilters() {
   searchQuery.value = "";
   router.push({
@@ -142,106 +130,13 @@ function formatDate(date?: string) {
 
 <template>
   <div class="bg-nimoura-base min-h-screen">
-    <!-- ============ هدر ژورنال زیبایی نیمورا ============ -->
-    <header class="relative overflow-hidden border-b border-nimoura-border/30 bg-gradient-to-b from-nimoura-base via-white/60 to-nimoura-base pt-8 pb-10">
-      <!-- تزئین پس‌زمینه لطیف -->
-      <div class="pointer-events-none absolute -top-24 right-1/4 h-80 w-80 rounded-full bg-nimoura-primary/10 blur-3xl" />
-      <div class="pointer-events-none absolute -bottom-20 left-10 h-72 w-72 rounded-full bg-nimoura-accent/20 blur-3xl" />
-
-      <div class="relative mx-auto max-w-6xl px-5 sm:px-8">
-        <!-- ناوبری کوچک بالا -->
-        <div class="flex items-center justify-between text-xs text-nimoura-text-500 mb-6">
-          <div class="flex items-center gap-2">
-            <NuxtLink to="/" class="hover:text-nimoura-primary transition">خانه</NuxtLink>
-            <span class="text-nimoura-border">/</span>
-            <span class="font-bold text-nimoura-velvet">مجله نیمورا</span>
-          </div>
-          <span class="hidden sm:inline-block rounded-full bg-nimoura-primary/10 px-3 py-1 text-nimoura-primary font-medium">
-            ✦ مرجع جامع و تخصصی زیبایی و سلامت
-          </span>
-        </div>
-
-        <!-- تایتل و توضیحات اصلی ژورنال -->
-        <div class="flex flex-col items-center text-center">
-          <div class="inline-flex items-center gap-2 rounded-full border border-nimoura-primary/20 bg-white/80 px-4 py-1 text-xs font-semibold text-nimoura-primary shadow-xs backdrop-blur mb-3">
-            <i class="pi pi-sparkles text-xs" />
-            مجله تخصصی زیبایی و مراقبت پوست
-          </div>
-          <h1 class="font-display font-extrabold text-3xl sm:text-5xl lg:text-6xl text-nimoura-velvet tracking-tight leading-tight">
-            مجله زیبایی <span class="text-nimoura-primary font-modam">نیمورا</span>
-          </h1>
-          <p class="mt-3.5 max-w-2xl text-sm sm:text-base leading-relaxed text-nimoura-text-600">
-            جدیدترین مقالات تخصصی، راهنمای روتین پوستی، مقایسه محصولات آرایشی و رازهای ماندگاری زیبایی بر پایه علم
-          </p>
-
-          <!-- نوار جستجو در مقالات -->
-          <div class="mt-6 w-full max-w-lg">
-            <div class="relative flex items-center">
-              <input
-                v-model="searchQuery"
-                type="text"
-                placeholder="جستجو در مقالات (مثلاً: تینت لب، ضدآفتاب، روتین شب...)"
-                class="w-full rounded-2xl border border-nimoura-border/60 bg-white/95 px-11 py-3 text-sm text-nimoura-velvet placeholder-nimoura-text-400 shadow-sm transition focus:border-nimoura-primary focus:outline-none focus:ring-2 focus:ring-nimoura-primary/20"
-                @input="onSearchInput"
-              />
-              <i class="pi pi-search absolute right-4 text-sm text-nimoura-text-400 pointer-events-none" />
-              <button
-                v-if="searchQuery"
-                type="button"
-                class="absolute left-3 text-nimoura-text-400 hover:text-nimoura-velvet transition text-xs"
-                @click="searchQuery = ''; onSearchInput()"
-              >
-                <i class="pi pi-times" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <!-- ============ نوار دسته‌بندی‌های مجله ============ -->
-    <nav class="sticky top-0 z-30 border-y border-nimoura-border/30 bg-nimoura-base/90 backdrop-blur-md transition-all shadow-xs">
-      <div class="mx-auto flex max-w-6xl items-center gap-2 overflow-x-auto px-5 py-3 sm:px-8 no-scrollbar">
-        <button
-          type="button"
-          class="shrink-0 rounded-full px-4 py-1.5 text-xs sm:text-sm font-semibold transition"
-          :class="
-            !activeCategorySlug && !activeTagSlug
-              ? 'bg-nimoura-primary text-white shadow-xs'
-              : 'bg-white/80 text-nimoura-text-600 hover:bg-white hover:text-nimoura-velvet border border-nimoura-border/40'
-          "
-          @click="selectCategory(undefined)"
-        >
-          همه مقالات
-        </button>
-
-        <button
-          v-for="cat in categories"
-          :key="cat.id"
-          type="button"
-          class="shrink-0 rounded-full px-4 py-1.5 text-xs sm:text-sm transition"
-          :class="
-            activeCategorySlug === cat.slug
-              ? 'bg-nimoura-primary text-white font-bold shadow-xs'
-              : 'bg-white/80 text-nimoura-text-600 hover:bg-white hover:text-nimoura-velvet border border-nimoura-border/40'
-          "
-          @click="selectCategory(cat.slug)"
-        >
-          {{ cat.name }}
-        </button>
-
-        <!-- نمایش فیلتر فعال برچسب -->
-        <span
-          v-if="activeTagSlug"
-          class="mr-auto inline-flex items-center gap-1.5 rounded-full bg-nimoura-accent/30 px-3 py-1 text-xs text-nimoura-velvet font-medium"
-        >
-          برچسب: {{ activeTagSlug }}
-          <button type="button" @click="clearFilters" class="text-nimoura-text-600 hover:text-red-500">
-            <i class="pi pi-times text-[10px]" />
-          </button>
-        </span>
-      </div>
-    </nav>
+    <!-- ============ بنر جایگاه مجله ============ -->
+    <BannersSlot
+      position-key="magazine-top"
+      layout="single"
+      spacing-class="mx-auto mt-5 max-w-6xl px-5 sm:px-8"
+      :contained="false"
+    />
 
     <div class="mx-auto max-w-6xl px-5 sm:px-8 py-8">
       <!-- ============ هیرو: مقاله ویژه (کاور) ============ -->
@@ -410,20 +305,7 @@ function formatDate(date?: string) {
         />
       </section>
 
-      <!-- ============ خبرنامه مجله ============ -->
-      <section class="mt-20">
-        <MagazineNewsletterBox />
-      </section>
     </div>
   </div>
 </template>
 
-<style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-</style>

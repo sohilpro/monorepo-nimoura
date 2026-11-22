@@ -1,6 +1,6 @@
 <template>
   <div>
-    <ProfileFavorite />
+    <ProfileWishlist />
   </div>
 </template>
 

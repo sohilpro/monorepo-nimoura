@@ -69,7 +69,7 @@
 
         <!-- ══ Parent category chips (horizontal scroll) ══ -->
         <div class="shrink-0 pt-4 pb-2">
-          <div class="hide-scrollbar flex gap-2.5 overflow-x-auto px-4 pb-1">
+          <div class="scrollbar-hide flex gap-2.5 overflow-x-auto px-4 pb-1">
             <button
               v-for="cat in categories"
               :key="cat.id"
@@ -118,7 +118,7 @@
             <div
               v-if="selectedParent"
               :key="selectedParent.id"
-              class="hide-scrollbar h-full overflow-y-auto px-4 pb-24"
+              class="scrollbar-hide h-full overflow-y-auto px-4 pb-24"
             >
               <!-- Section title + "see all" -->
               <div class="mb-4 flex items-center justify-between">
@@ -364,14 +364,6 @@ watch(
 </script>
 
 <style scoped>
-.hide-scrollbar {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
 /* Parent chips */
 .chip--idle {
   background: #fff;

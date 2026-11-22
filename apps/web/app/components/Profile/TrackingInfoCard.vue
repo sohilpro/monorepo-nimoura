@@ -1,53 +1,48 @@
 <template>
-  <div 
-    v-if="trackingCode" 
-    class="w-full rounded-xl border-2 p-4 sm:p-6 transition-all duration-300 mb-6"
+  <div
+    v-if="trackingCode"
+    class="mb-6 w-full rounded-2xl border bg-white p-5 shadow-[0_8px_30px_rgba(39,33,33,0.05)] transition-all duration-300 sm:p-6"
     :class="theme.container"
     dir="rtl"
   >
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-      
+    <div class="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
       <div class="flex items-center gap-4">
-        <div class="p-3 rounded-full shrink-0" :class="theme.iconBg">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" :class="theme.iconColor" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="flex size-12 shrink-0 items-center justify-center rounded-full" :class="theme.iconBg">
+          <svg xmlns="http://www.w3.org/2000/svg" class="size-6" :class="theme.iconColor" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         </div>
-        
+
         <div>
-          <h3 class="font-bold text-lg" :class="theme.title">
-            ارسال شده توسط {{ carrierName }}
-          </h3>
-          <p class="text-sm opacity-80 mt-1" :class="theme.text">
+          <h3 class="text-lg font-bold" :class="theme.title">ارسال شده توسط {{ carrierName }}</h3>
+          <p class="mt-1 text-sm opacity-80" :class="theme.text">
             کد رهگیری: <span class="font-mono text-base font-bold select-all">{{ trackingCode }}</span>
           </p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        
-        <button 
-          @click="copyToClipboard" 
-          class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors border"
+      <div class="flex w-full items-center gap-2 sm:w-auto">
+        <Button
+          type="button"
+          size="small"
+          outlined
+          class="!flex-1 !rounded-xl !bg-white !px-4 !py-2 !text-sm !font-medium sm:!flex-none"
           :class="theme.secondaryBtn"
+          @click="copyToClipboard"
         >
           <span v-if="copied">کپی شد!</span>
           <span v-else>کپی کد</span>
-          <svg v-if="!copied" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-          </svg>
-        </button>
+          <i v-if="!copied" class="pi pi-copy text-sm" />
+        </Button>
 
-        <a 
-          :href="trackingLink" 
+        <a
+          :href="trackingLink"
           target="_blank"
-          class="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors text-white"
+          class="flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors sm:flex-none"
           :class="theme.primaryBtn"
         >
           رهگیری مرسوله
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-          </svg>
+          <i class="pi pi-external-link text-sm" />
         </a>
       </div>
     </div>
@@ -63,37 +58,34 @@ const props = defineProps({
   // ورودی تعیین کننده روش ارسال: 'post' یا 'tipax'
   carrier: {
     type: String,
-    default: 'post' // پیش‌فرض پست باشد
+    default: 'post' // پیشفرض پست باشد
   }
 });
 
 const copied = ref(false);
 
-// تنظیمات ظاهری بر اساس ورودی
+// تم بر اساس روش ارسال — همه از پالت Nimoura
 const theme = computed(() => {
   if (props.carrier === 'tipax') {
-    // تم سبز (تیپاکس)
     return {
-      container: 'bg-emerald-50 border-emerald-200 text-emerald-900',
+      container: 'border-nimoura-success/30',
       iconBg: 'bg-white',
-      iconColor: 'text-emerald-500',
-      title: 'text-emerald-800',
-      text: 'text-emerald-700',
-      primaryBtn: 'bg-emerald-600 hover:bg-emerald-700',
-      secondaryBtn: 'bg-white border-emerald-200 text-emerald-700 hover:bg-emerald-100'
-    };
-  } else {
-    // تم زرد (پست پیشتاز)
-    return {
-      container: 'bg-yellow-50 border-yellow-200 text-yellow-900',
-      iconBg: 'bg-white',
-      iconColor: 'text-yellow-500',
-      title: 'text-yellow-800',
-      text: 'text-yellow-700',
-      primaryBtn: 'bg-yellow-500 hover:bg-yellow-600',
-      secondaryBtn: 'bg-white border-yellow-200 text-yellow-700 hover:bg-yellow-100'
+      iconColor: 'text-nimoura-success',
+      title: 'text-nimoura-success',
+      text: 'text-nimoura-text-600',
+      primaryBtn: 'bg-nimoura-success hover:bg-nimoura-600',
+      secondaryBtn: '!border-nimoura-success/30 !text-nimoura-success hover:!bg-nimoura-success/10'
     };
   }
+  return {
+    container: 'border-nimoura-warning/30',
+    iconBg: 'bg-white',
+    iconColor: 'text-nimoura-warning',
+    title: 'text-nimoura-text-800',
+    text: 'text-nimoura-text-600',
+    primaryBtn: 'bg-nimoura-primary hover:bg-nimoura-600',
+    secondaryBtn: '!border-nimoura-primary/30 !text-nimoura-primary hover:!bg-nimoura-primary/10'
+  };
 });
 
 const carrierName = computed(() => {
@@ -104,9 +96,8 @@ const carrierName = computed(() => {
 const trackingLink = computed(() => {
   if (props.carrier === 'tipax') {
     return `https://tipaxco.com/tracking?id=${props.trackingCode}`;
-  } else {
-    return `https://tracking.post.ir/?id=${props.trackingCode}`;
   }
+  return `https://tracking.post.ir/?id=${props.trackingCode}`;
 });
 
 // تابع کپی کردن کد

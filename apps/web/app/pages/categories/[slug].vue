@@ -1,5 +1,10 @@
 <template>
   <section>
+    <BannersSlot
+      position-key="category-top"
+      layout="single"
+      spacing-class="mt-3 sm:mt-5"
+    />
     <Categories :category-data="category" />
   </section>
 </template>

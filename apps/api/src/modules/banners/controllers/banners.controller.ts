@@ -4,6 +4,8 @@ import {
   Post,
   Param,
   Query,
+  ParseIntPipe,
+  ParseEnumPipe,
   UseInterceptors,
   UseGuards,
 } from '@nestjs/common';
@@ -31,21 +33,22 @@ export class BannersController {
   @ApiOperation({ summary: 'دریافت بنرهای فعال یک جایگاه برای نمایش در سایت' })
   findActive(
     @Param('positionKey') positionKey: string,
-    @Query('device') device: BannerDevice = BannerDevice.ALL,
+    @Query('device', new ParseEnumPipe(BannerDevice, { optional: true }))
+    device: BannerDevice = BannerDevice.ALL,
   ) {
     return this.bannerService.findActiveForPosition(positionKey, device);
   }
 
   @Post(':id/view')
   @ApiOperation({ summary: 'ثبت یک بازدید (impression) برای بنر' })
-  trackView(@Param('id') id: number) {
+  trackView(@Param('id', ParseIntPipe) id: number) {
     return this.bannerService.incrementView(id);
   }
 
   @Post(':id/click')
   @Throttle({ default: { limit: 20, ttl: 60_000 } })
   @ApiOperation({ summary: 'ثبت یک کلیک برای بنر' })
-  trackClick(@Param('id') id: number) {
+  trackClick(@Param('id', ParseIntPipe) id: number) {
     return this.bannerService.incrementClick(id);
   }
 }

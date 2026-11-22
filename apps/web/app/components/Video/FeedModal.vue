@@ -84,12 +84,3 @@ function close() {
     </Transition>
   </Teleport>
 </template>
-
-<style scoped>
-.scrollbar-hide {
-  scrollbar-width: none;
-}
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-</style>

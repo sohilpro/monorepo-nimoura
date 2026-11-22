@@ -1,128 +1,225 @@
 <template>
-  <div class="panel" dir="rtl">
-    <div class="flex items-center justify-between mb-6">
-      <h2 class="panel-title">اطلاعات شخصی</h2>
-      <span class="lock-notice">
-        <i class="pi pi-lock text-[11px]" />
+  <section
+    class="rounded-2xl border border-nimoura-text-100 bg-white p-5 shadow-[0_8px_30px_rgba(39,33,33,0.05)] sm:p-6"
+    dir="rtl"
+    aria-label="اطلاعات شخصی"
+  >
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <h2 class="relative pr-3 text-base font-bold text-nimoura-text-900">
+        <span
+          class="absolute right-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-nimoura-primary"
+          aria-hidden="true"
+        />
+        اطلاعات شخصی
+      </h2>
+      <span
+        class="inline-flex items-center gap-1.5 rounded-full bg-nimoura-primary/10 px-2.5 py-1 text-[11px] font-semibold text-nimoura-text-500"
+      >
+        <i class="pi pi-lock text-[10px]!" aria-hidden="true" />
         شماره موبایل قابل تغییر نیست
       </span>
     </div>
 
     <div class="grid gap-4 sm:grid-cols-2">
-
       <!-- first_name — editable -->
-      <div class="field-group">
-        <label class="field-label">
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="profile-first-name"
+          class="flex items-center gap-1 text-[11px] font-bold tracking-wide text-nimoura-text-500"
+        >
           نام
-          <span class="required">*</span>
+          <span class="text-nimoura-error">*</span>
         </label>
-        <div class="field-wrap" :class="{ 'field-wrap--active': editMode, 'field-wrap--error': errors.first_name }">
-          <i class="pi pi-user field-icon" />
-          <input
+        <div class="relative">
+          <span
+            class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5 text-xs! text-nimoura-primary/60"
+            aria-hidden="true"
+          >
+            <i class="pi pi-user" />
+          </span>
+          <InputText
+            id="profile-first-name"
             v-model="form.first_name"
             type="text"
             placeholder="نام"
-            class="field-input"
-            :disabled="!editMode"
             maxlength="80"
+            :disabled="!editMode"
+            class="!h-11 !w-full !rounded-xl !border !border-nimoura-text-100 !bg-nimoura-base/60 !ps-10 !pe-10 !text-sm !text-nimoura-text-800 !shadow-none placeholder:!text-nimoura-text-300 focus:!border-nimoura-primary focus:!bg-white focus:!ring-4 focus:!ring-nimoura-primary/10 disabled:!border-nimoura-text-100 disabled:!bg-nimoura-50/60 disabled:!text-nimoura-text-500"
+            :class="{
+              '!border-nimoura-primary !bg-white': editMode && !errors.first_name,
+              '!border-nimoura-error/70': errors.first_name,
+            }"
           />
-          <i v-if="!editMode" class="pi pi-pencil edit-hint" @click="editMode = true" />
+          <button
+            v-if="!editMode"
+            type="button"
+            aria-label="ویرایش نام"
+            class="absolute inset-y-0 end-0 flex items-center pe-3 text-[11px]! text-nimoura-primary/50 transition-colors hover:text-nimoura-primary"
+            @click="editMode = true"
+          >
+            <i class="pi pi-pencil" aria-hidden="true" />
+          </button>
         </div>
-        <span v-if="errors.first_name" class="field-error">{{ errors.first_name }}</span>
+        <span v-if="errors.first_name" class="text-[11px] text-nimoura-error">
+          {{ errors.first_name }}
+        </span>
       </div>
 
       <!-- last_name — editable -->
-      <div class="field-group">
-        <label class="field-label">
+      <div class="flex flex-col gap-1.5">
+        <label
+          for="profile-last-name"
+          class="flex items-center gap-1 text-[11px] font-bold tracking-wide text-nimoura-text-500"
+        >
           نام خانوادگی
-          <span class="required">*</span>
+          <span class="text-nimoura-error">*</span>
         </label>
-        <div class="field-wrap" :class="{ 'field-wrap--active': editMode, 'field-wrap--error': errors.last_name }">
-          <i class="pi pi-user field-icon" />
-          <input
+        <div class="relative">
+          <span
+            class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5 text-xs! text-nimoura-primary/60"
+            aria-hidden="true"
+          >
+            <i class="pi pi-user" />
+          </span>
+          <InputText
+            id="profile-last-name"
             v-model="form.last_name"
             type="text"
             placeholder="نام خانوادگی"
-            class="field-input"
-            :disabled="!editMode"
             maxlength="80"
+            :disabled="!editMode"
+            class="!h-11 !w-full !rounded-xl !border !border-nimoura-text-100 !bg-nimoura-base/60 !ps-10 !pe-10 !text-sm !text-nimoura-text-800 !shadow-none placeholder:!text-nimoura-text-300 focus:!border-nimoura-primary focus:!bg-white focus:!ring-4 focus:!ring-nimoura-primary/10 disabled:!border-nimoura-text-100 disabled:!bg-nimoura-50/60 disabled:!text-nimoura-text-500"
+            :class="{
+              '!border-nimoura-primary !bg-white': editMode && !errors.last_name,
+              '!border-nimoura-error/70': errors.last_name,
+            }"
           />
-          <i v-if="!editMode" class="pi pi-pencil edit-hint" @click="editMode = true" />
+          <button
+            v-if="!editMode"
+            type="button"
+            aria-label="ویرایش نام خانوادگی"
+            class="absolute inset-y-0 end-0 flex items-center pe-3 text-[11px]! text-nimoura-primary/50 transition-colors hover:text-nimoura-primary"
+            @click="editMode = true"
+          >
+            <i class="pi pi-pencil" aria-hidden="true" />
+          </button>
         </div>
-        <span v-if="errors.last_name" class="field-error">{{ errors.last_name }}</span>
+        <span v-if="errors.last_name" class="text-[11px] text-nimoura-error">
+          {{ errors.last_name }}
+        </span>
       </div>
 
       <!-- phone — locked -->
-      <div class="field-group">
-        <label class="field-label">شماره موبایل</label>
-        <div class="field-wrap field-wrap--locked">
-          <i class="pi pi-phone field-icon" style="opacity:.4" />
-          <input
+      <div class="flex flex-col gap-1.5">
+        <label for="profile-mobile" class="text-[11px] font-bold tracking-wide text-nimoura-text-500">
+          شماره موبایل
+        </label>
+        <div class="relative">
+          <span
+            class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5 text-xs! text-nimoura-primary/40"
+            aria-hidden="true"
+          >
+            <i class="pi pi-phone" />
+          </span>
+          <InputText
+            id="profile-mobile"
             :value="currentUser?.mobile || (currentUser as any)?.phone || ''"
             type="tel"
-            class="field-input"
             disabled
             readonly
+            class="!h-11 !w-full !cursor-default !rounded-xl !border !border-nimoura-text-100 !bg-nimoura-50/60 !ps-10 !pe-10 !text-sm !text-nimoura-text-500 !shadow-none"
           />
-          <i class="pi pi-lock text-[12px]" style="color:var(--nt-300); flex-shrink:0" />
+          <span
+            class="pointer-events-none absolute inset-y-0 end-0 flex items-center pe-3 text-xs! text-nimoura-text-300"
+            aria-hidden="true"
+          >
+            <i class="pi pi-lock" />
+          </span>
         </div>
-        <span class="field-hint">برای تغییر شماره با پشتیبانی تماس بگیر</span>
+        <span class="text-[10px] text-nimoura-text-400">
+          برای تغییر شماره با پشتیبانی تماس بگیر
+        </span>
       </div>
 
       <!-- birthDate — editable -->
-      <div class="field-group sm:col-span-2">
-        <label class="field-label">
+      <div class="flex flex-col gap-1.5 sm:col-span-2">
+        <label
+          for="profile-birth-date"
+          class="flex items-center gap-1.5 text-[11px] font-bold tracking-wide text-nimoura-text-500"
+        >
           تاریخ تولد
-          <span class="optional">(اختیاری)</span>
+          <span class="font-normal text-nimoura-text-400">(اختیاری)</span>
         </label>
-        <div class="field-wrap" :class="{ 'field-wrap--active': editMode }">
-          <i class="pi pi-calendar field-icon" />
-          <input
+        <div class="relative">
+          <span
+            class="pointer-events-none absolute inset-y-0 start-0 flex items-center ps-3.5 text-xs! text-nimoura-primary/60"
+            aria-hidden="true"
+          >
+            <i class="pi pi-calendar" />
+          </span>
+          <InputText
+            id="profile-birth-date"
             v-model="form.birthDate"
             type="text"
             placeholder="مثلاً ۱۳۷۵/۰۵/۱۲"
-            class="field-input"
-            :disabled="!editMode"
             maxlength="10"
             inputmode="numeric"
+            :disabled="!editMode"
+            class="!h-11 !w-full !rounded-xl !border !border-nimoura-text-100 !bg-nimoura-base/60 !ps-10 !pe-10 !font-modam !text-sm !text-nimoura-text-800 !shadow-none placeholder:!font-vazir placeholder:!text-nimoura-text-300 focus:!border-nimoura-primary focus:!bg-white focus:!ring-4 focus:!ring-nimoura-primary/10 disabled:!border-nimoura-text-100 disabled:!bg-nimoura-50/60 disabled:!text-nimoura-text-500"
+            :class="{ '!border-nimoura-primary !bg-white': editMode }"
             @input="maskDate"
           />
-          <i v-if="!editMode" class="pi pi-pencil edit-hint" @click="editMode = true" />
+          <button
+            v-if="!editMode"
+            type="button"
+            aria-label="ویرایش تاریخ تولد"
+            class="absolute inset-y-0 end-0 flex items-center pe-3 text-[11px]! text-nimoura-primary/50 transition-colors hover:text-nimoura-primary"
+            @click="editMode = true"
+          >
+            <i class="pi pi-pencil" aria-hidden="true" />
+          </button>
         </div>
       </div>
-
     </div>
 
     <!-- Actions -->
-    <div class="mt-6 flex items-center justify-between border-t pt-5"
-         style="border-color:rgba(183,110,121,0.1)">
-
-      <p v-if="savedAt" class="flex items-center gap-1.5 text-xs font-vazir" style="color:var(--nt-400)">
-        <i class="pi pi-check-circle text-xs" style="color:#059669" />
+    <div
+      class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-nimoura-text-100 pt-5"
+    >
+      <p v-if="savedAt" class="flex items-center gap-1.5 text-xs text-nimoura-text-400">
+        <i class="pi pi-check-circle text-xs! text-nimoura-success" aria-hidden="true" />
         آخرین ذخیره: {{ savedAt }}
       </p>
       <span v-else />
 
-      <div class="flex gap-2">
-        <template v-if="!editMode">
-          <button type="button" class="btn-outline" @click="startEdit">
-            <i class="pi pi-pencil text-xs" />
-            ویرایش
-          </button>
-        </template>
+      <div class="flex items-center gap-2">
+        <Button
+          v-if="!editMode"
+          label="ویرایش"
+          icon="pi pi-pencil"
+          outlined
+          class="!rounded-xl !border-nimoura-primary/40 !bg-transparent !px-5 !py-2.5 !text-sm !font-semibold !text-nimoura-primary hover:!border-nimoura-primary hover:!bg-nimoura-primary/5"
+          @click="startEdit"
+        />
         <template v-else>
-          <button type="button" class="btn-ghost" :disabled="submitting" @click="cancelEdit">
-            انصراف
-          </button>
-          <button type="button" class="btn-primary" :disabled="submitting" @click="save">
-            <i v-if="submitting" class="pi pi-spin pi-spinner text-xs" />
-            <i v-else class="pi pi-check text-xs" />
-            ذخیره
-          </button>
+          <Button
+            label="انصراف"
+            text
+            class="!rounded-xl !bg-nimoura-primary/5 !px-5 !py-2.5 !text-sm !font-medium !text-nimoura-text-500 hover:!bg-nimoura-primary/10"
+            :disabled="submitting"
+            @click="cancelEdit"
+          />
+          <Button
+            label="ذخیره"
+            :icon="submitting ? 'pi pi-spin pi-spinner' : 'pi pi-check'"
+            class="!rounded-xl !border-nimoura-primary !bg-nimoura-primary !px-5 !py-2.5 !text-sm !font-semibold !text-white !shadow-[0_6px_18px_rgba(183,110,121,0.25)] hover:!bg-nimoura-600 disabled:!opacity-60"
+            :disabled="submitting"
+            @click="save"
+          />
         </template>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -292,117 +389,3 @@ function maskDate(e: Event) {
   form.birthDate = v
 }
 </script>
-
-<style scoped>
-.panel {
-  --primary: #b76e79;
-  --base:    #fff8f4;
-  --nt-300: #b5adad; --nt-400: #9b9191;
-  --nt-500: #807676; --nt-800: #3a3131;
-  background: #fff;
-  border-radius: 20px;
-  padding: 20px;
-  border: 1px solid rgba(183,110,121,0.08);
-  box-shadow: 0 2px 20px rgba(183,110,121,0.05);
-  font-family: 'Vazirmatn', sans-serif;
-}
-
-/* title */
-.panel-title {
-  font-size: .95rem; font-weight: 700; color: var(--nt-800);
-  position: relative; padding-right: 12px;
-}
-.panel-title::before {
-  content: ''; position: absolute; right: 0; top: 50%; transform: translateY(-50%);
-  width: 3px; height: 16px; background: var(--primary); border-radius: 2px;
-}
-
-.lock-notice {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 4px 10px; border-radius: 20px;
-  font-size: 11px; font-weight: 600;
-  background: rgba(183,110,121,0.07); color: var(--nt-400);
-}
-
-/* field */
-.field-group { display: flex; flex-direction: column; gap: 5px; }
-
-.field-label {
-  font-size: 11px; font-weight: 700; color: var(--nt-500);
-  letter-spacing: .02em; display: flex; align-items: center; gap: 4px;
-}
-.required { color: #dc2626; }
-.optional  { color: var(--nt-400); font-weight: 400; }
-
-.field-wrap {
-  display: flex; align-items: center; gap: 10px;
-  padding: 11px 14px; border-radius: 14px;
-  border: 1.5px solid rgba(183,110,121,0.14);
-  background: var(--base);
-  transition: border-color .2s, box-shadow .2s;
-}
-.field-wrap--active {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(183,110,121,0.1);
-  background: #fff;
-}
-.field-wrap--locked {
-  background: rgba(183,110,121,0.03);
-  border-color: rgba(183,110,121,0.08);
-  cursor: not-allowed;
-}
-.field-wrap--error { border-color: rgba(220,38,38,0.45) !important; }
-
-.field-icon { font-size: 13px; color: var(--primary); opacity: .6; flex-shrink: 0; }
-
-.field-input {
-  flex: 1; background: transparent; border: none; outline: none;
-  font-size: .875rem; font-family: 'Modam', sans-serif;
-  color: var(--nt-800); direction: rtl;
-}
-.field-input:disabled { color: var(--nt-500); cursor: default; }
-.field-input::placeholder { color: var(--nt-300); }
-
-.edit-hint {
-  font-size: 11px; color: var(--primary); opacity: .45;
-  cursor: pointer; flex-shrink: 0;
-  transition: opacity .15s;
-}
-.edit-hint:hover { opacity: .85; }
-
-.field-error { font-size: 11px; color: #dc2626; }
-.field-hint  { font-size: 10px; color: var(--nt-400); }
-
-/* buttons */
-.btn-primary {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 9px 20px; border-radius: 14px; border: none;
-  background: linear-gradient(135deg, #b76e79, #9a5a64);
-  color: #fff; font-size: .875rem; font-family: 'Vazirmatn', sans-serif;
-  font-weight: 600; cursor: pointer;
-  box-shadow: 0 4px 14px rgba(183,110,121,0.3);
-  transition: opacity .2s, transform .15s;
-}
-.btn-primary:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-.btn-primary:not(:disabled):hover { opacity: .9; transform: translateY(-1px); }
-
-.btn-outline {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 8px 18px; border-radius: 14px;
-  border: 1.5px solid rgba(183,110,121,0.28);
-  background: transparent; color: var(--primary);
-  font-size: .875rem; font-family: 'Vazirmatn', sans-serif;
-  font-weight: 600; cursor: pointer; transition: all .2s;
-}
-.btn-outline:hover { background: rgba(183,110,121,0.06); }
-
-.btn-ghost {
-  display: inline-flex; align-items: center;
-  padding: 8px 18px; border-radius: 14px; border: none;
-  background: rgba(183,110,121,0.07); color: var(--nt-500);
-  font-size: .875rem; font-family: 'Vazirmatn', sans-serif;
-  cursor: pointer; transition: background .2s;
-}
-.btn-ghost:disabled { opacity: .5; cursor: not-allowed; }
-.btn-ghost:not(:disabled):hover { background: rgba(183,110,121,0.13); }
-</style>

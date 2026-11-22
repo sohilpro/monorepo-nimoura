@@ -1,19 +1,54 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   ConflictException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { BANNER_POSITIONS } from '@nimoura/shared-types';
 import { BannerPosition } from './entities';
 import { CreatePositionDto, UpdatePositionDto } from './dtos';
 
 @Injectable()
-export class BannerPositionService {
+export class BannerPositionService implements OnModuleInit {
+  private readonly logger = new Logger(BannerPositionService.name);
   constructor(
     @InjectRepository(BannerPosition)
     private readonly positionRepo: Repository<BannerPosition>,
   ) {}
+
+  /**
+   * جایگاههای استاندارد فروشگاه را بهصورت idempotent ایجاد میکند.
+   * اگر جایگاهی قبلاً توسط ادمین ساخته شده باشد، دستنخورده باقی میماند.
+   */
+  async onModuleInit(): Promise<void> {
+    try {
+      await this.positionRepo
+        .createQueryBuilder()
+        .insert()
+        .into(BannerPosition)
+        .values(
+          BANNER_POSITIONS.map((position) => ({
+            key: position.key,
+            name: position.name,
+            description: position.description,
+            recommendedWidth: position.recommendedWidth,
+            recommendedHeight: position.recommendedHeight,
+            maxItems: position.maxItems ?? 0,
+            isActive: true,
+          })),
+        )
+        .orIgnore()
+        .execute();
+    } catch (error: unknown) {
+      // نباید بالا آمدن API را متوقف کند؛ ادمین میتواند جایگاهها را دستی بسازد
+      this.logger.warn(
+        `امکان ایجاد خودکار جایگاههای بنر: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
 
   async create(dto: CreatePositionDto): Promise<BannerPosition> {
     const exists = await this.positionRepo.findOne({ where: { key: dto.key } });

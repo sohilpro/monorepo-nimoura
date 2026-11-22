@@ -1,41 +1,45 @@
 <template>
   <div>
     <!-- LOADING -->
-    <div v-if="pending" class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+    <div v-if="pending" class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
       <div
         v-for="n in 8"
         :key="`skeleton-${n}`"
-        class="w-full aspect-148/220 rounded-2xl border border-nimoura-border/30 p-3 animate-pulse"
+        class="aspect-148/220 rounded-2xl border border-nimoura-text-100 bg-white p-3 shadow-xs"
       >
-        <div class="h-27 w-full rounded-lg bg-nimoura-text-100"></div>
-        <div class="mt-2 space-y-1.5">
-          <div class="h-2.5 bg-nimoura-text-100 rounded w-full"></div>
-          <div class="h-2.5 bg-nimoura-text-100 rounded w-2/3 mr-auto"></div>
+        <Skeleton class="!h-27 !w-full !rounded-xl" />
+        <div class="mt-3 space-y-2">
+          <Skeleton class="!h-2.5 !w-full !rounded-full" />
+          <Skeleton class="!h-2.5 !w-2/3 !rounded-full" />
         </div>
       </div>
     </div>
 
     <!-- EMPTY -->
-    <div v-else-if="items.length === 0" class="flex flex-col items-center justify-center gap-3 py-16 text-center">
-      <i class="pi pi-heart text-4xl! text-nimoura-primary/30" />
-      <p class="text-sm text-nimoura-text-400">هنوز محصولی به علاقه‌مندی‌ها اضافه نکرده‌ای</p>
-      <NuxtLink to="/" class="mt-2 rounded-xl bg-nimoura-primary px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90">
+    <div v-else-if="items.length === 0" class="flex flex-col items-center justify-center gap-3 rounded-2xl border border-dashed border-nimoura-200 bg-white px-4 py-16 text-center shadow-xs">
+      <div class="flex size-16 items-center justify-center rounded-full bg-nimoura-primary/10">
+        <i class="pi pi-heart text-3xl text-nimoura-primary/40" />
+      </div>
+      <p class="text-sm font-medium text-nimoura-text-500">هنوز محصولی به علاقه‌مندی‌ها اضافه نکرده‌ای</p>
+      <NuxtLink
+        to="/"
+        class="mt-2 rounded-xl bg-nimoura-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-nimoura-600 hover:shadow-md"
+      >
         مشاهده محصولات
       </NuxtLink>
     </div>
 
     <!-- GRID -->
-    <div v-else class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+    <div v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
       <div v-for="product in items" :key="product.id" class="group relative">
-        <button
+        <Button
           type="button"
-          class="absolute left-4 top-2 z-10 flex size-7 items-center justify-center rounded-full bg-white/90 text-nimoura-primary shadow-sm backdrop-blur-sm transition-colors hover:bg-nimoura-primary hover:text-white"
+          icon="pi pi-heart-fill"
           aria-label="حذف از علاقه‌مندی"
+          rounded
+          class="!absolute !left-3 !top-3 !z-10 !flex !size-8 !items-center !justify-center !border-0 !bg-white/90 !text-nimoura-primary !shadow-sm !backdrop-blur-sm transition-all hover:!bg-nimoura-primary hover:!text-white"
           @click="removeFromWishlist(product.id)"
-        >
-          <i class="pi pi-heart-fill text-xs!" />
-        </button>
-
+        />
         <ProductCard :product="product" />
       </div>
     </div>

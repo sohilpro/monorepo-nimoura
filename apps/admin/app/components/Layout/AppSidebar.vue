@@ -62,7 +62,7 @@
     </div>
 
     <!-- بدنه منو با PrimeVue PanelMenu -->
-    <nav class="no-scrollbar flex-1 overflow-y-auto pb-4">
+    <nav class="scrollbar-hide flex-1 overflow-y-auto pb-4">
       <PanelMenu
         v-model:expandedKeys="expandedKeys"
         :model="sortedMenuItems"
@@ -288,6 +288,7 @@ const rawMenuItems = [
     items: [
       { key: "banners-all", label: "همه بنرها", icon: "pi pi-image", route: "/banners" },
       { key: "banners-create", label: "بنر جدید", icon: "pi pi-plus-circle", route: "/banners/create" },
+      { key: "banners-positions", label: "جایگاههای بنر", icon: "pi pi-th-large", route: "/banners/positions" },
     ],
   },
   {

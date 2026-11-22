@@ -1,6 +1,11 @@
 <template>
   <main>
     <ProductDetailSingle :product-data="productData" :pending="pending" />
+    <BannersSlot
+      position-key="product-bottom"
+      layout="single"
+      spacing-class="my-6 sm:my-10"
+    />
   </main>
 </template>
 

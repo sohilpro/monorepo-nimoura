@@ -69,7 +69,7 @@
         </div>
 
         <!-- محتوای نوتیفیکیشن‌ها -->
-        <div class="my-2 max-h-[360px] overflow-y-auto no-scrollbar space-y-1.5">
+        <div class="my-2 max-h-[360px] overflow-y-auto scrollbar-hide space-y-1.5">
           <!-- حالت لودینگ -->
           <div v-if="pending && !items.length" class="flex flex-col items-center justify-center py-8 text-gray-400">
             <i class="pi pi-spin pi-spinner text-2xl text-brand-500 mb-2" />

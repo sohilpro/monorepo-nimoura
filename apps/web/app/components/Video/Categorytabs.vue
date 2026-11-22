@@ -91,15 +91,6 @@ function select(id: number | null) {
 </template>
 
 <style scoped>
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-
 button {
   -webkit-tap-highlight-color: transparent;
   user-select: none;

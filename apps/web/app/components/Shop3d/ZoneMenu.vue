@@ -9,7 +9,7 @@ const { activeZone, goTo } = useShopControls()
     aria-label="بخش‌های مغازه"
   >
     <ul
-      class="pointer-events-auto flex max-w-full gap-1.5 overflow-x-auto rounded-full bg-nimoura-velvet/70 p-1.5 shadow-xl backdrop-blur-md [scrollbar-width:none]"
+      class="pointer-events-auto flex max-w-full gap-1.5 overflow-x-auto rounded-full bg-nimoura-velvet/70 p-1.5 shadow-xl backdrop-blur-md scrollbar-hide"
     >
       <li v-for="v in VIEWPOINTS" :key="v.id" class="shrink-0">
         <button

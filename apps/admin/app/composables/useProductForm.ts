@@ -84,6 +84,15 @@ const nextUid = (prefix: string) => `${prefix}-${++uidSeq}`;
 const toInt = (value: string | number | null | undefined): number =>
   Math.max(0, Math.trunc(Number(toEnglishDigits(String(value ?? ''))) || 0));
 
+type MediaValue = string | { id?: string | number; url?: string } | null | undefined;
+
+/** UtilsFileUploader مقدار { id, url } پس میدهد، ولی DTO محصول فقط رشتهٔ URL میخواهد. */
+function toMediaUrl(value: MediaValue): string | undefined {
+  if (!value) return undefined;
+  const url = typeof value === 'string' ? value : value.url;
+  return url && url !== 'undefined' ? url : undefined;
+}
+
 const effectivePrice = (item: { price?: number; priceDiscount?: number }): number => {
   const price = Number(item.price) || 0;
   const discount = Number(item.priceDiscount) || 0;
@@ -125,8 +134,8 @@ export function useProductForm() {
     subBrandId: null as number | null,
     isAmazingOffer: false,
     isAvailable: true,
-    thumbnail: null as string | null,
-    images: [] as string[],
+    thumbnail: null as string | { id?: string | number; url: string } | null,
+    images: [] as Array<string | { id?: string | number; url: string }>,
     specifications: [{ key: '', value: '' }],
     tagIds: [] as number[],
     lowStockThreshold: '5',
@@ -405,8 +414,10 @@ export function useProductForm() {
       categoryId: Number(form.categoryId),
       brandId: Number(form.brandId),
       subBrandId: form.subBrandId ? Number(form.subBrandId) : null,
-      thumbnail: form.thumbnail || undefined,
-      images: form.images.length ? form.images : undefined,
+      thumbnail: toMediaUrl(form.thumbnail),
+      images: form.images.length
+        ? form.images.map(toMediaUrl).filter((url): url is string => Boolean(url))
+        : undefined,
       specifications: form.specifications.filter((s) => s.key && s.key.trim()),
       tagIds: form.tagIds,
       lowStockThreshold: toInt(form.lowStockThreshold),

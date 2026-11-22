@@ -1,11 +1,13 @@
-import { IsArray, IsUUID, ValidateNested, IsInt, Min } from 'class-validator';
+import { IsArray, ValidateNested, IsInt, Min, IsPositive } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 class ReorderItem {
-  @ApiProperty()
-  @IsUUID()
-  id: string;
+  @ApiProperty({ type: Number })
+  @Type(() => Number)
+  @IsInt()
+  @IsPositive()
+  id: number;
 
   @ApiProperty()
   @IsInt()

@@ -48,7 +48,7 @@
       <!-- TABS -->
       <div
         v-if="tabs?.length"
-        class="flex items-center gap-x-2 overflow-x-auto no-scrollbar pt-1"
+        class="flex items-center gap-x-2 overflow-x-auto scrollbar-hide pt-1"
       >
         <button
           v-for="tab in tabs"

@@ -103,6 +103,15 @@
               placeholder="انتخاب جایگاه..."
               required
             />
+            <div
+              v-if="!positions.length"
+              class="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+            >
+              هیچ جایگاهی تعریف نشده است.
+              <NuxtLink to="/banners/positions" class="font-bold underline">
+                ابتدا جایگاه بنر بسازید
+              </NuxtLink>
+            </div>
 
             <CommonSelectInput
               v-model="form.device"
@@ -145,7 +154,13 @@
 </template>
 
 <script setup lang="ts">
-import { BannerDevice, BannerStatus, LinkTarget, type CreateBannerPayload } from '@nimoura/shared-types';
+import {
+  BannerDevice,
+  BannerStatus,
+  LinkTarget,
+  type BannerPosition,
+  type CreateBannerPayload,
+} from '@nimoura/shared-types';
 import { createSlug } from '@nimoura/utils';
 
 const props = withDefaults(
@@ -181,29 +196,30 @@ const form = reactive({
 const existingDesktopUrl = ref<string | null>(null);
 const existingMobileUrl = ref<string | null>(null);
 
-const positions = ref<any[]>([]);
+const positions = ref<BannerPosition[]>([]);
 const categoryOptions = ref<any[]>([]);
 const brandOptions = ref<any[]>([]);
 
 const selectedCategoryId = ref<number | null>(null);
 const selectedBrandId = ref<number | null>(null);
 
-const fallbackPositions = [
-  { id: 1, name: 'اسلایدر اصلی بالای صفحه (MAIN_PAGE_TOP)' },
-  { id: 2, name: 'بنرهای میانی صفحه اصلی (MAIN_PAGE_MIDDLE)' },
-  { id: 3, name: 'سایدبار دسته‌بندی‌ها (CATEGORY_SIDEBAR)' },
-  { id: 4, name: 'پایین صفحه محصول (PRODUCT_PAGE_BOTTOM)' },
-];
-
-const formattedPositionOptions = computed(() => {
-  if (positions.value.length) {
-    return positions.value.map((p) => ({
-      id: p.id,
-      name: `${p.name} (${p.key})`,
-    }));
+/** آپلودر یک شیء { id, url } برمیگرداند؛ فقط آدرس متنی را نگه میداریم */
+function toImageUrl(value: unknown): string | null {
+  if (typeof value === 'string') return value.trim() || null;
+  if (value && typeof value === 'object') {
+    const candidate = value as { url?: unknown; publicUrl?: unknown };
+    if (typeof candidate.url === 'string') return candidate.url.trim() || null;
+    if (typeof candidate.publicUrl === 'string') return candidate.publicUrl.trim() || null;
   }
-  return fallbackPositions;
-});
+  return null;
+}
+
+const formattedPositionOptions = computed(() =>
+  positions.value.map((p) => ({
+    id: p.id,
+    name: `${p.name} (${p.key})`,
+  })),
+);
 
 const deviceOptions = [
   { id: BannerDevice.ALL, name: 'تمام دستگاه‌ها (All)' },
@@ -238,7 +254,7 @@ onMounted(async () => {
   brandOptions.value = brandRes?.data?.brands || brandRes?.items || [];
 
   if (props.mode === 'create' && !form.positionId) {
-    form.positionId = formattedPositionOptions.value[0]?.id || 1;
+    form.positionId = formattedPositionOptions.value[0]?.id ?? null;
   }
 
   if (props.mode === 'update' && props.bannerId) {
@@ -248,19 +264,18 @@ onMounted(async () => {
       form.description = existing.description || '';
       form.link = existing.link || '';
       form.linkTarget = existing.linkTarget || LinkTarget.SELF;
-      form.positionId = existing.positionId || existing.position?.id || 1;
+      const currentPositionId = existing.positionId ?? existing.position?.id ?? null;
+      form.positionId = positions.value.some((p) => p.id === currentPositionId)
+        ? currentPositionId
+        : null;
       form.device = existing.device || BannerDevice.ALL;
       form.status = existing.status || BannerStatus.ACTIVE;
       form.sortOrder = existing.sortOrder || 0;
-      form.imageUrl = existing.imageUrl || null;
-      form.mobileImageUrl = existing.mobileImageUrl || null;
+      form.imageUrl = toImageUrl(existing.imageUrl);
+      form.mobileImageUrl = toImageUrl(existing.mobileImageUrl);
 
-      if (existing.imageUrl) {
-        existingDesktopUrl.value = existing.imageUrl;
-      }
-      if (existing.mobileImageUrl) {
-        existingMobileUrl.value = existing.mobileImageUrl;
-      }
+      existingDesktopUrl.value = form.imageUrl;
+      existingMobileUrl.value = form.mobileImageUrl;
     }
   }
 });
@@ -299,9 +314,14 @@ async function submitForm() {
     return;
   }
 
-  const finalImageUrl = form.imageUrl || existingDesktopUrl.value;
+  const finalImageUrl = toImageUrl(form.imageUrl) || existingDesktopUrl.value;
   if (!finalImageUrl) {
     alert('لطفاً تصویر دسکتاپ بنر را آپلود کنید');
+    return;
+  }
+
+  if (!form.positionId || Number(form.positionId) <= 0) {
+    alert('لطفاً جایگاه نمایش بنر را انتخاب کنید');
     return;
   }
 
@@ -310,12 +330,12 @@ async function submitForm() {
     description: form.description?.trim() || undefined,
     link: form.link?.trim() || undefined,
     linkTarget: form.linkTarget,
-    positionId: Number(form.positionId) || 1,
+    positionId: Number(form.positionId),
     device: form.device,
     status: form.status,
     sortOrder: Number(form.sortOrder) || 0,
     imageUrl: finalImageUrl,
-    mobileImageUrl: form.mobileImageUrl || existingMobileUrl.value || undefined,
+    mobileImageUrl: toImageUrl(form.mobileImageUrl) || existingMobileUrl.value || undefined,
   };
 
   let success = false;

@@ -381,7 +381,7 @@
           </div>
 
           <!-- ══ QUICK REPLIES BAR (CANNED RESPONSES) ══ -->
-          <div class="px-3 pt-2 bg-white border-t border-gray-100 flex items-center gap-1.5 overflow-x-auto hide-scrollbar">
+          <div class="px-3 pt-2 bg-white border-t border-gray-100 flex items-center gap-1.5 overflow-x-auto scrollbar-hide">
             <span class="text-[10px] text-gray-400 shrink-0">پاسخ‌های آماده:</span>
             <button
               v-for="(canned, cIdx) in quickReplies"
@@ -741,12 +741,3 @@ watch(
 );
 </script>
 
-<style scoped>
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-</style>

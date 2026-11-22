@@ -147,7 +147,7 @@
               </div>
             </button>
           </div>
-          <div class="overflow-x-auto w-full no-scrollbar md:hidden">
+          <div class="overflow-x-auto w-full scrollbar-hide md:hidden">
             <div
               class="flex gap-2 *:p-2 *:h-16 *:bg-neutral-100 *:rounded-lg *:flex *:flex-col *:gap-y-1.5"
             >

@@ -8,6 +8,7 @@ import {
   MaxLength,
   Min,
   IsPositive,
+  Matches,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { BannerStatus, BannerDevice, LinkTarget } from '../enums';
@@ -26,11 +27,17 @@ export class CreateBannerDto {
 
   @ApiProperty({ description: 'آدرس تصویر آپلود شده (دسکتاپ)' })
   @IsString()
+  @Matches(/^(\/uploads\/|https?:\/\/)/, {
+    message: 'آدرس تصویر بنر معتبر نیست',
+  })
   imageUrl: string;
 
   @ApiPropertyOptional({ description: 'آدرس تصویر اختصاصی موبایل' })
   @IsOptional()
   @IsString()
+  @Matches(/^(\/uploads\/|https?:\/\/)/, {
+    message: 'آدرس تصویر موبایل معتبر نیست',
+  })
   mobileImageUrl?: string;
 
   @ApiPropertyOptional()

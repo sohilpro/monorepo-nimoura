@@ -4,7 +4,7 @@
     :class="
       isGrid
         ? 'h-full w-full border-nimoura-text-100 p-2 hover:-translate-y-0.5 hover:border-nimoura-primary/30 hover:shadow-md sm:p-2.5'
-        : 'h-[220px] w-[148px] border-nimoura-border/30 p-3 hover:shadow-md'
+        : 'h-55 w-37 border-nimoura-border/30 p-3 hover:shadow-md'
     "
   >
     <UtilsOffBadge

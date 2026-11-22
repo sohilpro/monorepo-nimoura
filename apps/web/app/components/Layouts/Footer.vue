@@ -1,5 +1,5 @@
 <template>
-  <footer class="md:container mt-12">
+  <footer data-site-footer class="md:container mt-12">
     <div
       class="relative w-full bg-linear-to-t text-nimoura-text-800 from-[#F6E9EB] to-[#FFF8F4] rounded-2xl p-4 lg:p-9"
     >

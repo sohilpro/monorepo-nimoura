@@ -57,6 +57,7 @@
           class="nav-item no-underline"
           :class="isActive(item) ? 'text-nimoura-primary' : 'text-gray-400'"
           :aria-label="item.label"
+          @click="drawerOpen = false"
         >
           <span
             class="nav-icon-pill"
@@ -117,8 +118,12 @@ const navItems: NavItem[] = [
 // ─── Route ────────────────────────────────────
 const route = useRoute()
 
+watch(() => route.fullPath, () => {
+  drawerOpen.value = false
+})
+
 const shouldShowNavbar = computed(() => {
-  if (route.path === '/products/amazing' || route.path === '/products/amazing') return true
+  if (route.path === '/products/amazing') return true
   return !/^\/product\/[^/]+(\/[^/]+)?$/.test(route.path)
 })
 
@@ -159,7 +164,10 @@ onMounted(() => {
   lastScrollTop = window.scrollY
   window.addEventListener('scroll', onScroll, { passive: true })
 })
-onUnmounted(() => window.removeEventListener('scroll', onScroll))
+onUnmounted(() => {
+  window.removeEventListener('scroll', onScroll)
+  document.body.style.overflow = ''
+})
 </script>
 
 <style scoped>

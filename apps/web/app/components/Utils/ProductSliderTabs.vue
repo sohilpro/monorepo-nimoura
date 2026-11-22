@@ -1,6 +1,11 @@
 <template>
   <section
-    v-if="!hideWhenEmpty || !activeState.hasFetched || activeState.pending || activeState.products.length > 0"
+    v-if="
+      !hideWhenEmpty ||
+      !activeState.hasFetched ||
+      activeState.pending ||
+      activeState.products.length > 0
+    "
     ref="sectionRef"
     :class="container ? 'lg:container mx-auto px-4' : 'w-full'"
     class="my-10 lg:my-16"
@@ -18,7 +23,9 @@
           <div
             class="hidden xs:flex size-11 sm:size-12 lg:size-13 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-nimoura-primary/15 to-nimoura-primary/5 ring-1 ring-nimoura-primary/10 text-nimoura-primary shadow-xs"
           >
-            <i :class="`pi ${icon || 'pi-sparkles'} text-lg sm:text-xl lg:text-2xl`" />
+            <i
+              :class="`pi ${icon || 'pi-sparkles'} text-lg sm:text-xl lg:text-2xl`"
+            />
           </div>
 
           <div class="space-y-0.5 sm:space-y-1">
@@ -35,22 +42,6 @@
               {{ description }}
             </p>
           </div>
-        </div>
-
-        <!-- VIEW ALL BUTTON (به تب فعال ارجاع می‌دهد) -->
-        <div
-          v-if="!dontShowBtnAll && activeTab?.href"
-          class="flex justify-start xs:justify-end shrink-0"
-        >
-          <NuxtLink
-            :to="activeTab.href"
-            class="group text-xs sm:text-sm font-semibold flex items-center gap-x-1.5 px-3.5 h-9 sm:h-10 text-white bg-nimoura-primary hover:bg-nimoura-primary/90 rounded-xl shadow-xs transition-all duration-300 active:scale-95"
-          >
-            <span><span class="hidden lg:inline">مشاهده</span> همه</span>
-            <i
-              class="pi pi-arrow-left text-xs transition-transform duration-300 group-hover:-translate-x-1"
-            />
-          </NuxtLink>
         </div>
       </div>
 
@@ -116,6 +107,31 @@
             >
               <ProductCard :product="product" />
             </div>
+
+            <!-- VIEW ALL CARD -->
+            <div
+              v-if="!dontShowBtnAll && activeTab?.href"
+              class="flex-none w-[148px] min-w-0"
+            >
+              <NuxtLink
+                :to="activeTab.href"
+                class="group flex h-[220px] w-[148px] flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border border-dashed border-nimoura-primary/30 bg-gradient-to-br from-nimoura-primary/10 to-nimoura-primary/[0.03] p-3 text-center no-underline transition-all duration-300 hover:border-nimoura-primary hover:shadow-md active:scale-95"
+              >
+                <span
+                  class="flex size-12 items-center justify-center rounded-full bg-nimoura-primary text-white shadow-xs transition-transform duration-300 group-hover:-translate-x-1"
+                >
+                  <i class="pi pi-arrow-left text-base" />
+                </span>
+                <span class="font-modam text-sm font-bold text-nimoura-primary">
+                  مشاهده همه
+                </span>
+                <span
+                  class="line-clamp-2 text-[11px] leading-[1.6] text-nimoura-text-500"
+                >
+                  {{ activeTab.label }}
+                </span>
+              </NuxtLink>
+            </div>
           </template>
         </div>
       </div>
@@ -154,17 +170,25 @@ export interface ProductTab {
   endpoint?: string;
 }
 
-const { title, subTitle, description, icon, dontShowBtnAll, tabs, container, hideWhenEmpty } =
-  defineProps<{
-    title?: string;
-    subTitle?: string;
-    description?: string;
-    icon?: string;
-    dontShowBtnAll?: boolean;
-    container?: boolean;
-    hideWhenEmpty?: boolean;
-    tabs: ProductTab[];
-  }>();
+const {
+  title,
+  subTitle,
+  description,
+  icon,
+  dontShowBtnAll,
+  tabs,
+  container,
+  hideWhenEmpty,
+} = defineProps<{
+  title?: string;
+  subTitle?: string;
+  description?: string;
+  icon?: string;
+  dontShowBtnAll?: boolean;
+  container?: boolean;
+  hideWhenEmpty?: boolean;
+  tabs: ProductTab[];
+}>();
 
 type TabState = { products: any[]; pending: boolean; hasFetched: boolean };
 

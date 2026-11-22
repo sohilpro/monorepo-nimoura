@@ -181,7 +181,10 @@
   <!-- ══ MOBILE STICKY BOTTOM PRICE BAR ══ -->
   <div
     class="fixed inset-x-0 bottom-0 z-70 rounded-t-2xl border-t border-nimoura-text-100/80 bg-white/95 px-3 pt-2.5 shadow-[0_-8px_24px_rgba(39,33,33,0.08)] backdrop-blur-md lg:hidden"
-    :style="{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)' }"
+    :style="{
+      paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 10px)',
+      bottom: `${footerOffset}px`,
+    }"
     role="region"
     aria-label="خرید سریع محصول"
   >
@@ -340,5 +343,68 @@ const mobileCtaLabel = computed(() => {
   if (isOutOfStock.value) return "ناموجود";
   if (needsVariantSelection.value) return "انتخاب گزینه";
   return "افزودن به سبد";
+});
+
+// ── Mobile sticky bar: pin to bottom until the footer appears ─────────────
+// تا زمانی که فوتر وارد نمایش نشده، مقدار 0 است (نوار به کف صفحه چسبیده است).
+// با ظاهر شدن فوتر، نوار دقیقاً بالای آن قرار میگیرد و همراه فوتر بالا میرود،
+// بنابراین روی فوتر قرار نگرفته و تا انتهای کامنتها همراه صفحه میماند.
+const footerOffset = ref(0);
+
+let footerEl: HTMLElement | null = null;
+let footerWatcher: MutationObserver | null = null;
+let sizeWatcher: ResizeObserver | null = null;
+let rafId = 0;
+
+const updateFooterOffset = () => {
+  rafId = 0;
+  if (!footerEl) {
+    footerOffset.value = 0;
+    return;
+  }
+  const rect = footerEl.getBoundingClientRect();
+  footerOffset.value = Math.max(0, window.innerHeight - rect.top);
+};
+
+const scheduleUpdate = () => {
+  if (!rafId) rafId = requestAnimationFrame(updateFooterOffset);
+};
+
+const bindFooter = () => {
+  footerEl =
+    document.querySelector<HTMLElement>("[data-site-footer]") ??
+    document.querySelector<HTMLElement>("footer");
+
+  if (!footerEl) return false;
+
+  window.addEventListener("scroll", scheduleUpdate, { passive: true });
+  window.addEventListener("resize", scheduleUpdate, { passive: true });
+
+  if (typeof ResizeObserver !== "undefined") {
+    sizeWatcher = new ResizeObserver(scheduleUpdate);
+    sizeWatcher.observe(footerEl);
+    sizeWatcher.observe(document.body);
+  }
+
+  scheduleUpdate();
+  return true;
+};
+
+onMounted(() => {
+  // فوتر در لayout بعد از اسلات رندر میشود، بنابراین ممکن است هنوز در DOM نباشد.
+  if (bindFooter()) return;
+
+  footerWatcher = new MutationObserver(() => {
+    if (bindFooter()) footerWatcher?.disconnect();
+  });
+  footerWatcher.observe(document.body, { childList: true, subtree: true });
+});
+
+onBeforeUnmount(() => {
+  footerWatcher?.disconnect();
+  sizeWatcher?.disconnect();
+  window.removeEventListener("scroll", scheduleUpdate);
+  window.removeEventListener("resize", scheduleUpdate);
+  if (rafId) cancelAnimationFrame(rafId);
 });
 </script>

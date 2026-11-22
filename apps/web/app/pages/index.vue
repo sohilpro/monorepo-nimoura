@@ -45,7 +45,6 @@
       :container="true"
       title="مجموعه منتخب"
       sub-title="لاین‌های زیبایی"
-      description="دسته‌بندی مورد نظر خود را انتخاب کنید و محصولات پرفروش آن را ببینید"
       icon="pi-sparkles"
       :tabs="beautyTabs"
       :hide-when-empty="false"

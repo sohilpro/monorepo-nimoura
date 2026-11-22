@@ -23,7 +23,7 @@
               <i class="pi pi-instagram text-2xl! text-nimoura-text-600"></i>
             </NuxtLink>
             <NuxtLink
-              href="https://wa.me/989021027574"
+              href="https://wa.me/989036039314"
               target="_blank"
               rel="noopener noreferrer"
               class="size-10 bg-nimoura-primary/10 rounded-xl flex-center"
@@ -143,22 +143,19 @@
             <span
               class="w-16 p-1.25 h-20 lg:w-20 lg:h-24 flex-center rounded-xl"
             >
-              <NuxtLink
+              <a
                 referrerpolicy="origin"
                 target="_blank"
-                class="w-full h-full"
-                to="https://trustseal.enamad.ir/?id=8834507&Code=MbLPIm0frDrEpuJoVOOi4l4AuiaixHwF"
+                href="https://trustseal.enamad.ir/?id=8834507&Code=MbLPIm0frDrEpuJoVOOi4l4AuiaixHwF"
               >
-                <NuxtImg
+                <img
                   referrerpolicy="origin"
                   src="https://trustseal.enamad.ir/logo.aspx?id=8834507&Code=MbLPIm0frDrEpuJoVOOi4l4AuiaixHwF"
                   alt="اینماد"
-                  loading="lazy"
-                  class="w-full h-full object-contain"
                   style="cursor: pointer"
                   code="MbLPIm0frDrEpuJoVOOi4l4AuiaixHwF"
                 />
-              </NuxtLink>
+              </a>
             </span>
 
             <span

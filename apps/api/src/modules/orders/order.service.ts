@@ -470,11 +470,11 @@ export class OrderService {
           eligibleAmount,
           em,
         );
-        await this.loyaltyService.completeReferralOnFirstOrder(
-          order.user.id,
-          order.id,
-          em,
-        );
+        // await this.loyaltyService.completeReferralOnFirstOrder(
+        //   order.user.id,
+        //   order.id,
+        //   em,
+        // );
       }
 
       return { message: 'پرداخت با موفقیت ثبت شد', orderId };

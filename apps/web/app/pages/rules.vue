@@ -576,7 +576,7 @@ useSeoMeta({
   ogTitle: 'قوانین و مقررات فروشگاه اینترنتی نیمورا',
   ogDescription:
     'شرایط و قوانین عمومی استفاده، ثبت سفارش، حریم خصوصی، و ضوابط بهداشتی محصولات آرایشی و زیبایی در نیمورا.',
-  ogImage: `${siteUrl}/og-image.png`,
+  ogImage: `${siteUrl}/og-image.webp`,
   ogUrl: canonicalUrl,
   ogType: 'article',
   ogSiteName: 'Nimoura | نیمورا',
@@ -585,7 +585,7 @@ useSeoMeta({
   twitterTitle: 'قوانین و مقررات فروشگاه آنلاین نیمورا',
   twitterDescription:
     'راهنمای کامل مقررات استفاده، حریم خصوصی و رویه ارسال و مرجوعی در فروشگاه لوازم آرایشی نیمورا.',
-  twitterImage: `${siteUrl}/og-image.png`,
+  twitterImage: `${siteUrl}/og-image.webp`,
   robots: 'index, follow, max-image-preview:large, max-snippet:-1',
   author: 'فروشگاه اینترنتی نیمورا',
 });

@@ -113,7 +113,7 @@ useSeoMeta({
   description: () => pageDescription.value,
   ogTitle: () => pageTitle.value,
   ogDescription: () => pageDescription.value,
-  ogImage: () => brand.value?.logo || `${siteUrl}/og-image.png`,
+  ogImage: () => brand.value?.logo || `${siteUrl}/og-image.webp`,
   ogUrl: () => canonicalUrl.value,
   ogType: 'website',
   twitterCard: 'summary_large_image',

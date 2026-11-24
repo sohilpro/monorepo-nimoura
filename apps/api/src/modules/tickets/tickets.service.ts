@@ -15,11 +15,14 @@ import { CreateTicketDto } from './dtos/create-ticket.dto';
 import { ReplyTicketDto } from './dtos/reply-ticket.dto';
 import { UpdateTicketStatusDto } from './dtos/update-ticket-status.dto';
 import { TicketQueryDto } from './dtos/ticket-query.dto';
+import { ContactMessageDto } from './dtos/contact-message.dto';
 import { TicketStatus } from './enums/ticket-status.enum';
 import { TicketSenderRole } from './enums/ticket-sender-role.enum';
 import { TicketPriority } from './enums/ticket-priority.enum';
+import { TicketDepartment } from './enums/ticket-department.enum';
 import { SmsService } from 'src/modules/payments/sms.service';
 import { Users } from 'src/modules/users/entities/users.entity';
+import { UserRole } from 'src/common/auth/jwt.types';
 
 @Injectable()
 export class TicketsService {
@@ -466,5 +469,150 @@ export class TicketsService {
       id: ticketId,
       message: 'تیکت پشتیبانی با موفقیت حذف گردید',
     };
+  }
+
+  /**
+   * ۱۲. ثبت پیام ارسالی از فرم تماس با ما و تبدیل آن به تیکت پشتیبانی ادمین
+   */
+  async submitContactMessage(
+    dto: ContactMessageDto,
+    userId?: number,
+  ): Promise<{ success: boolean; trackingCode: string; message: string }> {
+    const cleanMobile = dto.mobile.replace(/[\s\-\(\)]/g, '').trim();
+
+    let targetUserId = userId;
+
+    if (!targetUserId) {
+      let user = await this.userRepo.findOne({
+        where: { mobile: cleanMobile },
+      });
+
+      if (!user) {
+        const nameParts = dto.name.trim().split(/\s+/);
+        const firstName = nameParts[0] || 'کاربر';
+        const lastName = nameParts.slice(1).join(' ') || 'تماس با ما';
+
+        user = this.userRepo.create({
+          mobile: cleanMobile,
+          first_name: firstName,
+          last_name: lastName,
+          email: dto.email?.trim() || undefined,
+          role: UserRole.USER,
+        });
+        user = await this.userRepo.save(user);
+      } else if (!user.first_name && dto.name) {
+        const nameParts = dto.name.trim().split(/\s+/);
+        user.first_name = nameParts[0];
+        user.last_name = nameParts.slice(1).join(' ') || undefined;
+        await this.userRepo.save(user);
+      }
+
+      targetUserId = user.id;
+    }
+
+    const subjectMap: Record<
+      string,
+      { dept: TicketDepartment; label: string; priority: TicketPriority }
+    > = {
+      skincare: {
+        dept: TicketDepartment.SALES,
+        label: 'مشاوره روتین پوستی و زیبایی',
+        priority: TicketPriority.MEDIUM,
+      },
+      order: {
+        dept: TicketDepartment.ORDERS,
+        label: 'پیگیری وضعیت سفارش',
+        priority: TicketPriority.HIGH,
+      },
+      return: {
+        dept: TicketDepartment.ORDERS,
+        label: 'درخواست مرجوعی و گارانتی',
+        priority: TicketPriority.HIGH,
+      },
+      complaint: {
+        dept: TicketDepartment.GENERAL,
+        label: 'انتقادات و شکایات',
+        priority: TicketPriority.HIGH,
+      },
+      b2b: {
+        dept: TicketDepartment.SALES,
+        label: 'همکاری تجاری و تامین کالا',
+        priority: TicketPriority.MEDIUM,
+      },
+      other: {
+        dept: TicketDepartment.GENERAL,
+        label: 'پیام عمومی',
+        priority: TicketPriority.MEDIUM,
+      },
+    };
+
+    const mapped = subjectMap[dto.subject] || {
+      dept: TicketDepartment.GENERAL,
+      label: dto.subject,
+      priority: TicketPriority.MEDIUM,
+    };
+
+    const trackingCode = await this.generateTrackingCode();
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const ticket = queryRunner.manager.create(Ticket, {
+        userId: targetUserId,
+        trackingCode,
+        title: `[فرم تماس] ${mapped.label} - ${dto.name}`,
+        department: mapped.dept,
+        priority: mapped.priority,
+        status: TicketStatus.OPEN,
+        lastReplyAt: new Date(),
+        lastReplyBy: TicketSenderRole.USER,
+        unreadUserCount: 0,
+        unreadAdminCount: 1,
+      });
+
+      const savedTicket = await queryRunner.manager.save(Ticket, ticket);
+
+      const messageContent = [
+        '📋 پیام ارسالی از فرم تماس با ما وب‌سایت نیمورا:',
+        `👤 فرستنده: ${dto.name}`,
+        `📱 شماره همراه: ${cleanMobile}`,
+        dto.email ? `✉️ ایمیل: ${dto.email}` : null,
+        dto.orderId ? `📦 شماره سفارش پیوست: ${dto.orderId}` : null,
+        `📌 موضوع: ${mapped.label}`,
+        '────────────────────────────────────────',
+        dto.message.trim(),
+      ]
+        .filter(Boolean)
+        .join('\n');
+
+      const message = queryRunner.manager.create(TicketMessage, {
+        ticketId: savedTicket.id,
+        senderId: targetUserId,
+        senderRole: TicketSenderRole.USER,
+        message: messageContent,
+        attachments: [],
+      });
+
+      await queryRunner.manager.save(TicketMessage, message);
+      await queryRunner.commitTransaction();
+
+      this.logger.log(
+        `New contact ticket created: ${trackingCode} by ${dto.name} (${cleanMobile})`,
+      );
+
+      return {
+        success: true,
+        trackingCode,
+        message: 'پیام شما با موفقیت برای کارشناسان نیمورا ارسال شد و در صف بررسی قرار گرفت.',
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error('Failed to submit contact ticket', error);
+      throw new BadRequestException('خطا در ثبت پیام تماس با ما');
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

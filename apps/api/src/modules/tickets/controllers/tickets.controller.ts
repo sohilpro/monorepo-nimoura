@@ -11,9 +11,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { CurrentUser } from 'src/common/auth/auth.decorators';
+import { CurrentUser, Public } from 'src/common/auth/auth.decorators';
 import { TicketsService } from '../tickets.service';
 import { CreateTicketDto } from '../dtos/create-ticket.dto';
+import { ContactMessageDto } from '../dtos/contact-message.dto';
 import { ReplyTicketDto } from '../dtos/reply-ticket.dto';
 import { TicketQueryDto } from '../dtos/ticket-query.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -40,6 +41,16 @@ export class TicketsController {
     @Body() dto: CreateTicketDto,
   ) {
     return await this.ticketsService.createTicket(userId, dto);
+  }
+
+  @Public()
+  @Post('contact')
+  @ApiOperation({ summary: 'ثبت و ارسال پیام از فرم تماس با ما وب‌سایت' })
+  async submitContact(
+    @CurrentUser('id') userId: number | undefined,
+    @Body() dto: ContactMessageDto,
+  ) {
+    return await this.ticketsService.submitContactMessage(dto, userId);
   }
 
   @Get()

@@ -191,7 +191,7 @@ useSeoMeta({
   ogTitle: 'فروشگاه لوازم آرایشی و بهداشتی نیمورا',
   ogDescription:
     'خرید اینترنتی محصولات آرایشی، پوستی و مراقبتی با بالاترین کیفیت و تضمین اصالت.',
-  ogImage: `${siteUrl}/og-image.png`,
+  ogImage: `${siteUrl}/og-image.webp`,
   ogUrl: siteUrl,
   twitterCard: 'summary_large_image',
 });

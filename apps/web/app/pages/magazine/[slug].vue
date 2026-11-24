@@ -108,7 +108,7 @@ useHead(() => {
       { property: "og:type", content: "article" },
       {
         property: "og:image",
-        content: article.value.coverImage || "https://nimoura.ir/og-image.png",
+        content: article.value.coverImage || "https://nimoura.ir/og-image.webp",
       },
       {
         property: "og:url",
@@ -120,7 +120,7 @@ useHead(() => {
       { name: "twitter:description", content: pageDescription.value },
       {
         name: "twitter:image",
-        content: article.value.coverImage || "https://nimoura.ir/og-image.png",
+        content: article.value.coverImage || "https://nimoura.ir/og-image.webp",
       },
     ],
     script: [

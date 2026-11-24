@@ -726,7 +726,7 @@ useSeoMeta({
   ogTitle: 'رویه بازگرداندن کالا و ضمانت ۷ روزه مرجوعی | نیمورا',
   ogDescription:
     'راهنمای جامع شرایط و رویه مرجوعی کالا، ضوابط بهداشتی محصولات آرایشی و استرداد وجه در نیمورا.',
-  ogImage: `${siteUrl}/og-image.png`,
+  ogImage: `${siteUrl}/og-image.webp`,
   ogUrl: canonicalUrl,
   ogType: 'article',
   ogSiteName: 'Nimoura | نیمورا',
@@ -735,7 +735,7 @@ useSeoMeta({
   twitterTitle: 'رویه بازگرداندن کالا و ضمانت ۷ روزه مرجوعی | نیمورا',
   twitterDescription:
     'راهنمای جامع شرایط و رویه مرجوعی کالا در فروشگاه لوازم آرایشی و زیبایی نیمورا.',
-  twitterImage: `${siteUrl}/og-image.png`,
+  twitterImage: `${siteUrl}/og-image.webp`,
   robots: 'index, follow, max-image-preview:large, max-snippet:-1',
   author: 'فروشگاه اینترنتی نیمورا',
 });

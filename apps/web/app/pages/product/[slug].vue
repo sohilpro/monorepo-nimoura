@@ -127,12 +127,12 @@ const pageDescription = computed(() => {
 
 const productImages = computed(() => {
   const p = productData.value;
-  if (!p) return [`${siteUrl}/og-image.png`];
+  if (!p) return [`${siteUrl}/og-image.webp`];
   const urls = [
     p.thumbnail,
     ...(p.images?.map((img: any) => img?.url) ?? []),
   ].filter((u): u is string => typeof u === 'string' && u.trim().length > 0);
-  return urls.length ? Array.from(new Set(urls)) : [`${siteUrl}/og-image.png`];
+  return urls.length ? Array.from(new Set(urls)) : [`${siteUrl}/og-image.webp`];
 });
 
 const isProductInStock = computed(() => {

@@ -136,7 +136,7 @@ export default defineNuxtConfig({
         },
         { property: "og:type", content: "website" },
         { property: "og:url", content: "https://nimoura.ir/" },
-        { property: "og:image", content: "https://nimoura.ir/og-image.png" },
+        { property: "og:image", content: "https://nimoura.ir/og-image.webp" },
         { property: "og:site_name", content: "Nimoura" },
         { property: "og:locale", content: "fa_IR" },
 
@@ -151,7 +151,7 @@ export default defineNuxtConfig({
           content:
             "خرید بهترین محصولات آرایشی و مراقبتی پوست و مو از Nimoura. کیفیت بالا، ارسال سریع و ضمانت اصالت کالا.",
         },
-        { name: "twitter:image", content: "https://nimoura.ir/og-image.png" },
+        { name: "twitter:image", content: "https://nimoura.ir/og-image.webp" },
         { name: "twitter:site", content: "@nimoura" },
       ],
     },
@@ -241,6 +241,9 @@ export default defineNuxtConfig({
     "/return-policy": { swr: 3600 },
     "/shipping-pay": { swr: 3600 },
     "/rules": { swr: 3600 },
+    "/about-us": { swr: 3600 },
+    "/contact-us": { swr: 3600 },
+    "/faq": { swr: 3600 },
     "/categories/**": { swr: 1800 },
     "/brand/**": { swr: 1800 },
     "/products/**": { swr: 1800 },

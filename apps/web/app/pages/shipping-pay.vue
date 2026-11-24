@@ -804,7 +804,7 @@ useSeoMeta({
   ogTitle: 'روش‌های ارسال و پرداخت | نیمورا',
   ogDescription:
     'راهنمای جامع انواع روش‌های ارسال پستی، ارسال رایگان بالای ۴ میلیون تومان، بسته‌بندی ایمن و درگاه‌های پرداخت امن شاپرک در نیمورا.',
-  ogImage: `${siteUrl}/og-image.png`,
+  ogImage: `${siteUrl}/og-image.webp`,
   ogUrl: canonicalUrl,
   ogType: 'article',
   ogSiteName: 'Nimoura | نیمورا',
@@ -813,7 +813,7 @@ useSeoMeta({
   twitterTitle: 'روش‌های ارسال و پرداخت | نیمورا',
   twitterDescription:
     'راهنمای جامع روش‌های ارسال پستی، بسته‌بندی ضدضربه و پرداخت امن آنلاین در فروشگاه لوازم آرایشی و زیبایی نیمورا.',
-  twitterImage: `${siteUrl}/og-image.png`,
+  twitterImage: `${siteUrl}/og-image.webp`,
   robots: 'index, follow, max-image-preview:large, max-snippet:-1',
   author: 'فروشگاه اینترنتی نیمورا',
 });

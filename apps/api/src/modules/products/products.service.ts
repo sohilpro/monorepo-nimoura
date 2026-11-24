@@ -1613,7 +1613,11 @@ export class ProductsService {
         newThumbnailUrl) &&
       oldThumbnail
     ) {
-      await this.mediaService.deleteByUrls([oldThumbnail]).catch(() => {});
+      await this.mediaService.deleteByUrls([oldThumbnail]).catch((err) => {
+        this.logger.warn(
+          `خطا در حذف تصویر شاخص قدیمی محصول ${product.id}: ${getErrorMessage(err)}`,
+        );
+      });
     }
 
     if (incomingThumb) {
@@ -1655,13 +1659,21 @@ export class ProductsService {
 
             const urlsToDelete = imagesForDelete.map((i) => i.url);
             if (urlsToDelete.length > 0) {
-              await this.mediaService
-                .deleteByUrls(urlsToDelete)
-                .catch(() => {});
+              await this.mediaService.deleteByUrls(urlsToDelete).catch((err) => {
+                this.logger.warn(
+                  `خطا در حذف فایلهای گالری محصول ${product.id}: ${getErrorMessage(err)}`,
+                );
+              });
             }
 
             await manager.delete(ProductImages, {
               id: In(deleteIds),
+              product: { id: product.id },
+            });
+
+            // رابطهٔ cascade-on-save باعث میشد آرایهٔ کهنهٔ product.images
+            // ردیفهای حذفشده را دوباره درج کند؛ بنابراین بعد از حذف، رابطه را تازه میکنیم.
+            product.images = await manager.findBy(ProductImages, {
               product: { id: product.id },
             });
           }
@@ -1687,7 +1699,11 @@ export class ProductsService {
             if (toRemove.length > 0) {
               await this.mediaService
                 .deleteByUrls(toRemove.map((i) => i.url))
-                .catch(() => {});
+                .catch((err) => {
+                  this.logger.warn(
+                    `خطا در حذف فایلهای گالری محصول ${product.id}: ${getErrorMessage(err)}`,
+                  );
+                });
               await manager.remove(ProductImages, toRemove);
             }
 

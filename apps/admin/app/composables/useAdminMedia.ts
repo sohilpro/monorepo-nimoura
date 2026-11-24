@@ -32,12 +32,17 @@ export function useAdminMedia() {
         query: params,
       });
 
-      const data = response?.data ?? response;
-      items.value = data?.items || [];
-      if (data?.meta) {
-        meta.value = data.meta;
+      // شکل پاسخ بسته به نسخه بکند متفاوت است؛ آرایه را مطمئن پیدا میکنیم
+      const root: any = response?.data ?? response;
+      const list = Array.isArray(root)
+        ? root
+        : (root?.items ?? root?.data?.items ?? root?.data ?? []);
+      items.value = Array.isArray(list) ? list : [];
+      const responseMeta = root?.meta ?? root?.data?.meta;
+      if (responseMeta) {
+        meta.value = { ...meta.value, ...responseMeta };
       }
-      return data;
+      return root;
     } catch (err: any) {
       toast.error(
         err?.data?.message || err?.statusMessage || 'خطا در بارگذاری لیست فایل‌ها',

@@ -266,11 +266,29 @@ export class MediaStaticService {
     const media = await this.mediaRepo.findOne({ where: { id } });
     if (!media) throw new NotFoundException('فایل مورد نظر یافت نشد');
 
-    await this.removeFileFromDisk(media.ftpPath);
+    const path = this.toRelativeUploadPath(media.ftpPath);
+    if (path) await this.removeFileFromDisk(path);
     await this.mediaRepo.remove(media);
   }
 
   /** حذف تمام فایل‌های مرتبط با یک مالک */
+  /**
+   * مسیر نسبی داخل پوشه uploads را از ftpPath ذخیرهشده یا از publicUrl بیرون میکشیم.
+   * رکوردهای قدیمی ftpPath را به شکل /uploads/products/... ذخیره کردهاند و
+   * path.join(root, '/uploads/...') به مسیر اشتباهی منتهی میشد (فایل پاک نمیشد).
+   */
+  private toRelativeUploadPath(value: string | null | undefined): string | null {
+    if (!value) return null;
+    const input = String(value).trim();
+    if (!input || /^(data:|blob:)/i.test(input)) return null;
+
+    const marker = '/uploads/';
+    const index = input.indexOf(marker);
+    const relative = index >= 0 ? input.slice(index + marker.length) : input;
+
+    return relative.replace(/\\/g, '/').replace(/^\/+/, '').trim() || null;
+  }
+
   async deleteByOwner(
     ownerType: MediaOwnerType,
     ownerId: string,
@@ -278,7 +296,10 @@ export class MediaStaticService {
     const mediaList = await this.findByOwner(ownerType, ownerId);
     if (mediaList.length === 0) return;
 
-    await Promise.all(mediaList.map((m) => this.removeFileFromDisk(m.ftpPath)));
+    const paths = mediaList
+      .map((m) => this.toRelativeUploadPath(m.ftpPath))
+      .filter((p): p is string => Boolean(p));
+    await Promise.all(paths.map((p) => this.removeFileFromDisk(p)));
     await this.mediaRepo.remove(mediaList);
   }
 
@@ -286,31 +307,33 @@ export class MediaStaticService {
    * حذف یک یا چند فایل از دیسک و دیتابیس بر اساس آدرس عمومی (publicUrl)
    */
   async deleteByUrls(urls: (string | undefined | null)[]): Promise<void> {
-    const validUrls = urls.filter((url): url is string => Boolean(url));
+    const validUrls = Array.from(
+      new Set(urls.filter((url): url is string => Boolean(url))),
+    );
     if (validUrls.length === 0) return;
 
-    // پیدا کردن مدیاها بر اساس URL
     const mediaList = await this.mediaRepo
       .createQueryBuilder('media')
       .where('media.publicUrl IN (:...validUrls)', { validUrls })
       .getMany();
 
-    if (mediaList.length === 0) {
-      // اگر به هر دلیلی رکورد در دیتابیس نبود اما فایل فیزیکی روی دیسک هست، از روی URL مسیر دیسک را پاک می‌کنیم
-      for (const url of validUrls) {
-        const relativePath = url.split('/uploads/')[1];
-        if (relativePath) {
-          await this.removeFileFromDisk(relativePath);
-        }
-      }
-      return;
+    const matchedUrls = new Set(mediaList.map((m) => m.publicUrl));
+
+    // فایلهایی که رکورد مدیای آنها وجود ندارد را هم از روی URL پاک میکنیم
+    const paths = [
+      ...mediaList.map((m) => this.toRelativeUploadPath(m.ftpPath)),
+      ...validUrls
+        .filter((url) => !matchedUrls.has(url))
+        .map((url) => this.toRelativeUploadPath(url)),
+    ].filter((path): path is string => Boolean(path));
+
+    await Promise.all(
+      Array.from(new Set(paths)).map((path) => this.removeFileFromDisk(path)),
+    );
+
+    if (mediaList.length > 0) {
+      await this.mediaRepo.remove(mediaList);
     }
-
-    // ۱. حذف فایل‌های فیزیکی از روی دیسک
-    await Promise.all(mediaList.map((m) => this.removeFileFromDisk(m.ftpPath)));
-
-    // ۲. حذف رکوردها از دیتابیس
-    await this.mediaRepo.remove(mediaList);
   }
 
   async reassignOwner(
@@ -366,7 +389,10 @@ export class MediaStaticService {
 
     if (mediaList.length === 0) return { deletedCount: 0 };
 
-    await Promise.all(mediaList.map((m) => this.removeFileFromDisk(m.ftpPath)));
+    const paths = mediaList
+      .map((m) => this.toRelativeUploadPath(m.ftpPath))
+      .filter((p): p is string => Boolean(p));
+    await Promise.all(paths.map((p) => this.removeFileFromDisk(p)));
     await this.mediaRepo.remove(mediaList);
 
     return { deletedCount: mediaList.length };

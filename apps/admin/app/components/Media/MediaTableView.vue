@@ -236,6 +236,7 @@ function getOwnerSeverity(ownerType: MediaOwnerType): 'info' | 'success' | 'warn
       return 'warn';
     case MediaOwnerType.MAGAZINE_COVER:
     case MediaOwnerType.MAGAZINE_CONTENT_IMAGE:
+    case MediaOwnerType.ARTICLE_CONTENT:
       return 'secondary';
     case MediaOwnerType.TICKET_ATTACHMENT:
       return 'danger';

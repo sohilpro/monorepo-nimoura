@@ -87,7 +87,7 @@ const toInt = (value: string | number | null | undefined): number =>
 type MediaValue = string | { id?: string | number; url?: string } | null | undefined;
 
 /** UtilsFileUploader مقدار { id, url } پس میدهد، ولی DTO محصول فقط رشتهٔ URL میخواهد. */
-function toMediaUrl(value: MediaValue): string | undefined {
+export function toMediaUrl(value: MediaValue): string | undefined {
   if (!value) return undefined;
   const url = typeof value === 'string' ? value : value.url;
   return url && url !== 'undefined' ? url : undefined;
@@ -316,6 +316,12 @@ export function useProductForm() {
       : [{ key: '', value: '' }];
     form.tagIds = (existing.tags || []).map((t) => t.id);
     form.lowStockThreshold = String(existing.lowStockThreshold ?? 5);
+
+    // گالری موجود را هم در فرم میگذاریم تا هنگام ذخیره، لیست کامل URLها ارسال شود.
+    // در غیر اینصورت بکند فکر میکند هیچ عکسی وجود ندارد و ردیفهای حذفشده را با cascade برمیگرداند.
+    form.images = (existing.images ?? [])
+      .map((img: any) => (typeof img === 'string' ? img : img?.url))
+      .filter((url): url is string => Boolean(url));
 
     if (existing.variants?.length) {
       form.variantKind = kindOfVariant(existing.variants[0]!) ?? 'color';

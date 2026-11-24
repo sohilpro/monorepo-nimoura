@@ -7,8 +7,8 @@
     <!-- لیست تصاویر بارگذاری‌شده یا موجود -->
     <div v-if="displayItems.length" class="flex flex-wrap gap-3.5 mb-3">
       <div
-        v-for="item in displayItems"
-        :key="item.source + '-' + (item.id ?? item.url)"
+        v-for="(item, i) in displayItems"
+        :key="item.source + '-' + i + '-' + (item.id ?? item.url)"
         class="relative w-28 h-28 sm:w-32 sm:h-32 border-2 border-gray-200 rounded-xl overflow-hidden group shadow-xs bg-gray-50 transition-all hover:border-brand-500"
       >
         <img
@@ -186,17 +186,28 @@ function handleDrop(e: DragEvent) {
 }
 
 async function uploadFiles(files: File[]) {
-  for (const file of files) {
-    await processSingleFile(file);
+  // تمام پیشنمایشها را قبل از شروع آپلود ثبت میکنیم؛ در غیر اینصورت فقط فایلی
+  // که نوبتش رسیده در حالت «در حال آپلود» دیده میشد و بقیه ناپدید بودند.
+  const queue = files.map((file) => {
+    const tempUrl = URL.createObjectURL(file);
+    const tempId = `temp_${Math.random().toString(36).substring(2)}`;
+    uploadingItems.value.push({ id: tempId, url: tempUrl, uploading: true });
+    return { file, tempUrl, tempId };
+  });
+
+  for (const item of queue) {
+    try {
+      await processSingleFile(item.file);
+    } finally {
+      uploadingItems.value = uploadingItems.value.filter(
+        (i) => i.id !== item.tempId,
+      );
+      URL.revokeObjectURL(item.tempUrl);
+    }
   }
 }
 
 async function processSingleFile(file: File) {
-  const tempUrl = URL.createObjectURL(file);
-  const tempId = `temp_${Math.random().toString(36).substring(2)}`;
-
-  uploadingItems.value.push(reactive({ id: tempId, url: tempUrl, uploading: true }));
-
   const formData = new FormData();
   formData.append('file', file);
   formData.append('ownerType', props.ownerType || 'article_content');
@@ -233,9 +244,6 @@ async function processSingleFile(file: File) {
     }
   } catch (err: any) {
     toast.error(err?.data?.message || err?.statusMessage || 'بارگذاری فایل ناموفق بود');
-  } finally {
-    uploadingItems.value = uploadingItems.value.filter((i) => i.id !== tempId);
-    URL.revokeObjectURL(tempUrl);
   }
 }
 

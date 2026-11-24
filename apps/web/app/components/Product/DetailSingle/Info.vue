@@ -5,10 +5,8 @@
     >
       <!-- IMAGE SLIDER -->
       <ProductDetailSingleImageSlider
-        :images="[
-          `${product.thumbnail}`,
-          ...(product.images?.map((img: any) => `${img.url}`) ?? []),
-        ]"
+        :key="selectedVariant?.id ?? 'default'"
+        :images="galleryImages"
       />
 
       <!-- INFOS -->
@@ -249,6 +247,7 @@ interface Variant {
   alt: string;
   stock: number;
   price?: number;
+  images?: string[];
 }
 
 const props = defineProps<{
@@ -260,6 +259,22 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "update:selectedVariant", val: Variant | null): void;
 }>();
+
+// عکسهای تنوع انتخابشده ابتدا نمایش میگیرند، سپس عکسهای عمومی محصول.
+// Set جلوگیری میکند از تکرار آدرسها در صورتی که تنوع همان عکس محصول را داشته باشد.
+const galleryImages = computed<string[]>(() => {
+  const variantImages = (props.selectedVariant?.images ?? []).filter(
+    (url): url is string => typeof url === 'string' && url.trim().length > 0,
+  );
+  const generalImages = [
+    props.product?.thumbnail,
+    ...(props.product?.images?.map((img: any) => img?.url) ?? []),
+  ].filter(
+    (url): url is string => typeof url === 'string' && url.trim().length > 0,
+  );
+
+  return Array.from(new Set([...variantImages, ...generalImages]));
+});
 
 const formattedRating = computed(() => {
   const val = Number(props.product?.averageRating);

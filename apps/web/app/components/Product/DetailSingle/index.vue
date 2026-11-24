@@ -143,6 +143,7 @@ interface Variant {
   alt: string;
   price: number;
   stock: number;
+  images?: string[];
 }
 
 const props = defineProps<{

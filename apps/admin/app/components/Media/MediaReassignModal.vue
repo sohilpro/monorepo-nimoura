@@ -104,6 +104,7 @@ const ownerTypeOptions = [
   { label: 'آیکون دسته‌بندی', value: MediaOwnerType.CATEGORY_ICON },
   { label: 'کاور مقاله مجله', value: MediaOwnerType.MAGAZINE_COVER },
   { label: 'تصویر محتوای مقاله', value: MediaOwnerType.MAGAZINE_CONTENT_IMAGE },
+  { label: 'محتوای مقاله (article_content)', value: MediaOwnerType.ARTICLE_CONTENT },
   { label: 'تصویر دیدگاه', value: MediaOwnerType.COMMENT_IMAGE },
   { label: 'ضمیمه تیکت', value: MediaOwnerType.TICKET_ATTACHMENT },
 ];

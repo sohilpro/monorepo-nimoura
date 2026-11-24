@@ -142,6 +142,7 @@ interface Variant {
   price: number;
   priceDiscount?: number;
   stock: number;
+  images?: string[];
 }
 
 // ─── Props / emits ────────────────────────────

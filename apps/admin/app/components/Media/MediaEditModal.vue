@@ -190,6 +190,7 @@ const ownerTypeOptions = [
   { label: 'آیکون دسته‌بندی (category_icon)', value: MediaOwnerType.CATEGORY_ICON },
   { label: 'کاور مقاله مجله (magazine_cover)', value: MediaOwnerType.MAGAZINE_COVER },
   { label: 'تصویر محتوای مقاله (magazine_content_image)', value: MediaOwnerType.MAGAZINE_CONTENT_IMAGE },
+  { label: 'محتوای مقاله (article_content)', value: MediaOwnerType.ARTICLE_CONTENT },
   { label: 'تصویر دیدگاه کاربران (comment_image)', value: MediaOwnerType.COMMENT_IMAGE },
   { label: 'ضمیمه تیکت پشتیبانی (ticket_attachment)', value: MediaOwnerType.TICKET_ATTACHMENT },
   { label: 'ویدیوی اکسپلور (explore_video)', value: MediaOwnerType.EXPLORE_VIDEO },

@@ -89,6 +89,19 @@
       </div>
     </div>
 
+    <!-- تصاویر اختصاصی این تنوع: در سایت هنگام انتخاب تنوع، این عکسها اول نمایش میگیرند -->
+    <div class="mt-3 border-t border-gray-100 pt-3">
+      <UtilsFileUploader
+        label="تصاویر این تنوع (اختیاری)"
+        name="variant-images"
+        :multiple="true"
+        ownerType="product_variant"
+        :ownerId="variant.id ?? 'temp'"
+        :model-value="variant.images"
+        @update:model-value="variant.images = normalizeVariantImages($event)"
+      />
+    </div>
+
     <ul v-if="showErrors && errors.length" class="mt-3 space-y-1 text-xs text-rose-600">
       <li v-for="error in errors" :key="error" class="flex items-center gap-1.5">
         <span class="size-1 rounded-full bg-rose-500" />{{ error }}
@@ -100,7 +113,12 @@
 <script setup lang="ts">
 import { nearestPersianColorName, normalizeHex, toPersianDigits } from '@nimoura/utils';
 import type { VariantKind } from '@nimoura/shared-types';
-import { VARIANT_UNITS, variantLabel, type FormVariant } from '~/composables/useProductForm';
+import {
+  VARIANT_UNITS,
+  toMediaUrl,
+  variantLabel,
+  type FormVariant,
+} from '~/composables/useProductForm';
 
 const props = defineProps<{
   variant: FormVariant;
@@ -113,6 +131,14 @@ const emit = defineEmits<{ remove: [] }>();
 
 const units = computed(() => (props.kind === 'color' ? [] : VARIANT_UNITS[props.kind]));
 const label = computed(() => variantLabel(props.variant, props.kind));
+
+// آپلودر MediaItemهای { id, url } پس میدهد؛ DTO بکند فقط آرایه URL میخواهد.
+function normalizeVariantImages(value: unknown): string[] {
+  const list = Array.isArray(value) ? value : value ? [value] : [];
+  return list
+    .map((item: any) => toMediaUrl(item))
+    .filter((url): url is string => Boolean(url));
+}
 
 // Suggest a Persian color name from the picked color until the admin types their own.
 watch(

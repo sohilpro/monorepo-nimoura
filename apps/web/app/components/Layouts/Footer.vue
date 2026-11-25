@@ -187,13 +187,13 @@
           >
             بازگشت به بالا
 
-            <i class="pi-angle-up pi size-4"></i>
+            <i class="pi-angle-up pi text-base!" />
           </button>
         </div>
       </div>
       <!-- ══ NEWSLETTER BOX ══ -->
       <div
-        class="w-full rounded-2xl bg-gradient-to-r from-nimoura-primary/15 via-[#FFF2F4] to-nimoura-primary/10 border border-nimoura-primary/20 p-5 md:p-7 mt-8 shadow-sm"
+        class="w-full rounded-2xl bg-linear-to-r from-nimoura-primary/15 via-[#FFF2F4] to-nimoura-primary/10 border border-nimoura-primary/20 p-5 md:p-7 mt-8 shadow-sm"
       >
         <div
           class="flex flex-col lg:flex-row items-center justify-between gap-6"
@@ -228,7 +228,7 @@
 
             <form
               v-else
-              class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/90 p-1.5 rounded-2xl border border-nimoura-primary/25 shadow-xs w-full sm:w-[420px]"
+              class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white/90 p-1.5 rounded-2xl border border-nimoura-primary/25 shadow-xs w-full sm:w-105"
               @submit.prevent="handleNewsletterSubmit"
             >
               <div class="relative flex-1">

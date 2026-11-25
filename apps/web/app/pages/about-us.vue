@@ -138,8 +138,8 @@
                 شادابی، سلامت و اعتمادبه‌نفس هر انسان است.
               </p>
               <p>
-                در سال ۱۳۹۹، گروهی از مشتاقان بیوتی، داروسازان و متخصصان فناوری
-                گرد هم آمدند تا بستری امن، شفاف و الهام‌بخش بیافرینند. نام
+                در سال ۱۳۹۹، گروهی از مشتاقان بیوتی، گرد هم آمدند تا بستری امن،
+                شفاف و الهام‌بخش بیافرینند. نام
                 <strong class="text-nimoura-primary font-bold">«نیمورا»</strong>
                 با الهام از حس درخشش، زیبایی ماندگار و وقار برگزیده شد تا نماد
                 تعهدی استوار به اصالت باشد.
@@ -253,10 +253,10 @@
             class="mt-3 text-xs leading-relaxed text-nimoura-text-600 sm:text-sm sm:leading-loose"
           >
             چشم‌انداز نیمورا، تبدیل شدن به الهام‌بخش‌ترین و پیشرفته‌ترین
-            اکوسیستم زیبایی و سلامت دیجیتال در خاورمیانه است؛ جایی که هوش مصنوعی
-            در تحلیل سلامت پوست، تکنولوژی شبیه‌سازی سه‌بعدی و اصالت بی‌چون‌وچرا
-            به هم می‌پیوندند تا تعریفی نوین از خرید مدرن لوازم آرایشی و مراقبتی
-            به ارمغان آورند.
+            اکوسیستم زیبایی و سلامت دیجیتال در است؛ جایی که هوش مصنوعی در تحلیل
+            سلامت پوست، تکنولوژی شبیه‌سازی سه‌بعدی و اصالت بی‌چون‌وچرا به هم
+            می‌پیوندند تا تعریفی نوین از خرید مدرن لوازم آرایشی و مراقبتی به
+            ارمغان آورند.
           </p>
 
           <ul
@@ -407,30 +407,17 @@
 
           <!-- ستون بنر فروشگاه سه بعدی -->
           <div class="lg:col-span-5">
-            <!-- 📷 PLACEHOLDER: بنر پیش‌نمایش فروشگاه سه‌بعدی -->
+            <!-- 📷 تصویر نمای داخلی فروشگاه سه بعدی نیمورا با NuxtImg -->
             <div
-              class="group flex aspect-4/3 w-full flex-col items-center justify-center overflow-hidden rounded-3xl border-2 border-dashed border-nimoura-accent/40 bg-white/5 p-6 text-center backdrop-blur-sm transition-all hover:border-nimoura-accent"
-              aria-label="محل تصویر نمای داخلی فروشگاه سه بعدی نیمورا"
+              class="relative w-full overflow-hidden rounded-3xl shadow-sm transition-all duration-300 hover:shadow-md aspect-4/3"
             >
-              <div
-                class="flex size-16 items-center justify-center rounded-2xl bg-white/10 text-nimoura-accent ring-1 ring-white/20 transition-transform group-hover:scale-110"
-              >
-                <i class="pi pi-desktop text-2xl" />
-              </div>
-              <p
-                class="mt-4 font-vazir text-xs font-bold text-white sm:text-sm"
-              >
-                محل اسکرین‌شات یا بنر محیط سه‌بعدی 3D Store
-              </p>
-              <p class="mt-1 text-[11px] text-nimoura-text-200">
-                ابعاد پیشنهادی: ۸۰۰ × ۵۰۰ پیکسل (رندر ۳D از قفسه‌ها و سالن
-                زیبایی)
-              </p>
-              <span
-                class="mt-3 inline-flex items-center gap-1 rounded-full bg-nimoura-accent/20 px-3 py-1 text-[10px] font-semibold text-nimoura-accent"
-              >
-                Virtual Reality Engine
-              </span>
+              <NuxtImg
+                src="/images/3d-shop.webp"
+                alt="نمای داخلی فروشگاه سه بعدی نیمورا"
+                class="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                loading="lazy"
+                format="webp"
+              />
             </div>
           </div>
         </div>
@@ -779,7 +766,7 @@ const breadcrumbItems = [
 const aboutHighlights = [
   {
     icon: "pi-users",
-    title: "۵۰٬۰۰۰+ مشتری وفادار",
+    title: "1٬۰۰۰+ مشتری وفادار",
     subtitle: "همراهان عزیز خانواده نیمورا",
   },
   {

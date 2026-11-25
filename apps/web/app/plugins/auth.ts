@@ -1,25 +1,17 @@
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(async () => {
   const auth = useAuth();
 
+  // پلاگینها نباید از useFetch استفاده کنند: هندلر SSR آن میتواند undefined
+  // برگرداند (مثلاً وقتی بکند در دسترس نیست) و Nuxt هشدار E3006 میدهد و
+  // درخواست را دوباره روی کلاینت تکرار میکند. $fetch مستقیم این مشکل را ندارد.
   try {
-    const { data, error }: any = await useFetch("/api/auth/me");
+    const response: any = await $fetch("/api/auth/me");
+    const u = response?.data ?? response;
 
-    if (error.value) {
-      if (import.meta.dev) {
-        console.warn("Auth error:", error.value);
-      }
-      auth.value = null;
-    } else {
-      const u = data.value?.data ?? data.value;
-      if (u && u.id) {
-        auth.value = u;
-      } else {
-        auth.value = null;
-      }
-    }
+    auth.value = u && u.id ? u : null;
   } catch (e) {
     if (import.meta.dev) {
-      console.warn("Unexpected auth error:", e);
+      console.warn("Auth check failed:", e);
     }
     auth.value = null;
   }

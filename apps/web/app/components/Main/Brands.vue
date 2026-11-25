@@ -1,6 +1,6 @@
 <template>
   <section
-    v-if="!pending || displayBrands.length > 0"
+    v-if="pending || displayBrands.length > 0"
     class="mx-4 lg:container mt-12 mb-8 lg:mt-20 lg:mb-14"
     aria-label="برندهای محبوب نیمورا"
   >
@@ -63,17 +63,25 @@
             class="group relative flex flex-col items-center justify-center rounded-2xl border border-nimoura-text-100/80 bg-white p-3.5 sm:p-4 text-center transition-all duration-300 hover:-translate-y-1 hover:border-nimoura-primary/40 hover:shadow-md"
             :title="`مشاهده محصولات برند ${brand.name}`"
           >
-            <!-- Logo Container -->
+            <!-- Logo Container: real logo only, otherwise the brand's initial -->
             <div
               class="relative flex h-16 w-full items-center justify-center overflow-hidden rounded-xl bg-nimoura-base/40 p-2 transition-colors group-hover:bg-nimoura-base/80 sm:h-20"
             >
               <img
+                v-if="brand.logo && !failedLogos[brand.id]"
                 :src="formatImageUrl(brand.logo)"
                 :alt="`لوگوی برند ${brand.name}`"
                 loading="lazy"
                 class="max-h-full max-w-full object-contain filter grayscale opacity-75 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105"
-                @error="onImageError($event, brand)"
+                @error="failedLogos[brand.id] = true"
               />
+              <span
+                v-else
+                class="flex size-full items-center justify-center rounded-lg bg-gradient-to-br from-nimoura-primary/15 to-nimoura-primary/5 font-modam text-2xl font-bold text-nimoura-primary"
+                :aria-label="`برند ${brand.name}`"
+              >
+                {{ brand.name.charAt(0) }}
+              </span>
             </div>
 
             <!-- Brand Name -->
@@ -102,80 +110,35 @@ interface BrandItem {
   to: string;
 }
 
-// نگاشت اختصاصی لوگوهای محلی برای برندهای اصلی فروشگاه
-const BRAND_LOCAL_LOGOS: Record<string, string> = {
-  essence: "/brand/1.png",
-  olibolla: "/brand/2.png",
-  bioksin: "/brand/3.png",
-  dove: "/brand/4.png",
-  kemes: "/brand/5.png",
-  genobiotic: "/brand/6.png",
-};
-
-// لیست برندهای تکمیلی جهت تضمین حضور حداقل ۱۰ برند معتبر آرایشی و مراقبتی
-const FALLBACK_BRANDS = [
-  { id: 1, name: "اسنس", slug: "essence", logo: "/brand/1.png" },
-  { id: 2, name: "اولیبولا", slug: "olibolla", logo: "/brand/2.png" },
-  { id: 3, name: "بیوکسین", slug: "bioksin", logo: "/brand/3.png" },
-  { id: 4, name: "داو", slug: "dove", logo: "/brand/4.png" },
-  { id: 5, name: "کمس", slug: "kemes", logo: "/brand/5.png" },
-  { id: 6, name: "ژنوبایوتیک", slug: "genobiotic", logo: "/brand/6.png" },
-  { id: 7, name: "لورآل", slug: "loreal", logo: "/brand/1.png" },
-  { id: 8, name: "سیمپل", slug: "simple", logo: "/brand/2.png" },
-  { id: 9, name: "نوتروژینا", slug: "neutrogena", logo: "/brand/3.png" },
-  { id: 10, name: "کلینیک", slug: "clinique", logo: "/brand/4.png" },
-];
-
-// دریافت ۱۰ برند برتر از API
+// برندها فقط از بکند واقعی خوانده میشوند؛ هیچ لیست یا لوگوی استاتیکی وجود ندارد
 const { data: apiResponse, pending } = await useFetch<any>("/api/brands", {
-  query: { limit: 10 },
-  key: "home-brands-showcase-10",
+  query: { limit: 24 },
+  key: "home-brands-showcase",
   lazy: true,
 });
+
+// لوگوی خراب یا ناموجود → حرف اول نام برند
+const failedLogos = reactive<Record<string | number, boolean>>({});
 
 const displayBrands = computed<BrandItem[]>(() => {
   const d = apiResponse.value?.data ?? apiResponse.value;
   const rawList: any[] = d?.brands ?? d?.items ?? [];
 
-  const mapped: BrandItem[] = rawList.map((b, index) => {
-    const slug = b.slug || createSlug(b.name);
-    const localFallback =
-      BRAND_LOCAL_LOGOS[slug] || `/brand/${(index % 6) + 1}.png`;
-    return {
-      id: b.id,
-      name: b.name,
-      slug,
-      logo: b.logo?.trim() || localFallback,
-      to: `/brand/${encodeURIComponent(slug)}`,
-    };
-  });
-
-  // اگر کمتر از ۱۰ برند در دیتابیس بود، با برندهای معتبر تا ۱۰ عدد تکمیل کن (دقیقاً حدود ۱۰ برند)
-  if (mapped.length < 10) {
-    const existingSlugs = new Set(mapped.map((b) => b.slug));
-    for (const fb of FALLBACK_BRANDS) {
-      if (!existingSlugs.has(fb.slug)) {
-        mapped.push({
-          ...fb,
-          to: `/brand/${encodeURIComponent(fb.slug)}`,
-        });
-        existingSlugs.add(fb.slug);
-      }
-      if (mapped.length >= 10) break;
-    }
-  }
-
-  return mapped.slice(0, 10);
+  return rawList
+    .map((b) => {
+      const name = String(b?.name ?? "").trim();
+      const slug = b?.slug || createSlug(name);
+      return {
+        id: b?.id ?? slug,
+        name,
+        slug,
+        logo: typeof b?.logo === "string" ? b.logo.trim() : "",
+        to: `/brand/${encodeURIComponent(slug)}`,
+      };
+    })
+    .filter((b) => !!b.name)
+    .slice(0, 10);
 });
-
-// فال‌بک خودکار در صورت لود نشدن عکس
-function onImageError(e: Event, brand: BrandItem) {
-  const img = e.target as HTMLInputElement;
-  const fallback = BRAND_LOCAL_LOGOS[brand.slug] || "/brand/1.png";
-  if (img.src !== fallback) {
-    img.src = fallback;
-  }
-}
 
 // -------------------- Embla AutoScroll --------------------
 const [emblaRef] = useEmblaCarousel(

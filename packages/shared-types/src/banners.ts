@@ -44,6 +44,13 @@ export const BANNER_POSITIONS: readonly BannerPositionSuggestion[] = [
     recommendedHeight: 400,
   },
   {
+    key: 'products-top',
+    name: 'بالای صفحه همه محصولات',
+    description: 'بنر تمامعرض بالای لیست تمام محصولات (/products)',
+    recommendedWidth: 1600,
+    recommendedHeight: 400,
+  },
+  {
     key: 'product-bottom',
     name: 'پایین صفحه محصول',
     description: 'بنر تمامعرض بعد از توضیحات محصول',

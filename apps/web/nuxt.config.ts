@@ -244,6 +244,7 @@ export default defineNuxtConfig({
     "/about-us": { swr: 3600 },
     "/contact-us": { swr: 3600 },
     "/faq": { swr: 3600 },
+    "/products": { swr: 1800 },
     "/categories/**": { swr: 1800 },
     "/brand/**": { swr: 1800 },
     "/products/**": { swr: 1800 },

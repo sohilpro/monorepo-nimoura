@@ -2,17 +2,11 @@
   <div>
     <!-- لودینگ اولیه‌ی صفحه با اسکلتون کامل (بدون پرش چیدمان) -->
     <CategoriesUtilsPageSkeleton
-      v-if="pending && !products"
+      v-if="showSkeleton"
       :page-size="PAGE_SIZE"
     />
 
-    <Transition
-      v-else
-      appear
-      enter-active-class="transition-opacity duration-300 ease-out"
-      enter-from-class="opacity-0"
-    >
-      <main class="container">
+    <main v-else class="container">
       <UtilsBreadCrumb v-if="breadcrumbItems.length > 1" :items="breadcrumbItems" />
 
       <component
@@ -213,8 +207,7 @@
       />
 
       <CategoriesUtilsSeoSection :category="seoSectionTarget" />
-      </main>
-    </Transition>
+    </main>
 
     <UtilsScrollToTop />
   </div>
@@ -252,8 +245,10 @@ const isSearchRoute = route.path === "/search";
 const isAmazingRoute = route.path.includes("/amazing");
 const isNewestRoute = route.path.includes("/products/newest");
 const isBestSellerRoute = route.path.includes("/products/best-seller");
+const isAllProductsRoute = route.path === "/products";
 
-const defaultSort: StorefrontSort = isNewestRoute ? "newest" : "popular";
+const defaultSort: StorefrontSort =
+  isNewestRoute || isAllProductsRoute ? "newest" : "popular";
 
 function normalizeSort(raw: unknown): StorefrontSort {
   if (raw === "latest" || raw === "createdAt") return "newest";
@@ -268,6 +263,12 @@ function normalizeSort(raw: unknown): StorefrontSort {
 }
 
 // ─── UI state ─────────────────────────────────────────────
+// اسکلتون نباید بر اساس وضعیت pending رندر شود چون SSR و هیدریشن ممکن است
+// دو وضعیت متفاوت ببینند و Vue هشدار Hydration node mismatch بدهد.
+// هم سرور و هم اولین رندر کلاینت همیشه محتوا را میسازند؛ تنها بعد از mount
+// و در صورتی که هنوز دیتایی نیامده باشد اسکلتون جایگزین میشود.
+const showSkeleton = ref(false);
+
 const resetKey = ref(0);
 const sortModal = ref(false);
 const filterModal = ref(false);
@@ -327,18 +328,22 @@ const apiKey = computed(
   () => `products-${route.fullPath}-${currentSort.value}-${currentPage.value}`,
 );
 
-const productsAsync: any = useLazyAsyncData(apiKey, fetchProducts, {
+// باید SSR منتظر بماند تا همان دیتایی که بعداً هیدراته میشود در پی\u200cلود وجود
+// داشته باشد؛ useLazyAsyncData + onServerPrefetch باعث میشد سرور گاهی حالت خالی
+// رندر کند و کلاینت با دیتای پر هیدراته شود (Hydration node mismatch).
+const { data: products, pending }: any = await useAsyncData(apiKey, fetchProducts, {
   watch: [apiKey],
-  // در لحظه hydration پی‌لود SSR را نگه دار تا mismatch رخ ندهد؛ در ناوبری بعدی تازه بگیر
   getCachedData: (key, nuxtApp) =>
     nuxtApp.isHydrating ? nuxtApp.payload.data[key] : undefined,
 });
 
-onServerPrefetch(async () => {
-  await productsAsync;
+onMounted(() => {
+  if (pending.value && !products.value) showSkeleton.value = true;
 });
 
-const { data: products, pending } = productsAsync;
+watch([pending, products], () => {
+  if (!pending.value || products.value) showSkeleton.value = false;
+});
 
 const activeCategory = computed<Category | null>(
   () => products.value?.data?.category ?? props.categoryData ?? null,
@@ -356,7 +361,10 @@ const pageHeading = computed(() => {
     return "جدیدترین محصولات";
   }
   if (isBestSellerRoute) {
-    return "پرفروش‌ترین محصولات";
+    return "پرفروشترین محصولات";
+  }
+  if (isAllProductsRoute) {
+    return "همه محصولات";
   }
   if (isSearchRoute) {
     const query = String(route.query.q ?? "").trim();
@@ -458,6 +466,12 @@ const breadcrumbItems = computed(() => {
     return [
       { label: "خانه", href: "/" },
       { label: "پرفروش‌ترین محصولات" },
+    ];
+  }
+  if (isAllProductsRoute) {
+    return [
+      { label: "خانه", href: "/" },
+      { label: "همه محصولات" },
     ];
   }
   if (isSearchRoute) {

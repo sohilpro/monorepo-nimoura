@@ -151,6 +151,7 @@ const currentSubCategories = computed(() => {
 });
 
 const staticMenuItems = [
+  { label: "همه محصولات", to: "/products" },
   { label: "جادوی نیمورا", to: "/videos" },
   { label: "جدیدترین‌ها", to: "/products/newest" },
   { label: "تخفیف ویژه", to: "/products/amazing" },

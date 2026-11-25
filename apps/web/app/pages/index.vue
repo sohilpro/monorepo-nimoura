@@ -10,6 +10,7 @@
 
     <!-- ══ ۲. شوکیس شبکه‌ای دسته‌بندی‌های برگزیده (Grid Variant) ══ -->
     <CategoriesShowcase
+      config-key="home-grid"
       title="دسته‌بندی‌های"
       highlight="برگزیده"
       subtitle="محصولات تخصصی زیبایی، مراقبت و سلامت پوست و مو"
@@ -52,6 +53,7 @@
 
     <!-- ══ ۸. کارت‌های شوکیس هیرو (Hero Cards Variant) ══ -->
     <CategoriesShowcase
+      config-key="home-hero-cards"
       title="لاین‌های ویژه"
       highlight="نیمورا"
       subtitle="دسترسی سریع به محبوب‌ترین مجموعه‌های تخصصی آرایشی و درمانی"
@@ -74,10 +76,11 @@
 
     <!-- ══ ۱۱. شوکیس دایره‌ای روتین‌های محبوب (Circle Variant) ══ -->
     <CategoriesShowcase
+      config-key="home-circle"
       title="روتین‌های محبوب"
       highlight="زیبایی و سلامت"
       subtitle="محبوب‌ترین لاین‌ها برای مراقبت روزمره از پوست، مو و چهره"
-      variant="circle"
+      variant="radial"
       badge-text="پیشنهاد متخصصان"
       :limit="6"
     />

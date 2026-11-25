@@ -34,6 +34,7 @@ const resolveUploadsPath = (): string => {
   return join(process.cwd(), 'uploads');
 };
 import { BannersModule } from './modules/banners/banners.module';
+import { ShowcaseConfigsModule } from './modules/showcase-configs/showcase-configs.module';
 import { CacheModule } from '@nestjs/cache-manager';
 import { ScheduleModule } from '@nestjs/schedule';
 import { PriceListModule } from './modules/price-list/price-list.module';
@@ -101,8 +102,9 @@ import { ExploreModule } from './modules/explore/explore.module';
     SearchModule,
     TagsModule,
     PaymentModule,
-    BannersModule,
-    WishlistModule,
+      BannersModule,
+      ShowcaseConfigsModule,
+      WishlistModule,
     MediaModule,
     BrandsModule,
     MagazineModule,

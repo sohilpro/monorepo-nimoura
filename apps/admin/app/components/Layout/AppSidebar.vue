@@ -292,8 +292,17 @@ const rawMenuItems = [
     ],
   },
   {
+    key: "showcases",
+    label: "ویترینهای دستهبندی",
+    icon: "pi pi-discord",
+    items: [
+      { key: "showcases-all", label: "همه ویترینها", icon: "pi pi-list", route: "/showcases" },
+      { key: "showcases-new", label: "ویترین جدید", icon: "pi pi-plus-circle", route: "/showcases/new" },
+    ],
+  },
+  {
     key: "media",
-    label: "مدیریت فایل‌ها و رسانه",
+    label: "مدیریت فایلها و رسانه",
     icon: "pi pi-folder-open",
     items: [
       { key: "media-all", label: "کتابخانه فایل‌ها (Uploads)", icon: "pi pi-images", route: "/media" },
